@@ -1,0 +1,5 @@
+import React from 'react';
+import {Text,Pressable,StyleSheet,View} from 'react-native';
+export function Button({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={[styles.button,disabled&&{opacity:0.5}]}><Text style={styles.buttonText}>{label}</Text></Pressable>;}
+export function Card({children}:{children:React.ReactNode}){return <View style={styles.card}>{children}</View>;}
+export const styles=StyleSheet.create({button:{backgroundColor:'#185D3B',padding:16,borderRadius:14,alignItems:'center',marginVertical:6},buttonText:{color:'white',fontSize:16,fontWeight:'700'},card:{backgroundColor:'white',padding:20,borderRadius:18,marginVertical:10,gap:10},title:{fontSize:25,fontWeight:'700',color:'#18382A',marginVertical:14},text:{fontSize:16,lineHeight:24,color:'#647A6D'},input:{borderWidth:1,borderColor:'#D8E5DD',backgroundColor:'white',padding:14,borderRadius:12,marginVertical:6}});
