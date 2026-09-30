@@ -740,4 +740,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
   },
   pressed: {
-    opacity:
+    opacity: 0.8,
+  },
+});
