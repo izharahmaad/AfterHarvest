@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
   Platform,
   Pressable,
   StyleSheet,
@@ -13,11 +14,23 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 
 import {predict} from '../services/api';
-import {Assessment, Context} from '../types/assessment';
+import type {Assessment, Context} from '../types/assessment';
 
 type Props = {
   onResult: (result: Assessment) => void;
 };
+
+type NumericField = 'temperature' | 'humidity' | 'days';
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_PIXELS = 20_000_000;
+
+const SUPPORTED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+]);
 
 const PACKAGING_OPTIONS = [
   {
@@ -38,14 +51,117 @@ const PACKAGING_OPTIONS = [
     description: 'Airflow openings',
     symbol: '▦',
   },
+] as const;
+
+const FIELDS: {
+  key: NumericField;
+  label: string;
+  unit: string;
+  hint: string;
+  placeholder: string;
+}[] = [
+  {
+    key: 'temperature',
+    label: 'Temperature',
+    unit: '°C',
+    hint: '−20 to 60°C',
+    placeholder: '8.5',
+  },
+  {
+    key: 'humidity',
+    label: 'Humidity',
+    unit: '%',
+    hint: '0 to 100%',
+    placeholder: '72',
+  },
+  {
+    key: 'days',
+    label: 'Storage duration',
+    unit: 'days',
+    hint: 'Whole days since storage began',
+    placeholder: '4',
+  },
 ];
+
+function parseDecimal(value: string): number | null {
+  const normalized = value.trim().replace(',', '.');
+
+  if (!/^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized)) {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function validateImage(
+  image: ImagePicker.ImagePickerAsset,
+): string | null {
+  if (!image.uri) {
+    return 'This image could not be opened. Choose another photo.';
+  }
+
+  if (
+    typeof image.fileSize === 'number' &&
+    image.fileSize > MAX_IMAGE_BYTES
+  ) {
+    return 'Choose an image no larger than 5 MB.';
+  }
+
+  if (
+    image.width > 0 &&
+    image.height > 0 &&
+    image.width * image.height > MAX_IMAGE_PIXELS
+  ) {
+    return 'Choose an image with no more than 20 megapixels.';
+  }
+
+  const mimeType = image.mimeType
+    ?.toLowerCase()
+    .split(';')[0]
+    .trim();
+
+  if (mimeType && !SUPPORTED_MIME_TYPES.has(mimeType)) {
+    return 'Choose a JPEG, PNG or WebP image. The current backend does not support HEIC/HEIF.';
+  }
+
+  // Missing metadata is allowed here.
+  // The backend must still validate the actual uploaded bytes.
+  return null;
+}
+
+function SectionHeader({
+  number,
+  title,
+  description,
+}: {
+  number: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <View style={s.sectionHeader}>
+      <View style={s.step}>
+        <Text style={s.stepText}>{number}</Text>
+      </View>
+
+      <View style={s.sectionCopy}>
+        <Text style={s.sectionTitle}>{title}</Text>
+        <Text style={s.sectionSubtitle}>{description}</Text>
+      </View>
+    </View>
+  );
+}
 
 export default function CaptureScreen({onResult}: Props) {
   const [asset, setAsset] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
+
   const [busy, setBusy] = useState(false);
   const [picking, setPicking] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  const [focusedField, setFocusedField] =
+    useState<NumericField | null>(null);
 
   const [context, setContext] = useState<Context>({
     temperature: '8.5',
@@ -54,6 +170,7 @@ export default function CaptureScreen({onResult}: Props) {
     packaging: 'open_crate',
   });
 
+  const operationLocked = useRef(false);
   const disabled = busy || picking;
 
   function updateContext(key: keyof Context, value: string) {
@@ -64,9 +181,11 @@ export default function CaptureScreen({onResult}: Props) {
   }
 
   async function choose(camera: boolean) {
-    if (disabled) return;
+    if (operationLocked.current) return;
 
+    operationLocked.current = true;
     setPicking(true);
+    Keyboard.dismiss();
 
     try {
       if (camera) {
@@ -76,25 +195,45 @@ export default function CaptureScreen({onResult}: Props) {
         if (!permission.granted) {
           Alert.alert(
             'Camera permission needed',
-            'Allow camera access to photograph your tomato.',
+            permission.canAskAgain
+              ? 'Allow camera access to photograph your tomato.'
+              : 'Enable camera access in your device settings, or choose an image from your gallery.',
           );
           return;
         }
       }
 
-      const result = camera
-        ? await ImagePicker.launchCameraAsync({
-            quality: 0.8,
-          })
-        : await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            quality: 0.8,
-          });
+      const options: ImagePicker.ImagePickerOptions = {
+        mediaTypes: ['images'],
+        allowsMultipleSelection: false,
+        quality: 0.8,
+      };
 
-      if (!result.canceled && result.assets[0]) {
-        setAsset(result.assets[0]);
+      const response = camera
+        ? await ImagePicker.launchCameraAsync(options)
+        : await ImagePicker.launchImageLibraryAsync(options);
+
+      if (response.canceled) return;
+
+      const selectedImage = response.assets?.[0];
+
+      if (!selectedImage) {
+        Alert.alert(
+          'No image returned',
+          'Please select your tomato photo again.',
+        );
+        return;
       }
-    } catch (error) {
+
+      const error = validateImage(selectedImage);
+
+      if (error) {
+        Alert.alert('Check your image', error);
+        return;
+      }
+
+      setAsset(selectedImage);
+    } catch (error: unknown) {
       Alert.alert(
         'Unable to open image',
         error instanceof Error
@@ -102,12 +241,13 @@ export default function CaptureScreen({onResult}: Props) {
           : 'Please try selecting your image again.',
       );
     } finally {
+      operationLocked.current = false;
       setPicking(false);
     }
   }
 
   async function submit() {
-    if (disabled) return;
+    if (operationLocked.current) return;
 
     if (!asset) {
       Alert.alert(
@@ -117,85 +257,125 @@ export default function CaptureScreen({onResult}: Props) {
       return;
     }
 
-    const temperature = Number(context.temperature);
-    const humidity = Number(context.humidity);
-    const days = Number(context.days);
+    const imageError = validateImage(asset);
 
-    const invalid =
-      !context.temperature.trim() ||
-      !context.humidity.trim() ||
-      !context.days.trim() ||
-      !Number.isFinite(temperature) ||
+    if (imageError) {
+      Alert.alert('Check your image', imageError);
+      return;
+    }
+
+    const temperature = parseDecimal(context.temperature);
+    const humidity = parseDecimal(context.humidity);
+    const daysText = context.days.trim();
+
+    if (
+      temperature === null ||
       temperature < -20 ||
-      temperature > 60 ||
-      !Number.isFinite(humidity) ||
-      humidity < 0 ||
-      humidity > 100 ||
-      !Number.isInteger(days) ||
-      days < 0 ||
-      days > 365;
-
-    if (invalid) {
+      temperature > 60
+    ) {
       Alert.alert(
-        'Check storage details',
-        'Temperature: −20 to 60°C\nHumidity: 0–100%\nStorage days: a whole number from 0–365.',
+        'Check temperature',
+        'Enter a temperature from −20 to 60°C.',
       );
       return;
     }
 
+    if (
+      humidity === null ||
+      humidity < 0 ||
+      humidity > 100
+    ) {
+      Alert.alert(
+        'Check humidity',
+        'Enter a humidity percentage from 0 to 100.',
+      );
+      return;
+    }
+
+    if (!/^\d+$/.test(daysText)) {
+      Alert.alert(
+        'Check storage duration',
+        'Enter a whole number of days from 0 to 365.',
+      );
+      return;
+    }
+
+    const days = Number(daysText);
+
+    if (!Number.isSafeInteger(days) || days > 365) {
+      Alert.alert(
+        'Check storage duration',
+        'Enter a whole number of days from 0 to 365.',
+      );
+      return;
+    }
+
+    if (
+      !PACKAGING_OPTIONS.some(
+        option => option.value === context.packaging,
+      )
+    ) {
+      Alert.alert(
+        'Choose packaging',
+        'Select one of the available packaging types.',
+      );
+      return;
+    }
+
+    const requestContext: Context = {
+      temperature: String(temperature),
+      humidity: String(humidity),
+      days: String(days),
+      packaging: context.packaging,
+    };
+
+    operationLocked.current = true;
     setBusy(true);
+    Keyboard.dismiss();
+
+    let assessment: Assessment;
 
     try {
-      const result = await predict(asset, context);
-      onResult(result);
-    } catch (error) {
+      assessment = await predict(asset, requestContext);
+    } catch (error: unknown) {
       Alert.alert(
         'Unable to assess',
         error instanceof Error
           ? error.message
           : 'Check your connection and try again.',
       );
+      return;
     } finally {
+      operationLocked.current = false;
       setBusy(false);
     }
+
+    onResult(assessment);
   }
 
   return (
     <View style={s.container}>
-      {/* Header */}
-      <View style={s.header}>
+      <View>
         <View style={s.badge}>
           <View style={s.badgeDot} />
           <Text style={s.badgeText}>TOMATO ASSESSMENT</Text>
         </View>
 
-        <Text style={s.heading}>A clearer picture{'\n'}of your produce.</Text>
+        <Text style={s.heading}>
+          A clearer picture{'\n'}of your produce.
+        </Text>
 
         <Text style={s.subtitle}>
           Add a photo and storage details to start your assessment.
         </Text>
       </View>
 
-      {/* Photo section */}
       <View style={s.card}>
-        <View style={s.sectionHeader}>
-          <View style={s.step}>
-            <Text style={s.stepText}>01</Text>
-          </View>
-
-          <View style={s.sectionCopy}>
-            <Text style={s.sectionTitle}>Produce photo</Text>
-            <Text style={s.sectionSubtitle}>
-              Choose a clear image of your tomato.
-            </Text>
-          </View>
-
-          <View style={s.smallBadge}>
-            <Text style={s.smallBadgeText}>
-              {asset ? 'Added' : 'Required'}
-            </Text>
-          </View>
-        </View>
+        <SectionHeader
+          number="01"
+          title="Produce photo"
+          description="Choose a clear image of your tomato."
+        />
 
         {asset ? (
           <View style={s.preview}>
@@ -207,15 +387,16 @@ export default function CaptureScreen({onResult}: Props) {
             />
 
             <View style={s.previewLabel}>
-              <Text style={s.previewLabelText}>Photo ready</Text>
+              <Text style={s.previewLabelText}>Photo selected</Text>
             </View>
 
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Remove selected photo"
+              accessibilityState={{disabled}}
               disabled={disabled}
               onPress={() => setAsset(null)}
-              hitSlop={10}
+              hitSlop={8}
               style={({pressed}) => [
                 s.removeButton,
                 pressed && s.pressed,
@@ -228,6 +409,7 @@ export default function CaptureScreen({onResult}: Props) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Choose tomato photo from gallery"
+            accessibilityState={{disabled}}
             disabled={disabled}
             onPress={() => choose(false)}
             style={({pressed}) => [
@@ -243,14 +425,16 @@ export default function CaptureScreen({onResult}: Props) {
             <Text style={s.uploadDescription}>
               Tap to browse your gallery
             </Text>
-
-            <Text style={s.uploadHint}>JPEG, PNG or WebP · Up to 5 MB</Text>
+            <Text style={s.uploadHint}>
+              JPEG, PNG or WebP · Maximum 5 MB
+            </Text>
           </Pressable>
         )}
 
         <View style={s.photoActions}>
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{disabled}}
             disabled={disabled}
             onPress={() => choose(true)}
             style={({pressed}) => [
@@ -264,6 +448,7 @@ export default function CaptureScreen({onResult}: Props) {
 
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{disabled}}
             disabled={disabled}
             onPress={() => choose(false)}
             style={({pressed}) => [
@@ -279,133 +464,78 @@ export default function CaptureScreen({onResult}: Props) {
         </View>
 
         {picking && (
-          <ActivityIndicator
-            color="#1C6846"
-            style={s.pickerLoading}
-          />
+          <View style={s.loadingRow}>
+            <ActivityIndicator color="#1C6846" />
+            <Text style={s.loadingText}>Opening image picker…</Text>
+          </View>
         )}
       </View>
 
-      {/* Storage section */}
       <View style={s.card}>
-        <View style={s.sectionHeader}>
-          <View style={s.step}>
-            <Text style={s.stepText}>02</Text>
-          </View>
+        <SectionHeader
+          number="02"
+          title="Storage conditions"
+          description="Enter the conditions for this produce."
+        />
 
-          <View style={s.sectionCopy}>
-            <Text style={s.sectionTitle}>Storage conditions</Text>
-            <Text style={s.sectionSubtitle}>
-              Enter the conditions for this produce.
-            </Text>
-          </View>
-        </View>
-
-        <View style={s.fieldRow}>
-          <View style={s.fieldHalf}>
-            <Text style={s.fieldLabel}>Temperature</Text>
-
+        <View style={s.fields}>
+          {FIELDS.map(field => (
             <View
-              style={[
-                s.inputWrapper,
-                focusedField === 'temperature' && s.inputFocused,
-              ]}>
-              <TextInput
-                accessibilityLabel="Storage temperature in Celsius"
-                editable={!disabled}
-                value={context.temperature}
-                onChangeText={value =>
-                  updateContext('temperature', value)
-                }
-                onFocus={() => setFocusedField('temperature')}
-                onBlur={() => setFocusedField(null)}
-                keyboardType={
-                  Platform.OS === 'ios'
-                    ? 'numbers-and-punctuation'
-                    : 'numeric'
-                }
-                placeholder="8.5"
-                placeholderTextColor="#A1ADA5"
-                style={s.input}
-              />
-              <Text style={s.unit}>°C</Text>
+              key={field.key}
+              style={
+                field.key === 'days'
+                  ? s.fullField
+                  : s.halfField
+              }>
+              <Text style={s.fieldLabel}>{field.label}</Text>
+
+              <View
+                style={[
+                  s.inputWrapper,
+                  focusedField === field.key && s.inputFocused,
+                  disabled && s.disabled,
+                ]}>
+                <TextInput
+                  accessibilityLabel={`${field.label} in ${field.unit}`}
+                  editable={!disabled}
+                  value={context[field.key]}
+                  onChangeText={value =>
+                    updateContext(field.key, value)
+                  }
+                  onFocus={() => setFocusedField(field.key)}
+                  onBlur={() => setFocusedField(null)}
+                  keyboardType={
+                    field.key === 'days'
+                      ? 'number-pad'
+                      : field.key === 'temperature'
+                        ? Platform.OS === 'ios'
+                          ? 'numbers-and-punctuation'
+                          : 'numeric'
+                        : 'decimal-pad'
+                  }
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                  placeholder={field.placeholder}
+                  placeholderTextColor="#94A298"
+                  selectionColor="#26744E"
+                  style={s.input}
+                />
+
+                <Text style={s.unit}>{field.unit}</Text>
+              </View>
+
+              <Text style={s.fieldHint}>{field.hint}</Text>
             </View>
-
-            <Text style={s.fieldHint}>−20 to 60°C</Text>
-          </View>
-
-          <View style={s.fieldHalf}>
-            <Text style={s.fieldLabel}>Humidity</Text>
-
-            <View
-              style={[
-                s.inputWrapper,
-                focusedField === 'humidity' && s.inputFocused,
-              ]}>
-              <TextInput
-                accessibilityLabel="Storage humidity percentage"
-                editable={!disabled}
-                value={context.humidity}
-                onChangeText={value =>
-                  updateContext('humidity', value)
-                }
-                onFocus={() => setFocusedField('humidity')}
-                onBlur={() => setFocusedField(null)}
-                keyboardType="decimal-pad"
-                placeholder="72"
-                placeholderTextColor="#A1ADA5"
-                style={s.input}
-              />
-              <Text style={s.unit}>%</Text>
-            </View>
-
-            <Text style={s.fieldHint}>0 to 100%</Text>
-          </View>
-        </View>
-
-        <View style={s.durationField}>
-          <Text style={s.fieldLabel}>Storage duration</Text>
-
-          <View
-            style={[
-              s.inputWrapper,
-              focusedField === 'days' && s.inputFocused,
-            ]}>
-            <TextInput
-              accessibilityLabel="Number of storage days"
-              editable={!disabled}
-              value={context.days}
-              onChangeText={value => updateContext('days', value)}
-              onFocus={() => setFocusedField('days')}
-              onBlur={() => setFocusedField(null)}
-              keyboardType="number-pad"
-              placeholder="4"
-              placeholderTextColor="#A1ADA5"
-              style={s.input}
-            />
-            <Text style={s.unit}>days</Text>
-          </View>
-
-          <Text style={s.fieldHint}>
-            Whole days since storage began
-          </Text>
+          ))}
         </View>
       </View>
 
-      {/* Packaging section */}
       <View style={s.card}>
-        <View style={s.sectionHeader}>
-          <View style={s.step}>
-            <Text style={s.stepText}>03</Text>
-          </View>
-
-          <View style={s.sectionCopy}>
-            <Text style={s.sectionTitle}>Packaging type</Text>
-            <Text style={s.sectionSubtitle}>
-              Select how the tomato is stored.
-            </Text>
-          </View>
-        </View>
+        <SectionHeader
+          number="03"
+          title="Packaging type"
+          description="Select how the tomato is stored."
+        />
 
         <View style={s.packagingList}>
           {PACKAGING_OPTIONS.map(option => {
@@ -462,20 +592,21 @@ export default function CaptureScreen({onResult}: Props) {
         </View>
       </View>
 
-      {/* Demo notice */}
       <View style={s.notice}>
         <Text style={s.noticeTitle}>Demo assessment</Text>
         <Text style={s.noticeText}>
-          The current demo uses storage-context heuristics. Your image
-          is validated, but not analyzed by a trained AI model.
+          The current demo uses storage-context heuristics.
+          Images are validated but not analyzed by a trained AI model.
+          Packaging does not affect demo scoring.
           Results do not certify food safety.
         </Text>
       </View>
 
-      {/* Main action */}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={busy ? 'Analyzing quality' : 'Analyze quality'}
+        accessibilityLabel={
+          busy ? 'Generating demo assessment' : 'Run demo assessment'
+        }
         accessibilityState={{disabled, busy}}
         disabled={disabled}
         onPress={submit}
@@ -487,11 +618,11 @@ export default function CaptureScreen({onResult}: Props) {
         {busy ? (
           <>
             <ActivityIndicator color="#FFFFFF" />
-            <Text style={s.submitText}>Analyzing…</Text>
+            <Text style={s.submitText}>Assessing…</Text>
           </>
         ) : (
           <>
-            <Text style={s.submitText}>Analyze quality</Text>
+            <Text style={s.submitText}>Run demo assessment</Text>
             <Text style={s.submitArrow}>→</Text>
           </>
         )}
@@ -509,9 +640,6 @@ const s = StyleSheet.create({
     gap: 18,
     paddingTop: 8,
     paddingBottom: 12,
-  },
-  header: {
-    marginBottom: 2,
   },
   badge: {
     flexDirection: 'row',
@@ -546,7 +674,7 @@ const s = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#718174',
+    color: '#65776B',
     marginTop: 10,
   },
   card: {
@@ -586,19 +714,8 @@ const s = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 11,
     lineHeight: 16,
-    color: '#809084',
+    color: '#687D6E',
     marginTop: 3,
-  },
-  smallBadge: {
-    backgroundColor: '#F2F6F3',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  smallBadgeText: {
-    color: '#637B6A',
-    fontSize: 10,
-    fontWeight: '600',
   },
   uploadArea: {
     minHeight: 190,
@@ -633,12 +750,12 @@ const s = StyleSheet.create({
   },
   uploadDescription: {
     fontSize: 12,
-    color: '#7C8E80',
+    color: '#6D8273',
     marginTop: 5,
   },
   uploadHint: {
     fontSize: 10,
-    color: '#8B9B8F',
+    color: '#718476',
     marginTop: 14,
     textAlign: 'center',
   },
@@ -670,9 +787,9 @@ const s = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.95)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -713,15 +830,28 @@ const s = StyleSheet.create({
     fontWeight: '600',
     color: '#536D5C',
   },
-  pickerLoading: {
-    marginTop: 12,
-  },
-  fieldRow: {
+  loadingRow: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 14,
   },
-  fieldHalf: {
-    flex: 1,
+  loadingText: {
+    fontSize: 11,
+    color: '#647B6B',
+  },
+  fields: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 18,
+  },
+  halfField: {
+    width: '47%',
+  },
+  fullField: {
+    width: '100%',
   },
   fieldLabel: {
     fontSize: 12,
@@ -753,16 +883,14 @@ const s = StyleSheet.create({
   },
   unit: {
     fontSize: 12,
-    color: '#849487',
+    color: '#6C8172',
     marginLeft: 6,
   },
   fieldHint: {
     fontSize: 10,
-    color: '#8D9B90',
+    lineHeight: 15,
+    color: '#748678',
     marginTop: 6,
-  },
-  durationField: {
-    marginTop: 18,
   },
   packagingList: {
     gap: 10,
@@ -807,7 +935,8 @@ const s = StyleSheet.create({
   },
   packagingDescription: {
     fontSize: 11,
-    color: '#86958A',
+    lineHeight: 16,
+    color: '#718577',
     marginTop: 3,
   },
   radio: {
@@ -844,7 +973,7 @@ const s = StyleSheet.create({
   noticeText: {
     fontSize: 11,
     lineHeight: 17,
-    color: '#778A7C',
+    color: '#657C6D',
   },
   submitButton: {
     minHeight: 56,
@@ -857,7 +986,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
   },
   submitText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
   },
@@ -869,7 +998,7 @@ const s = StyleSheet.create({
     fontSize: 10,
     lineHeight: 16,
     textAlign: 'center',
-    color: '#91A095',
+    color: '#718577',
   },
   pressed: {
     opacity: 0.8,
