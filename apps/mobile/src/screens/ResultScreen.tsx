@@ -6,21 +6,22 @@ import {
   View,
 } from 'react-native';
 
-import type {Assessment} from '../types/assessment';
+import {Assessment} from '../types/assessment';
 
 type Props = {
   result: Assessment;
   onNew: () => void;
 };
 
-type StatusStyle = {
-  label: string;
-  color: string;
-  background: string;
-  description: string;
-};
-
-const STATUS: Record<string, StatusStyle> = {
+const STATUS: Record<
+  string,
+  {
+    label: string;
+    color: string;
+    background: string;
+    description: string;
+  }
+> = {
   fresh: {
     label: 'Fresh',
     color: '#2B794D',
@@ -41,13 +42,6 @@ const STATUS: Record<string, StatusStyle> = {
   },
 };
 
-const UNKNOWN_STATUS: StatusStyle = {
-  label: 'Uncertain',
-  color: '#657A87',
-  background: '#EDF2F5',
-  description: 'Review this result with caution.',
-};
-
 const FACTOR_LABELS: Record<string, string> = {
   temperature: 'Temperature',
   storage_duration: 'Storage duration',
@@ -56,35 +50,17 @@ const FACTOR_LABELS: Record<string, string> = {
   visual_color_change: 'Visual color change',
 };
 
-function normalizeString(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function normalizeState(value: unknown): string {
-  return normalizeString(value).toLowerCase();
-}
-
-function clamp(value: number): number {
+function clamp(value: number) {
   return Math.max(0, Math.min(1, value));
 }
 
-function displayScore(value: unknown): number | null {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return null;
-  }
-
-  return Math.round(clamp(value) * 100);
+function displayScore(value: number) {
+  return Number.isFinite(value)
+    ? Math.round(clamp(value) * 100)
+    : null;
 }
 
-function getStatus(value: unknown): StatusStyle {
-  return STATUS[normalizeState(value)] ?? UNKNOWN_STATUS;
-}
-
-function formatDate(value: unknown): string {
-  if (typeof value !== 'string') {
-    return 'Date unavailable';
-  }
-
+function formatDate(value: string) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -94,62 +70,31 @@ function formatDate(value: unknown): string {
   return date.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
 }
 
-function getFactorLabel(value: unknown): string {
-  const normalized = normalizeString(value);
-
-  if (!normalized) {
-    return 'Unknown factor';
-  }
-
-  return (
-    FACTOR_LABELS[normalized] ??
-    normalized
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, letter => letter.toUpperCase())
-  );
-}
-
-function getRecommendation(value: unknown): string {
-  const recommendation = normalizeString(value);
-
-  return (
-    recommendation ||
-    'No recommendation was returned for this assessment.'
-  );
-}
-
-function getProduceName(value: unknown): string {
-  const produce = normalizeString(value);
-
-  if (!produce) {
-    return 'Tomato';
-  }
-
-  return (
-    produce.charAt(0).toUpperCase() +
-    produce.slice(1).toLowerCase()
-  );
-}
-
-export default function ResultScreen({result, onNew}: Props) {
+export default function ResultScreen({
+  result,
+  onNew,
+}: Props) {
   const demo = result.inference_mode === 'demo';
   const score = displayScore(result.quality_score);
-  const confidence = displayScore(result.confidence);
-  const status = getStatus(result.quality_state);
-  const factors = Array.isArray(result.contributing_factors)
-    ? result.contributing_factors
-    : [];
-  const recommendation = getRecommendation(result.recommendation);
-  const produceName = getProduceName(result.produce_type);
+
+  const status =
+    STATUS[result.quality_state.toLowerCase()] ?? {
+      label: 'Uncertain',
+      color: '#657A87',
+      background: '#EDF2F5',
+      description: 'Review this result with caution.',
+    };
+
+  const factors = result.contributing_factors ?? [];
 
   return (
     <View style={s.container}>
+      {/* Header */}
       <View>
         <View style={s.badge}>
           <View style={s.badgeDot} />
@@ -157,7 +102,8 @@ export default function ResultScreen({result, onNew}: Props) {
         </View>
 
         <Text style={s.heading}>
-          Your assessment,{'\n'}explained.
+          Your assessment,{'\n'}
+          explained.
         </Text>
 
         <Text style={s.subtitle}>
@@ -166,6 +112,7 @@ export default function ResultScreen({result, onNew}: Props) {
         </Text>
       </View>
 
+      {/* Score card */}
       <View style={s.scoreCard}>
         <View style={s.scoreCardHeader}>
           <View
@@ -179,7 +126,12 @@ export default function ResultScreen({result, onNew}: Props) {
                 {backgroundColor: status.color},
               ]}
             />
-            <Text style={[s.statusText, {color: status.color}]}>
+
+            <Text
+              style={[
+                s.statusText,
+                {color: status.color},
+              ]}>
               {status.label}
             </Text>
           </View>
@@ -196,9 +148,14 @@ export default function ResultScreen({result, onNew}: Props) {
         </Text>
 
         <View style={s.scoreValueRow}>
-          <Text style={[s.scoreValue, {color: status.color}]}>
+          <Text
+            style={[
+              s.scoreValue,
+              {color: status.color},
+            ]}>
             {score === null ? '—' : score}
           </Text>
+
           <Text style={s.scoreMaximum}>/100</Text>
         </View>
 
@@ -237,7 +194,7 @@ export default function ResultScreen({result, onNew}: Props) {
         <View style={s.metadataRow}>
           <View style={s.metadataItem}>
             <Text style={s.metadataLabel}>PRODUCE</Text>
-            <Text style={s.metadataValue}>{produceName}</Text>
+            <Text style={s.metadataValue}>Tomato</Text>
           </View>
 
           <View style={s.metadataItem}>
@@ -249,6 +206,7 @@ export default function ResultScreen({result, onNew}: Props) {
         </View>
       </View>
 
+      {/* Recommendation */}
       <View style={s.recommendationCard}>
         <View style={s.sectionHeader}>
           <View style={s.recommendationIcon}>
@@ -264,10 +222,12 @@ export default function ResultScreen({result, onNew}: Props) {
         </View>
 
         <Text style={s.recommendationText}>
-          {recommendation}
+          {result.recommendation ||
+            'No recommendation was returned for this assessment.'}
         </Text>
       </View>
 
+      {/* Context factors */}
       <View style={s.card}>
         <View style={s.sectionHeader}>
           <View style={s.sectionIcon}>
@@ -291,29 +251,28 @@ export default function ResultScreen({result, onNew}: Props) {
         ) : (
           <View style={s.factorList}>
             {factors.map((factor, index) => {
-              const rawWeight = factor?.weight;
-              const validWeight =
-                typeof rawWeight === 'number' &&
-                Number.isFinite(rawWeight);
+              const valid = Number.isFinite(factor.weight);
+              const value = valid ? clamp(factor.weight) : 0;
 
-              const value = validWeight ? clamp(rawWeight) : 0;
-              const label = getFactorLabel(factor?.name);
+              const label =
+                FACTOR_LABELS[factor.name] ??
+                factor.name.replace(/_/g, ' ');
 
               return (
-                <View key={`${label}-${index}`}>
+                <View key={`${factor.name}-${index}`}>
                   <View style={s.factorHeader}>
                     <Text style={s.factorName}>{label}</Text>
 
                     <Text style={s.factorValue}>
-                      {validWeight ? rawWeight.toFixed(2) : '—'}
+                      {valid ? factor.weight.toFixed(2) : '—'}
                     </Text>
                   </View>
 
                   <View
                     accessible
                     accessibilityLabel={`${label}: ${
-                      validWeight
-                        ? rawWeight.toFixed(2)
+                      valid
+                        ? factor.weight.toFixed(2)
                         : 'unavailable'
                     }`}
                     style={s.factorTrack}>
@@ -339,6 +298,7 @@ export default function ResultScreen({result, onNew}: Props) {
         </View>
       </View>
 
+      {/* Inference details */}
       <View style={s.card}>
         <Text style={s.sectionTitle}>Inference details</Text>
 
@@ -356,9 +316,9 @@ export default function ResultScreen({result, onNew}: Props) {
           <Text style={s.detailValue}>
             {demo
               ? 'Not estimated'
-              : confidence === null
+              : displayScore(result.confidence) === null
                 ? 'Unavailable'
-                : `${confidence}% reported`}
+                : `${displayScore(result.confidence)}% reported`}
           </Text>
         </View>
 
@@ -370,17 +330,9 @@ export default function ResultScreen({result, onNew}: Props) {
             {demo ? 'Illustrative only' : 'Not a safety rating'}
           </Text>
         </View>
-
-        <View style={s.detailDivider} />
-
-        <View style={s.detailRow}>
-          <Text style={s.detailLabel}>Model version</Text>
-          <Text style={s.detailValue}>
-            {normalizeString(result.model_version) || 'Unavailable'}
-          </Text>
-        </View>
       </View>
 
+      {/* Limitations */}
       <View style={s.notice}>
         <View style={s.noticeHeader}>
           <View style={s.noticeIcon}>
@@ -406,13 +358,14 @@ export default function ResultScreen({result, onNew}: Props) {
         </Text>
       </View>
 
+      {/* Action */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Start a new tomato assessment"
         onPress={onNew}
         style={({pressed}) => [
           s.newButton,
-          pressed ? s.pressed : null,
+          pressed && s.pressed,
         ]}>
         <Text style={s.newButtonText}>New assessment</Text>
         <Text style={s.newButtonArrow}>→</Text>
@@ -642,7 +595,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   sectionIconText: {
-    fontSize: 22,
+    fontSize: 23,
     color: '#638A6D',
   },
   factorList: {
@@ -705,8 +658,6 @@ const s = StyleSheet.create({
     color: '#85978B',
   },
   detailValue: {
-    flexShrink: 1,
-    textAlign: 'right',
     fontSize: 11,
     fontWeight: '600',
     color: '#5B7864',
