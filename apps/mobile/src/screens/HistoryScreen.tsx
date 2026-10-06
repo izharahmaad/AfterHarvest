@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 
-import type {Assessment} from '../types/assessment';
+import {Assessment} from '../types/assessment';
 
 type Props = {
   items: Assessment[];
@@ -15,20 +15,17 @@ type Props = {
 
 type Filter = 'all' | 'fresh' | 'aging' | 'spoiled';
 
-type StatusStyle = {
-  label: string;
-  color: string;
-  background: string;
-};
-
-const FILTERS: Array<{value: Filter; label: string}> = [
+const FILTERS: {value: Filter; label: string}[] = [
   {value: 'all', label: 'All'},
   {value: 'fresh', label: 'Fresh'},
   {value: 'aging', label: 'Aging'},
   {value: 'spoiled', label: 'Spoiled'},
 ];
 
-const STATUS_STYLES: Record<string, StatusStyle> = {
+const STATUS_STYLES: Record<
+  string,
+  {label: string; color: string; background: string}
+> = {
   fresh: {
     label: 'Fresh',
     color: '#28764A',
@@ -46,43 +43,28 @@ const STATUS_STYLES: Record<string, StatusStyle> = {
   },
 };
 
-const UNKNOWN_STATUS: StatusStyle = {
-  label: 'Uncertain',
-  color: '#64748B',
-  background: '#EDF1F4',
-};
-
-function normalizeState(value: unknown): string {
-  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+function getStatus(state: string) {
+  return (
+    STATUS_STYLES[state.toLowerCase()] ?? {
+      label: 'Uncertain',
+      color: '#6B7680',
+      background: '#EDF1F4',
+    }
+  );
 }
 
-function getStatus(state: unknown): StatusStyle {
-  return STATUS_STYLES[normalizeState(state)] ?? UNKNOWN_STATUS;
-}
-
-function getScore(value: unknown): number | null {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return null;
-  }
+function getScore(value: number): number | null {
+  if (!Number.isFinite(value)) return null;
 
   return Math.round(Math.max(0, Math.min(1, value)) * 100);
 }
 
-function getTimestamp(value: unknown): number {
-  if (typeof value !== 'string') {
-    return 0;
-  }
-
+function getTimestamp(value: string) {
   const timestamp = Date.parse(value);
-
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
-function formatDate(value: unknown): string {
-  if (typeof value !== 'string') {
-    return 'Date unavailable';
-  }
-
+function formatDate(value: string) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -96,11 +78,7 @@ function formatDate(value: unknown): string {
   });
 }
 
-function formatTime(value: unknown): string {
-  if (typeof value !== 'string') {
-    return '';
-  }
-
+function formatTime(value: string) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -113,76 +91,54 @@ function formatTime(value: unknown): string {
   });
 }
 
-function getRecommendation(value: unknown): string {
-  if (typeof value !== 'string' || !value.trim()) {
-    return 'Open this assessment to review its details.';
-  }
-
-  return value.trim();
-}
-
-function isDemoAssessment(item: Assessment): boolean {
-  return item.inference_mode === 'demo';
-}
-
 export default function HistoryScreen({items, onSelect}: Props) {
   const [filter, setFilter] = useState<Filter>('all');
 
-  const sortedItems = useMemo(() => {
-    return [...items].sort(
-      (first, second) =>
-        getTimestamp(second.created_at) -
-        getTimestamp(first.created_at),
-    );
-  }, [items]);
+  const sortedItems = useMemo(
+    () =>
+      [...items].sort(
+        (a, b) =>
+          getTimestamp(b.created_at) - getTimestamp(a.created_at),
+      ),
+    [items],
+  );
 
-  const counts = useMemo(() => {
-    const fresh = items.filter(
-      item => normalizeState(item.quality_state) === 'fresh',
-    ).length;
-
-    const aging = items.filter(
-      item => normalizeState(item.quality_state) === 'aging',
-    ).length;
-
-    const spoiled = items.filter(
-      item => normalizeState(item.quality_state) === 'spoiled',
-    ).length;
-
-    return {
+  const counts = useMemo(
+    () => ({
       all: items.length,
-      fresh,
-      aging,
-      spoiled,
-    };
-  }, [items]);
+      fresh: items.filter(
+        item => item.quality_state.toLowerCase() === 'fresh',
+      ).length,
+      aging: items.filter(
+        item => item.quality_state.toLowerCase() === 'aging',
+      ).length,
+      spoiled: items.filter(
+        item => item.quality_state.toLowerCase() === 'spoiled',
+      ).length,
+    }),
+    [items],
+  );
 
-  const visibleItems = useMemo(() => {
-    if (filter === 'all') {
-      return sortedItems;
-    }
-
-    return sortedItems.filter(
-      item => normalizeState(item.quality_state) === filter,
-    );
-  }, [filter, sortedItems]);
-
-  const listTitle =
-    filter === 'all'
-      ? 'Recent assessments'
-      : `${FILTERS.find(option => option.value === filter)?.label ?? 'Filtered'} assessments`;
+  const visibleItems = useMemo(
+    () =>
+      filter === 'all'
+        ? sortedItems
+        : sortedItems.filter(
+            item => item.quality_state.toLowerCase() === filter,
+          ),
+    [filter, sortedItems],
+  );
 
   return (
     <View style={s.container}>
+      {/* Header */}
       <View>
         <View style={s.badge}>
           <View style={s.badgeDot} />
           <Text style={s.badgeText}>YOUR ASSESSMENTS</Text>
         </View>
 
-        <Text style={s.heading}>
-          Your produce,{'\n'}at a glance.
-        </Text>
+        <Text style={s.heading}>Your produce,{'\n'}at a glance.</Text>
 
         <Text style={s.subtitle}>
           Review recent assessments and revisit the details behind
@@ -190,6 +146,7 @@ export default function HistoryScreen({items, onSelect}: Props) {
         </Text>
       </View>
 
+      {/* Session notice */}
       <View style={s.sessionNotice}>
         <View style={s.sessionIcon}>
           <Text style={s.sessionIconText}>i</Text>
@@ -204,6 +161,7 @@ export default function HistoryScreen({items, onSelect}: Props) {
         </View>
       </View>
 
+      {/* Overview */}
       <View style={s.summaryRow}>
         <View style={s.summaryCard}>
           <Text style={s.summaryLabel}>Assessments</Text>
@@ -220,6 +178,7 @@ export default function HistoryScreen({items, onSelect}: Props) {
         </View>
       </View>
 
+      {/* Filters */}
       <View style={s.filterRow}>
         {FILTERS.map(option => {
           const selected = filter === option.value;
@@ -233,13 +192,13 @@ export default function HistoryScreen({items, onSelect}: Props) {
               onPress={() => setFilter(option.value)}
               style={({pressed}) => [
                 s.filter,
-                selected ? s.filterSelected : null,
-                pressed ? s.pressed : null,
+                selected && s.filterSelected,
+                pressed && s.pressed,
               ]}>
               <Text
                 style={[
                   s.filterText,
-                  selected ? s.filterTextSelected : null,
+                  selected && s.filterTextSelected,
                 ]}>
                 {option.label}
               </Text>
@@ -247,12 +206,12 @@ export default function HistoryScreen({items, onSelect}: Props) {
               <View
                 style={[
                   s.filterCount,
-                  selected ? s.filterCountSelected : null,
+                  selected && s.filterCountSelected,
                 ]}>
                 <Text
                   style={[
                     s.filterCountText,
-                    selected ? s.filterCountTextSelected : null,
+                    selected && s.filterCountTextSelected,
                   ]}>
                   {counts[option.value]}
                 </Text>
@@ -262,8 +221,13 @@ export default function HistoryScreen({items, onSelect}: Props) {
         })}
       </View>
 
+      {/* List heading */}
       <View style={s.listHeader}>
-        <Text style={s.listTitle}>{listTitle}</Text>
+        <Text style={s.listTitle}>
+          {filter === 'all'
+            ? 'Recent assessments'
+            : `${FILTERS.find(option => option.value === filter)?.label} assessments`}
+        </Text>
 
         <Text style={s.listCount}>
           {visibleItems.length}{' '}
@@ -271,10 +235,11 @@ export default function HistoryScreen({items, onSelect}: Props) {
         </Text>
       </View>
 
+      {/* Empty state */}
       {visibleItems.length === 0 ? (
         <View style={s.emptyCard}>
           <View style={s.emptyIcon}>
-            <Text style={s.emptyIconText}>H</Text>
+            <Text style={s.emptyIconText}>≡</Text>
           </View>
 
           <Text style={s.emptyTitle}>
@@ -289,18 +254,17 @@ export default function HistoryScreen({items, onSelect}: Props) {
               : `There are no ${filter} results in this session. Try another filter.`}
           </Text>
 
-          {filter !== 'all' ? (
+          {filter !== 'all' && (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="View all assessment results"
               onPress={() => setFilter('all')}
               style={({pressed}) => [
                 s.resetButton,
-                pressed ? s.pressed : null,
+                pressed && s.pressed,
               ]}>
               <Text style={s.resetButtonText}>View all results</Text>
             </Pressable>
-          ) : null}
+          )}
         </View>
       ) : (
         <View style={s.list}>
@@ -308,22 +272,19 @@ export default function HistoryScreen({items, onSelect}: Props) {
             const status = getStatus(item.quality_state);
             const score = getScore(item.quality_score);
             const time = formatTime(item.created_at);
-            const demo = isDemoAssessment(item);
-            const recommendation = getRecommendation(item.recommendation);
+            const demo = item.inference_mode === 'demo';
 
             return (
               <Pressable
                 key={item.assessment_id}
                 accessibilityRole="button"
-                accessibilityLabel={`Open ${status.label.toLowerCase()} tomato assessment, ${
-                  score === null
-                    ? 'score unavailable'
-                    : `score ${score} out of 100`
-                }`}
+                accessibilityLabel={`Open ${status.label.toLowerCase()} assessment, ${
+                  score === null ? 'score unavailable' : `score ${score} out of 100`
+                }, ${formatDate(item.created_at)}`}
                 onPress={() => onSelect(item)}
                 style={({pressed}) => [
                   s.assessmentCard,
-                  pressed ? s.cardPressed : null,
+                  pressed && s.cardPressed,
                 ]}>
                 <View style={s.cardTop}>
                   <View style={s.produceIcon}>
@@ -358,7 +319,6 @@ export default function HistoryScreen({items, onSelect}: Props) {
                         {backgroundColor: status.color},
                       ]}
                     />
-
                     <Text
                       style={[
                         s.statusText,
@@ -395,7 +355,8 @@ export default function HistoryScreen({items, onSelect}: Props) {
                 </View>
 
                 <Text style={s.recommendation} numberOfLines={2}>
-                  {recommendation}
+                  {item.recommendation ||
+                    'Open this assessment to review its details.'}
                 </Text>
 
                 <View style={s.cardFooter}>
@@ -405,7 +366,7 @@ export default function HistoryScreen({items, onSelect}: Props) {
                     </Text>
                   </View>
 
-                  <Text style={s.detailsLink}>View details</Text>
+                  <Text style={s.detailsLink}>View details →</Text>
                 </View>
               </Pressable>
             );
@@ -756,8 +717,7 @@ const s = StyleSheet.create({
     marginBottom: 18,
   },
   emptyIconText: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 34,
     color: '#639273',
   },
   emptyTitle: {
