@@ -147,7 +147,6 @@ export default function ResultScreen({result, onNew}: Props) {
     : [];
   const recommendation = getRecommendation(result.recommendation);
   const produceName = getProduceName(result.produce_type);
-
   return (
     <View style={s.container}>
       <View>
