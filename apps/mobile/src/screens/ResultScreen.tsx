@@ -337,6 +337,7 @@ export default function ResultScreen({result, onNew}: Props) {
           </Text>
         </View>
       </View>
+
       <View style={s.card}>
         <Text style={s.sectionTitle}>Inference details</Text>
 
