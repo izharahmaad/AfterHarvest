@@ -11,7 +11,13 @@ type Props = {
   onHistory: () => void;
 };
 
-const STEPS = [
+type WorkflowStep = {
+  number: string;
+  title: string;
+  description: string;
+};
+
+const WORKFLOW_STEPS: WorkflowStep[] = [
   {
     number: '01',
     title: 'Add a photo',
@@ -29,22 +35,70 @@ const STEPS = [
   },
 ];
 
+function TomatoIllustration() {
+  return (
+    <View
+      pointerEvents="none"
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      style={s.tomatoIllustration}>
+      <View style={s.tomatoHalo} />
+      <View style={s.tomatoShadow} />
+      <View style={s.tomatoBody} />
+      <View style={s.tomatoHighlight} />
+      <View style={s.tomatoStem} />
+      <View style={s.tomatoLeafLeft} />
+      <View style={s.tomatoLeafRight} />
+    </View>
+  );
+}
+
+function WorkflowCard() {
+  return (
+    <View style={s.stepsCard}>
+      {WORKFLOW_STEPS.map((step, index) => {
+        const showDivider = index < WORKFLOW_STEPS.length - 1;
+
+        return (
+          <View
+            key={step.number}
+            style={[
+              s.stepRow,
+              showDivider ? s.stepRowBorder : null,
+            ]}>
+            <View style={s.stepNumber}>
+              <Text style={s.stepNumberText}>{step.number}</Text>
+            </View>
+
+            <View style={s.stepCopy}>
+              <Text style={s.stepTitle}>{step.title}</Text>
+              <Text style={s.stepDescription}>
+                {step.description}
+              </Text>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function HomeScreen({
   onCapture,
   onHistory,
 }: Props) {
   return (
     <View style={s.container}>
-      {/* Intro */}
       <View style={s.intro}>
         <View style={s.badge}>
           <View style={s.badgeDot} />
-          <Text style={s.badgeText}>POST-HARVEST INTELLIGENCE</Text>
+          <Text style={s.badgeText}>
+            POST-HARVEST INTELLIGENCE
+          </Text>
         </View>
 
         <Text style={s.heading}>
-          Understand your{'\n'}
-          produce better.
+          Understand your{'\n'}produce better.
         </Text>
 
         <Text style={s.subtitle}>
@@ -53,13 +107,13 @@ export default function HomeScreen({
         </Text>
       </View>
 
-      {/* Hero */}
       <View style={s.hero}>
         <View
           pointerEvents="none"
           accessible={false}
           style={s.heroDecoration}
         />
+
         <View
           pointerEvents="none"
           accessible={false}
@@ -78,29 +132,15 @@ export default function HomeScreen({
         <View style={s.heroBody}>
           <View style={s.heroCopy}>
             <Text style={s.heroTitle}>
-              Small details.{'\n'}
-              Clearer insights.
+              Small details.{'\n'}Clearer insights.
             </Text>
 
             <Text style={s.heroDescription}>
-              Start with a photo.{'\n'}
-              Add the storage context.
+              Start with a photo.{'\n'}Add the storage context.
             </Text>
           </View>
 
-          {/* Decorative tomato illustration */}
-          <View
-            style={s.tomatoIllustration}
-            accessible={false}
-            importantForAccessibility="no-hide-descendants">
-            <View style={s.tomatoHalo} />
-            <View style={s.tomatoShadow} />
-            <View style={s.tomatoBody} />
-            <View style={s.tomatoHighlight} />
-            <View style={s.tomatoStem} />
-            <View style={s.tomatoLeafLeft} />
-            <View style={s.tomatoLeafRight} />
-          </View>
+          <TomatoIllustration />
         </View>
 
         <View style={s.heroDivider} />
@@ -116,17 +156,16 @@ export default function HomeScreen({
         </View>
       </View>
 
-      {/* Main action */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Start a new tomato assessment"
         onPress={onCapture}
         style={({pressed}) => [
           s.primaryAction,
-          pressed && s.pressed,
+          pressed ? s.pressed : null,
         ]}>
         <View style={s.primaryIcon}>
-          <Text style={s.primaryIconText}>＋</Text>
+          <Text style={s.primaryIconText}>+</Text>
         </View>
 
         <View style={s.actionCopy}>
@@ -139,17 +178,16 @@ export default function HomeScreen({
         <Text style={s.primaryArrow}>→</Text>
       </Pressable>
 
-      {/* History action */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Open assessment history"
         onPress={onHistory}
         style={({pressed}) => [
           s.secondaryAction,
-          pressed && s.secondaryPressed,
+          pressed ? s.secondaryPressed : null,
         ]}>
         <View style={s.secondaryIcon}>
-          <Text style={s.secondaryIconText}>≡</Text>
+          <Text style={s.secondaryIconText}>H</Text>
         </View>
 
         <View style={s.actionCopy}>
@@ -162,39 +200,15 @@ export default function HomeScreen({
         <Text style={s.secondaryArrow}>›</Text>
       </Pressable>
 
-      {/* How it works */}
       <View style={s.section}>
         <View style={s.sectionHeader}>
           <Text style={s.sectionTitle}>A simple workflow</Text>
           <Text style={s.sectionLabel}>THREE STEPS</Text>
         </View>
 
-        <View style={s.stepsCard}>
-          {STEPS.map((step, index) => (
-            <View
-              key={step.number}
-              style={[
-                s.stepRow,
-                index < STEPS.length - 1 && s.stepRowBorder,
-              ]}>
-              <View style={s.stepNumber}>
-                <Text style={s.stepNumberText}>
-                  {step.number}
-                </Text>
-              </View>
-
-              <View style={s.stepCopy}>
-                <Text style={s.stepTitle}>{step.title}</Text>
-                <Text style={s.stepDescription}>
-                  {step.description}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
+        <WorkflowCard />
       </View>
 
-      {/* Prototype scope */}
       <View style={s.scopeRow}>
         <View style={s.scopeCard}>
           <View style={s.scopeIcon}>
@@ -209,7 +223,7 @@ export default function HomeScreen({
 
         <View style={s.scopeCard}>
           <View style={s.scopeIcon}>
-            <Text style={s.scopeIconText}>↺</Text>
+            <Text style={s.scopeIconText}>S</Text>
           </View>
 
           <Text style={s.scopeTitle}>Session history</Text>
@@ -219,7 +233,6 @@ export default function HomeScreen({
         </View>
       </View>
 
-      {/* Honest demo notice */}
       <View style={s.notice}>
         <View style={s.noticeHeader}>
           <View style={s.noticeIcon}>
@@ -364,6 +377,7 @@ const s = StyleSheet.create({
   },
   heroCopy: {
     flex: 1,
+    minWidth: 0,
   },
   heroTitle: {
     fontSize: 22,
@@ -381,7 +395,7 @@ const s = StyleSheet.create({
   tomatoIllustration: {
     width: 104,
     height: 120,
-    flexShrink: 1,
+    flexShrink: 0,
     position: 'relative',
   },
   tomatoHalo: {
@@ -506,6 +520,7 @@ const s = StyleSheet.create({
   },
   actionCopy: {
     flex: 1,
+    minWidth: 0,
   },
   primaryTitle: {
     fontSize: 15,
@@ -542,7 +557,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryIconText: {
-    fontSize: 27,
+    fontSize: 17,
+    fontWeight: '800',
     color: '#5D8969',
   },
   secondaryTitle: {
@@ -614,6 +630,7 @@ const s = StyleSheet.create({
   },
   stepCopy: {
     flex: 1,
+    minWidth: 0,
   },
   stepTitle: {
     fontSize: 13,
