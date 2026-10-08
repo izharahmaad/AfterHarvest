@@ -52,12 +52,16 @@ const UNKNOWN_STATUS: StatusStyle = {
   background: '#EDF1F4',
 };
 
-function normalizeState(value: unknown): string {
-  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+function normalizeString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
-function getStatus(state: unknown): StatusStyle {
-  return STATUS_STYLES[normalizeState(state)] ?? UNKNOWN_STATUS;
+function normalizeState(value: unknown): string {
+  return normalizeString(value).toLowerCase();
+}
+
+function getStatus(value: unknown): StatusStyle {
+  return STATUS_STYLES[normalizeState(value)] ?? UNKNOWN_STATUS;
 }
 
 function getScore(value: unknown): number | null {
@@ -65,25 +69,31 @@ function getScore(value: unknown): number | null {
     return null;
   }
 
-  return Math.round(Math.max(0, Math.min(1, value)) * 100);
+  const safeScore = Math.max(0, Math.min(1, value));
+
+  return Math.round(safeScore * 100);
 }
 
 function getTimestamp(value: unknown): number {
-  if (typeof value !== 'string') {
+  const createdAt = normalizeString(value);
+
+  if (!createdAt) {
     return 0;
   }
 
-  const timestamp = Date.parse(value);
+  const timestamp = Date.parse(createdAt);
 
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function formatDate(value: unknown): string {
-  if (typeof value !== 'string') {
+  const createdAt = normalizeString(value);
+
+  if (!createdAt) {
     return 'Date unavailable';
   }
 
-  const date = new Date(value);
+  const date = new Date(createdAt);
 
   if (Number.isNaN(date.getTime())) {
     return 'Date unavailable';
@@ -97,11 +107,13 @@ function formatDate(value: unknown): string {
 }
 
 function formatTime(value: unknown): string {
-  if (typeof value !== 'string') {
+  const createdAt = normalizeString(value);
+
+  if (!createdAt) {
     return '';
   }
 
-  const date = new Date(value);
+  const date = new Date(createdAt);
 
   if (Number.isNaN(date.getTime())) {
     return '';
@@ -114,26 +126,44 @@ function formatTime(value: unknown): string {
 }
 
 function getRecommendation(value: unknown): string {
-  if (typeof value !== 'string' || !value.trim()) {
-    return 'Open this assessment to review its details.';
+  const recommendation = normalizeString(value);
+
+  return (
+    recommendation ||
+    'Open this assessment to review its details.'
+  );
+}
+
+function getAssessmentKey(
+  assessment: Assessment,
+  index: number,
+): string {
+  const assessmentId = normalizeString(assessment.assessment_id);
+
+  if (assessmentId) {
+    return assessmentId;
   }
 
-  return value.trim();
+  return `assessment-${index}-${getTimestamp(assessment.created_at)}`;
 }
 
-function isDemoAssessment(item: Assessment): boolean {
-  return item.inference_mode === 'demo';
+function isDemoAssessment(assessment: Assessment): boolean {
+  return assessment.inference_mode === 'demo';
 }
 
-export default function HistoryScreen({items, onSelect}: Props) {
+export default function HistoryScreen({
+  items,
+  onSelect,
+}: Props) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const sortedItems = useMemo(() => {
-    return [...items].sort(
-      (first, second) =>
+    return [...items].sort((first, second) => {
+      return (
         getTimestamp(second.created_at) -
-        getTimestamp(first.created_at),
-    );
+        getTimestamp(first.created_at)
+      );
+    });
   }, [items]);
 
   const counts = useMemo(() => {
@@ -167,14 +197,18 @@ export default function HistoryScreen({items, onSelect}: Props) {
     );
   }, [filter, sortedItems]);
 
+  const filterLabel =
+    FILTERS.find(option => option.value === filter)?.label ??
+    'Filtered';
+
   const listTitle =
     filter === 'all'
       ? 'Recent assessments'
-      : `${FILTERS.find(option => option.value === filter)?.label ?? 'Filtered'} assessments`;
+      : `${filterLabel} assessments`;
 
   return (
     <View style={s.container}>
-      <View>
+      <View style={s.header}>
         <View style={s.badge}>
           <View style={s.badgeDot} />
           <Text style={s.badgeText}>YOUR ASSESSMENTS</Text>
@@ -198,8 +232,8 @@ export default function HistoryScreen({items, onSelect}: Props) {
         <View style={s.sessionCopy}>
           <Text style={s.sessionTitle}>Session history</Text>
           <Text style={s.sessionDescription}>
-            These records reset when the app restarts. Cloud
-            persistence is not connected yet.
+            Records reset when the app restarts. Cloud persistence
+            is not connected yet.
           </Text>
         </View>
       </View>
@@ -216,7 +250,7 @@ export default function HistoryScreen({items, onSelect}: Props) {
           <Text style={[s.summaryValue, s.summaryValueGreen]}>
             {counts.fresh}
           </Text>
-          <Text style={s.summaryHint}>Demo state labels</Text>
+          <Text style={s.summaryHint}>Current session</Text>
         </View>
       </View>
 
@@ -292,7 +326,7 @@ export default function HistoryScreen({items, onSelect}: Props) {
           {filter !== 'all' ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="View all assessment results"
+              accessibilityLabel="View all assessments"
               onPress={() => setFilter('all')}
               style={({pressed}) => [
                 s.resetButton,
@@ -304,21 +338,23 @@ export default function HistoryScreen({items, onSelect}: Props) {
         </View>
       ) : (
         <View style={s.list}>
-          {visibleItems.map(item => {
+          {visibleItems.map((item, index) => {
             const status = getStatus(item.quality_state);
             const score = getScore(item.quality_score);
             const time = formatTime(item.created_at);
             const demo = isDemoAssessment(item);
-            const recommendation = getRecommendation(item.recommendation);
+            const recommendation = getRecommendation(
+              item.recommendation,
+            );
 
             return (
               <Pressable
-                key={item.assessment_id}
+                key={getAssessmentKey(item, index)}
                 accessibilityRole="button"
-                accessibilityLabel={`Open ${status.label.toLowerCase()} tomato assessment, ${
+                accessibilityLabel={`Open ${status.label.toLowerCase()} tomato assessment${
                   score === null
-                    ? 'score unavailable'
-                    : `score ${score} out of 100`
+                    ? ''
+                    : ` with score ${score} out of 100`
                 }`}
                 onPress={() => onSelect(item)}
                 style={({pressed}) => [
@@ -426,6 +462,9 @@ const s = StyleSheet.create({
     gap: 18,
     paddingTop: 8,
     paddingBottom: 12,
+  },
+  header: {
+    gap: 0,
   },
   badge: {
     alignSelf: 'flex-start',
