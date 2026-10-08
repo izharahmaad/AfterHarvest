@@ -1,1 +1,25 @@
-{"expo": {"name": "AfterHarvest", "slug": "afterharvest", "version": "0.1.0", "plugins": ["expo-image-picker"]}}
+{
+  "expo": {
+    "name": "AfterHarvest",
+    "slug": "afterharvest",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow AfterHarvest to access tomato photos for quality assessment.",
+          "cameraPermission": "Allow AfterHarvest to use the camera for tomato quality assessment."
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.afterharvest.mobile"
+    },
+    "android": {
+      "package": "com.afterharvest.mobile"
+    }
+  }
+}
