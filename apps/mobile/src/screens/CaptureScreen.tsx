@@ -124,6 +124,7 @@ function validateImage(
   if (mimeType && !SUPPORTED_MIME_TYPES.has(mimeType)) {
     return 'Choose a JPEG, PNG or WebP image. The current backend does not support HEIC/HEIF.';
   }
+
   // Missing metadata is allowed here.
   // The backend must still validate the actual uploaded bytes.
   return null;
