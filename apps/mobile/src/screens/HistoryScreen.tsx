@@ -52,16 +52,12 @@ const UNKNOWN_STATUS: StatusStyle = {
   background: '#EDF1F4',
 };
 
-function normalizeString(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
 function normalizeState(value: unknown): string {
-  return normalizeString(value).toLowerCase();
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
 }
 
-function getStatus(value: unknown): StatusStyle {
-  return STATUS_STYLES[normalizeState(value)] ?? UNKNOWN_STATUS;
+function getStatus(state: unknown): StatusStyle {
+  return STATUS_STYLES[normalizeState(state)] ?? UNKNOWN_STATUS;
 }
 
 function getScore(value: unknown): number | null {
@@ -69,31 +65,25 @@ function getScore(value: unknown): number | null {
     return null;
   }
 
-  const safeScore = Math.max(0, Math.min(1, value));
-
-  return Math.round(safeScore * 100);
+  return Math.round(Math.max(0, Math.min(1, value)) * 100);
 }
 
 function getTimestamp(value: unknown): number {
-  const createdAt = normalizeString(value);
-
-  if (!createdAt) {
+  if (typeof value !== 'string') {
     return 0;
   }
 
-  const timestamp = Date.parse(createdAt);
+  const timestamp = Date.parse(value);
 
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function formatDate(value: unknown): string {
-  const createdAt = normalizeString(value);
-
-  if (!createdAt) {
+  if (typeof value !== 'string') {
     return 'Date unavailable';
   }
 
-  const date = new Date(createdAt);
+  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return 'Date unavailable';
@@ -107,13 +97,11 @@ function formatDate(value: unknown): string {
 }
 
 function formatTime(value: unknown): string {
-  const createdAt = normalizeString(value);
-
-  if (!createdAt) {
+  if (typeof value !== 'string') {
     return '';
   }
 
-  const date = new Date(createdAt);
+  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return '';
@@ -126,44 +114,26 @@ function formatTime(value: unknown): string {
 }
 
 function getRecommendation(value: unknown): string {
-  const recommendation = normalizeString(value);
-
-  return (
-    recommendation ||
-    'Open this assessment to review its details.'
-  );
-}
-
-function getAssessmentKey(
-  assessment: Assessment,
-  index: number,
-): string {
-  const assessmentId = normalizeString(assessment.assessment_id);
-
-  if (assessmentId) {
-    return assessmentId;
+  if (typeof value !== 'string' || !value.trim()) {
+    return 'Open this assessment to review its details.';
   }
 
-  return `assessment-${index}-${getTimestamp(assessment.created_at)}`;
+  return value.trim();
 }
 
-function isDemoAssessment(assessment: Assessment): boolean {
-  return assessment.inference_mode === 'demo';
+function isDemoAssessment(item: Assessment): boolean {
+  return item.inference_mode === 'demo';
 }
 
-export default function HistoryScreen({
-  items,
-  onSelect,
-}: Props) {
+export default function HistoryScreen({items, onSelect}: Props) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((first, second) => {
-      return (
+    return [...items].sort(
+      (first, second) =>
         getTimestamp(second.created_at) -
-        getTimestamp(first.created_at)
-      );
-    });
+        getTimestamp(first.created_at),
+    );
   }, [items]);
 
   const counts = useMemo(() => {
@@ -197,18 +167,14 @@ export default function HistoryScreen({
     );
   }, [filter, sortedItems]);
 
-  const filterLabel =
-    FILTERS.find(option => option.value === filter)?.label ??
-    'Filtered';
-
   const listTitle =
     filter === 'all'
       ? 'Recent assessments'
-      : `${filterLabel} assessments`;
+      : `${FILTERS.find(option => option.value === filter)?.label ?? 'Filtered'} assessments`;
 
   return (
     <View style={s.container}>
-      <View style={s.header}>
+      <View>
         <View style={s.badge}>
           <View style={s.badgeDot} />
           <Text style={s.badgeText}>YOUR ASSESSMENTS</Text>
@@ -232,8 +198,8 @@ export default function HistoryScreen({
         <View style={s.sessionCopy}>
           <Text style={s.sessionTitle}>Session history</Text>
           <Text style={s.sessionDescription}>
-            Records reset when the app restarts. Cloud persistence
-            is not connected yet.
+            These records reset when the app restarts. Cloud
+            persistence is not connected yet.
           </Text>
         </View>
       </View>
@@ -250,7 +216,7 @@ export default function HistoryScreen({
           <Text style={[s.summaryValue, s.summaryValueGreen]}>
             {counts.fresh}
           </Text>
-          <Text style={s.summaryHint}>Current session</Text>
+          <Text style={s.summaryHint}>Demo state labels</Text>
         </View>
       </View>
 
@@ -326,7 +292,7 @@ export default function HistoryScreen({
           {filter !== 'all' ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="View all assessments"
+              accessibilityLabel="View all assessment results"
               onPress={() => setFilter('all')}
               style={({pressed}) => [
                 s.resetButton,
@@ -338,23 +304,21 @@ export default function HistoryScreen({
         </View>
       ) : (
         <View style={s.list}>
-          {visibleItems.map((item, index) => {
+          {visibleItems.map(item => {
             const status = getStatus(item.quality_state);
             const score = getScore(item.quality_score);
             const time = formatTime(item.created_at);
             const demo = isDemoAssessment(item);
-            const recommendation = getRecommendation(
-              item.recommendation,
-            );
+            const recommendation = getRecommendation(item.recommendation);
 
             return (
               <Pressable
-                key={getAssessmentKey(item, index)}
+                key={item.assessment_id}
                 accessibilityRole="button"
-                accessibilityLabel={`Open ${status.label.toLowerCase()} tomato assessment${
+                accessibilityLabel={`Open ${status.label.toLowerCase()} tomato assessment, ${
                   score === null
-                    ? ''
-                    : ` with score ${score} out of 100`
+                    ? 'score unavailable'
+                    : `score ${score} out of 100`
                 }`}
                 onPress={() => onSelect(item)}
                 style={({pressed}) => [
@@ -462,9 +426,6 @@ const s = StyleSheet.create({
     gap: 18,
     paddingTop: 8,
     paddingBottom: 12,
-  },
-  header: {
-    gap: 0,
   },
   badge: {
     alignSelf: 'flex-start',
