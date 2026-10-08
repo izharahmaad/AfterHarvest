@@ -20,7 +20,7 @@ type StatusStyle = {
   description: string;
 };
 
-const STATUS: Record<string, StatusStyle> = {
+const STATUS_STYLES: Record<string, StatusStyle> = {
   fresh: {
     label: 'Fresh',
     color: '#2B794D',
@@ -77,15 +77,17 @@ function displayScore(value: unknown): number | null {
 }
 
 function getStatus(value: unknown): StatusStyle {
-  return STATUS[normalizeState(value)] ?? UNKNOWN_STATUS;
+  return STATUS_STYLES[normalizeState(value)] ?? UNKNOWN_STATUS;
 }
 
 function formatDate(value: unknown): string {
-  if (typeof value !== 'string') {
+  const rawDate = normalizeString(value);
+
+  if (!rawDate) {
     return 'Date unavailable';
   }
 
-  const date = new Date(value);
+  const date = new Date(rawDate);
 
   if (Number.isNaN(date.getTime())) {
     return 'Date unavailable';
@@ -107,12 +109,13 @@ function getFactorLabel(value: unknown): string {
     return 'Unknown factor';
   }
 
-  return (
-    FACTOR_LABELS[normalized] ??
-    normalized
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, letter => letter.toUpperCase())
-  );
+  if (FACTOR_LABELS[normalized]) {
+    return FACTOR_LABELS[normalized];
+  }
+
+  return normalized
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, character => character.toUpperCase());
 }
 
 function getRecommendation(value: unknown): string {
@@ -138,19 +141,23 @@ function getProduceName(value: unknown): string {
 }
 
 export default function ResultScreen({result, onNew}: Props) {
-  const demo = result.inference_mode === 'demo';
+  const isDemo = result.inference_mode === 'demo';
   const score = displayScore(result.quality_score);
   const confidence = displayScore(result.confidence);
   const status = getStatus(result.quality_state);
+
   const factors = Array.isArray(result.contributing_factors)
     ? result.contributing_factors
     : [];
+
   const recommendation = getRecommendation(result.recommendation);
   const produceName = getProduceName(result.produce_type);
+  const modelVersion =
+    normalizeString(result.model_version) || 'Unavailable';
 
   return (
     <View style={s.container}>
-      <View>
+      <View style={s.header}>
         <View style={s.badge}>
           <View style={s.badgeDot} />
           <Text style={s.badgeText}>ASSESSMENT RESULT</Text>
@@ -179,6 +186,7 @@ export default function ResultScreen({result, onNew}: Props) {
                 {backgroundColor: status.color},
               ]}
             />
+
             <Text style={[s.statusText, {color: status.color}]}>
               {status.label}
             </Text>
@@ -186,13 +194,13 @@ export default function ResultScreen({result, onNew}: Props) {
 
           <View style={s.modeBadge}>
             <Text style={s.modeText}>
-              {demo ? 'DEMO MODE' : 'MODEL MODE'}
+              {isDemo ? 'DEMO MODE' : 'MODEL MODE'}
             </Text>
           </View>
         </View>
 
         <Text style={s.scoreLabel}>
-          {demo ? 'Illustrative quality score' : 'Quality score'}
+          {isDemo ? 'Illustrative quality score' : 'Quality score'}
         </Text>
 
         <View style={s.scoreValueRow}>
@@ -227,7 +235,7 @@ export default function ResultScreen({result, onNew}: Props) {
         </View>
 
         <Text style={s.stateDescription}>
-          {demo
+          {isDemo
             ? `${status.label} is a demo label from storage-context heuristics, not an image-based finding.`
             : status.description}
         </Text>
@@ -271,13 +279,13 @@ export default function ResultScreen({result, onNew}: Props) {
       <View style={s.card}>
         <View style={s.sectionHeader}>
           <View style={s.sectionIcon}>
-            <Text style={s.sectionIconText}>≡</Text>
+            <Text style={s.sectionIconText}>C</Text>
           </View>
 
           <View style={s.sectionCopy}>
             <Text style={s.sectionTitle}>Context indicators</Text>
             <Text style={s.sectionSubtitle}>
-              {demo
+              {isDemo
                 ? 'Heuristic values reported by the demo.'
                 : 'Factor values reported by the service.'}
             </Text>
@@ -292,11 +300,15 @@ export default function ResultScreen({result, onNew}: Props) {
           <View style={s.factorList}>
             {factors.map((factor, index) => {
               const rawWeight = factor?.weight;
-              const validWeight =
+
+              const hasValidWeight =
                 typeof rawWeight === 'number' &&
                 Number.isFinite(rawWeight);
 
-              const value = validWeight ? clamp(rawWeight) : 0;
+              const percentage = hasValidWeight
+                ? clamp(rawWeight) * 100
+                : 0;
+
               const label = getFactorLabel(factor?.name);
 
               return (
@@ -305,14 +317,16 @@ export default function ResultScreen({result, onNew}: Props) {
                     <Text style={s.factorName}>{label}</Text>
 
                     <Text style={s.factorValue}>
-                      {validWeight ? rawWeight.toFixed(2) : '—'}
+                      {hasValidWeight
+                        ? rawWeight.toFixed(2)
+                        : '—'}
                     </Text>
                   </View>
 
                   <View
                     accessible
                     accessibilityLabel={`${label}: ${
-                      validWeight
+                      hasValidWeight
                         ? rawWeight.toFixed(2)
                         : 'unavailable'
                     }`}
@@ -320,7 +334,7 @@ export default function ResultScreen({result, onNew}: Props) {
                     <View
                       style={[
                         s.factorFill,
-                        {width: `${value * 100}%`},
+                        {width: `${percentage}%`},
                       ]}
                     />
                   </View>
@@ -332,9 +346,9 @@ export default function ResultScreen({result, onNew}: Props) {
 
         <View style={s.factorNotice}>
           <Text style={s.factorNoticeText}>
-            {demo
+            {isDemo
               ? 'Bars show individual heuristic indicators on a 0–1 scale. They are not contribution percentages and do not need to sum to 1.'
-              : 'Bars show the factor values returned by the service. Their interpretation depends on the model implementation.'}
+              : 'Bars show factor values returned by the service. Their interpretation depends on the model implementation.'}
           </Text>
         </View>
       </View>
@@ -345,7 +359,7 @@ export default function ResultScreen({result, onNew}: Props) {
         <View style={s.detailRow}>
           <Text style={s.detailLabel}>Mode</Text>
           <Text style={s.detailValue}>
-            {demo ? 'Demo inference' : 'Model inference'}
+            {isDemo ? 'Demo inference' : 'Model inference'}
           </Text>
         </View>
 
@@ -354,7 +368,7 @@ export default function ResultScreen({result, onNew}: Props) {
         <View style={s.detailRow}>
           <Text style={s.detailLabel}>Confidence</Text>
           <Text style={s.detailValue}>
-            {demo
+            {isDemo
               ? 'Not estimated'
               : confidence === null
                 ? 'Unavailable'
@@ -367,7 +381,7 @@ export default function ResultScreen({result, onNew}: Props) {
         <View style={s.detailRow}>
           <Text style={s.detailLabel}>Score meaning</Text>
           <Text style={s.detailValue}>
-            {demo ? 'Illustrative only' : 'Not a safety rating'}
+            {isDemo ? 'Illustrative only' : 'Not a safety rating'}
           </Text>
         </View>
 
@@ -375,9 +389,7 @@ export default function ResultScreen({result, onNew}: Props) {
 
         <View style={s.detailRow}>
           <Text style={s.detailLabel}>Model version</Text>
-          <Text style={s.detailValue}>
-            {normalizeString(result.model_version) || 'Unavailable'}
-          </Text>
+          <Text style={s.detailValue}>{modelVersion}</Text>
         </View>
       </View>
 
@@ -393,7 +405,7 @@ export default function ResultScreen({result, onNew}: Props) {
         </View>
 
         <Text style={s.noticeText}>
-          {demo
+          {isDemo
             ? 'This demo validates the uploaded image but does not analyze it with a trained AI model. It does not predict remaining shelf life or provide a measured probability of freshness.'
             : 'This prototype result is decision support, not food-safety certification. A quality score must not be interpreted as proof that food is safe.'}
         </Text>
@@ -430,6 +442,9 @@ const s = StyleSheet.create({
     gap: 18,
     paddingTop: 8,
     paddingBottom: 12,
+  },
+  header: {
+    gap: 0,
   },
   badge: {
     alignSelf: 'flex-start',
@@ -597,6 +612,7 @@ const s = StyleSheet.create({
   },
   sectionCopy: {
     flex: 1,
+    minWidth: 0,
   },
   sectionTitle: {
     fontSize: 15,
@@ -642,7 +658,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   sectionIconText: {
-    fontSize: 22,
+    fontSize: 16,
+    fontWeight: '800',
     color: '#638A6D',
   },
   factorList: {
