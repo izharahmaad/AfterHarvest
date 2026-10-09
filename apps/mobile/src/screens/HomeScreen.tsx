@@ -15,327 +15,325 @@ type Props = {
 };
 
 const C = {
-  page: '#F7F7F2',
-  card: '#FFFFFF',
-  ink: '#202B22',
-  muted: '#788077',
-  faint: '#9AA197',
-  line: '#E9EAE2',
-  green: '#244F38',
-  greenLight: '#E8EFE7',
-  lime: '#D2E3A6',
-  coral: '#E27D5E',
+  page: '#F7F8F4',
+  surface: '#FFFFFF',
+  ink: '#1E3327',
+  body: '#627267',
+  muted: '#89958B',
+  border: '#E5EBE5',
+  green: '#216744',
+  deepGreen: '#174D34',
+  paleGreen: '#EAF3EC',
+  lime: '#D9E8B8',
+  coral: '#E77C5B',
 };
 
-const STEPS = [
+const FLOW = [
   {
-    n: '01',
-    title: 'Photograph',
-    description: 'Add a clear image of your tomato.',
+    number: '01',
+    title: 'Add a produce photo',
+    description: 'Take a picture or select one from your gallery.',
     icon: 'camera-outline' as const,
   },
   {
-    n: '02',
-    title: 'Add context',
-    description: 'Enter storage temperature, humidity and days.',
-    icon: 'thermometer-outline' as const,
+    number: '02',
+    title: 'Enter storage conditions',
+    description: 'Add temperature, humidity and storage duration.',
+    icon: 'options-outline' as const,
   },
   {
-    n: '03',
-    title: 'Review',
-    description: 'See your demo result and its contributing factors.',
-    icon: 'bar-chart-outline' as const,
+    number: '03',
+    title: 'Review the result',
+    description: 'See the demo assessment and its context.',
+    icon: 'analytics-outline' as const,
   },
 ];
 
-function IconButton({
+function IconBox({
   name,
-  color,
-  backgroundColor,
+  color = C.green,
+  background = C.paleGreen,
   size = 19,
 }: {
   name: React.ComponentProps<typeof Ionicons>['name'];
-  color: string;
-  backgroundColor: string;
+  color?: string;
+  background?: string;
   size?: number;
 }) {
   return (
-    <View style={[styles.iconButton, {backgroundColor}]}>
+    <View style={[s.iconBox, {backgroundColor: background}]}>
       <Ionicons name={name} size={size} color={color} />
     </View>
   );
 }
 
-function FruitArtwork() {
+function TomatoArtwork() {
   return (
     <View
       accessible={false}
       importantForAccessibility="no-hide-descendants"
-      style={styles.fruitArtwork}>
-      <View style={styles.fruitHalo} />
-      <View style={styles.fruitShadow} />
-      <View style={styles.fruitBody} />
-      <View style={styles.fruitShine} />
-      <View style={styles.fruitStem} />
-      <View style={styles.fruitLeafOne} />
-      <View style={styles.fruitLeafTwo} />
-      <View style={styles.fruitLeafThree} />
+      style={s.artwork}>
+      <View style={s.artworkHalo} />
+      <View style={s.tomatoShadow} />
+      <View style={s.tomatoBody} />
+      <View style={s.tomatoHighlight} />
+      <View style={s.tomatoStem} />
+      <View style={s.tomatoLeafLeft} />
+      <View style={s.tomatoLeafRight} />
     </View>
   );
 }
 
 export default function HomeScreen({onCapture, onHistory}: Props) {
   const {width} = useWindowDimensions();
-  const isNarrow = width < 360;
+  const narrow = width < 360;
 
   return (
     <ScrollView
-      style={styles.screen}
+      style={s.screen}
       contentContainerStyle={[
-        styles.content,
-        width >= 720 ? styles.contentWide : null,
+        s.content,
+        width >= 720 ? s.contentTablet : null,
       ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled">
-      <View style={styles.header}>
-        <View style={styles.brand}>
-          <View style={styles.brandMark}>
-            <Ionicons name="leaf" size={18} color="#FFFFFF" />
+      <View style={s.topBar}>
+        <View style={s.brand}>
+          <View style={s.brandMark}>
+            <Ionicons name="leaf" size={19} color="#FFFFFF" />
           </View>
+
           <View>
-            <Text style={styles.brandName}>AfterHarvest</Text>
-            <Text style={styles.brandMeta}>FIELD QUALITY TOOLS</Text>
+            <Text style={s.brandName}>AfterHarvest</Text>
+            <Text style={s.brandCaption}>PRODUCE QUALITY</Text>
           </View>
         </View>
 
-        <View style={styles.demoStatus}>
-          <View style={styles.statusDot} />
-          <Text style={styles.demoStatusText}>PROTOTYPE</Text>
+        <View style={s.demoBadge}>
+          <View style={s.demoDot} />
+          <Text style={s.demoBadgeText}>DEMO</Text>
         </View>
       </View>
 
-      <View style={styles.greeting}>
-        <Text style={styles.greetingOverline}>YOUR PRODUCE WORKSPACE</Text>
+      <View style={s.intro}>
+        <Text style={s.eyebrow}>YOUR QUALITY WORKSPACE</Text>
+
         <Text
           accessibilityRole="header"
-          style={[
-            styles.greetingTitle,
-            isNarrow ? styles.greetingTitleNarrow : null,
-          ]}>
-          Quality starts{'\n'}with good context.
+          style={[s.headline, narrow ? s.headlineNarrow : null]}>
+          Better context,{'\n'}
+          <Text style={s.headlineAccent}>clearer decisions.</Text>
         </Text>
-        <Text style={styles.greetingBody}>
-          Explore a tomato assessment using a photo and the conditions
-          it was stored in.
+
+        <Text style={s.introBody}>
+          Start with a tomato photo. Add its storage conditions.
+          Review a transparent demo assessment.
         </Text>
       </View>
 
-      <View style={styles.featureCard}>
-        <View style={styles.featureTopRow}>
-          <View style={styles.featureLabel}>
-            <View style={styles.featureLabelDot} />
-            <Text style={styles.featureLabelText}>CURRENT PILOT</Text>
+      <View style={s.feature}>
+        <View style={s.featureTop}>
+          <View style={s.featureTag}>
+            <View style={s.featureTagDot} />
+            <Text style={s.featureTagText}>CURRENT PILOT</Text>
           </View>
-          <Ionicons
-            name="arrow-up-right"
-            size={18}
-            color="#D8E5D5"
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
+
+          <Text style={s.featureIndex}>01 / TOMATO</Text>
         </View>
 
-        <View style={styles.featureMiddle}>
-          <View style={styles.featureCopy}>
-            <Text style={styles.featureTitle}>Tomato quality</Text>
-            <Text style={styles.featureSubtitle}>
-              Photo-led · Context-aware
+        <View style={s.featureMain}>
+          <View style={s.featureCopy}>
+            <Text style={s.featureTitle}>Tomato quality</Text>
+            <Text style={s.featureDescription}>
+              Photo-led assessment with storage context.
             </Text>
           </View>
-          <FruitArtwork />
+
+          <TomatoArtwork />
         </View>
 
-        <View style={styles.featureBottom}>
-          <View style={styles.featureBottomItem}>
+        <View style={s.featureFooter}>
+          <View style={s.featureMeta}>
             <Ionicons
               name="image-outline"
               size={14}
-              color="#D5E3D5"
+              color="#D7E6D9"
             />
-            <Text style={styles.featureBottomText}>PHOTO</Text>
+            <Text style={s.featureMetaText}>PHOTO</Text>
           </View>
-          <View style={styles.featureBottomDivider} />
-          <View style={styles.featureBottomItem}>
+
+          <View style={s.metaDivider} />
+
+          <View style={s.featureMeta}>
             <Ionicons
               name="thermometer-outline"
               size={14}
-              color="#D5E3D5"
+              color="#D7E6D9"
             />
-            <Text style={styles.featureBottomText}>STORAGE</Text>
+            <Text style={s.featureMetaText}>STORAGE</Text>
           </View>
-          <View style={styles.featureBottomDivider} />
-          <Text style={styles.featureDemo}>DEMO MODEL</Text>
+
+          <View style={s.metaSpacer} />
+          <Text style={s.featureMode}>HEURISTIC DEMO</Text>
         </View>
       </View>
 
-      <View style={styles.actions}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Start a new tomato assessment"
-          accessibilityHint="Opens the photo and storage details form"
-          onPress={onCapture}
-          style={({pressed}) => [
-            styles.startAction,
-            pressed ? styles.startActionPressed : null,
-          ]}>
-          <View style={styles.startIconWrap}>
-            <Ionicons name="add" size={24} color={C.green} />
-          </View>
-          <View style={styles.startTextWrap}>
-            <Text style={styles.startEyebrow}>START SOMETHING NEW</Text>
-            <Text style={styles.startTitle}>Create assessment</Text>
-          </View>
-          <Ionicons
-            name="arrow-forward"
-            size={19}
-            color="#EAF0E8"
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Start a new tomato assessment"
+        accessibilityHint="Opens the form to add a photo and storage conditions"
+        onPress={onCapture}
+        style={({pressed}) => [
+          s.primaryAction,
+          pressed ? s.primaryPressed : null,
+        ]}>
+        <View style={s.primaryIcon}>
+          <Ionicons name="add" size={25} color={C.deepGreen} />
+        </View>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open assessment history"
-          accessibilityHint="View assessments saved for this session"
-          onPress={onHistory}
-          style={({pressed}) => [
-            styles.historyAction,
-            pressed ? styles.historyActionPressed : null,
-          ]}>
-          <IconButton
-            name="time-outline"
-            color={C.green}
-            backgroundColor={C.greenLight}
-          />
-          <View style={styles.historyTextWrap}>
-            <Text style={styles.historyTitle}>Recent assessments</Text>
-            <Text style={styles.historySubtitle}>
-              View this session’s results
-            </Text>
-          </View>
-          <Ionicons
-            name="chevron-forward"
-            size={17}
-            color="#879087"
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        </Pressable>
-      </View>
+        <View style={s.primaryCopy}>
+          <Text style={s.primaryOverline}>START HERE</Text>
+          <Text style={s.primaryTitle}>New assessment</Text>
+          <Text style={s.primarySubtitle}>
+            Photo and storage details
+          </Text>
+        </View>
 
-      <View style={styles.sectionHeading}>
+        <View style={s.arrowButton}>
+          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+        </View>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open assessment history"
+        accessibilityHint="View results saved during this session"
+        onPress={onHistory}
+        style={({pressed}) => [
+          s.historyAction,
+          pressed ? s.historyPressed : null,
+        ]}>
+        <IconBox name="time-outline" />
+
+        <View style={s.historyCopy}>
+          <Text style={s.historyTitle}>Assessment history</Text>
+          <Text style={s.historySubtitle}>
+            Revisit results from this session
+          </Text>
+        </View>
+
+        <Ionicons
+          name="chevron-forward"
+          size={17}
+          color={C.muted}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        />
+      </Pressable>
+
+      <View style={s.sectionHeader}>
         <View>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            The process
+          <Text accessibilityRole="header" style={s.sectionTitle}>
+            How it works
           </Text>
-          <Text style={styles.sectionCaption}>
-            From a photo to a clearer picture
+          <Text style={s.sectionSubtitle}>
+            A guided process from photo to result
           </Text>
         </View>
-        <Text style={styles.sectionCount}>03 STEPS</Text>
+
+        <View style={s.stepPill}>
+          <Text style={s.stepPillText}>3 STEPS</Text>
+        </View>
       </View>
 
-      <View style={styles.stepsCard}>
-        {STEPS.map((step, index) => (
+      <View style={s.flowCard}>
+        {FLOW.map((item, index) => (
           <View
-            key={step.n}
+            key={item.number}
             style={[
-              styles.stepRow,
-              index < STEPS.length - 1 ? styles.stepBorder : null,
+              s.flowItem,
+              index < FLOW.length - 1 ? s.flowItemBorder : null,
             ]}>
-            <View style={styles.stepIcon}>
-              <Ionicons name={step.icon} size={18} color={C.green} />
-            </View>
+            <IconBox
+              name={item.icon}
+              size={18}
+              background="#EFF4EC"
+            />
 
-            <View style={styles.stepContent}>
-              <View style={styles.stepTitleLine}>
-                <Text style={styles.stepNumber}>{step.n}</Text>
-                <Text style={styles.stepTitle}>{step.title}</Text>
+            <View style={s.flowCopy}>
+              <View style={s.flowTitleRow}>
+                <Text style={s.flowNumber}>{item.number}</Text>
+                <Text style={s.flowTitle}>{item.title}</Text>
               </View>
-              <Text style={styles.stepDescription}>
-                {step.description}
+              <Text style={s.flowDescription}>
+                {item.description}
               </Text>
             </View>
-
-            <Ionicons
-              name="chevron-forward"
-              size={15}
-              color="#BAC3B8"
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-            />
           </View>
         ))}
       </View>
 
-      <View style={styles.infoGrid}>
-        <View style={styles.infoCard}>
-          <IconButton
+      <View style={s.infoRow}>
+        <View style={s.infoCard}>
+          <IconBox
             name="nutrition-outline"
-            color="#557455"
-            backgroundColor="#E9F0E5"
             size={18}
+            color="#57764F"
+            background="#E7EFE2"
           />
-          <Text style={styles.infoTitle}>Tomato-only pilot</Text>
-          <Text style={styles.infoBody}>
-            This prototype currently supports tomato assessments.
+          <Text style={s.infoTitle}>Tomato-only pilot</Text>
+          <Text style={s.infoBody}>
+            This prototype is currently focused on tomatoes.
           </Text>
         </View>
 
-        <View style={styles.infoCard}>
-          <IconButton
+        <View style={s.infoCard}>
+          <IconBox
             name="phone-portrait-outline"
-            color="#557455"
-            backgroundColor="#E9F0E5"
             size={18}
+            color="#57764F"
+            background="#E7EFE2"
           />
-          <Text style={styles.infoTitle}>Session-based</Text>
-          <Text style={styles.infoBody}>
-            Saved history resets when the app restarts.
+          <Text style={s.infoTitle}>Session history</Text>
+          <Text style={s.infoBody}>
+            History resets when the app restarts.
           </Text>
         </View>
       </View>
 
-      <View style={styles.disclaimer}>
-        <View style={styles.disclaimerHeading}>
+      <View style={s.disclosure}>
+        <View style={s.disclosureTitleRow}>
           <Ionicons
             name="information-circle-outline"
-            size={17}
-            color="#756B49"
+            size={18}
+            color="#796F4C"
           />
-          <Text style={styles.disclaimerTitle}>Prototype, clearly labeled</Text>
+          <Text style={s.disclosureTitle}>About this prototype</Text>
         </View>
-        <Text style={styles.disclaimerBody}>
-          Results currently use storage-context heuristics. Images are
-          validated but not analyzed by a trained AI model. Packaging
+
+        <Text style={s.disclosureBody}>
+          Results use storage-context heuristics. Images are validated,
+          not analyzed by a trained AI model. Packaging is recorded but
           does not affect demo scoring.
         </Text>
-        <Text style={styles.disclaimerFoot}>
-          Images are not permanently stored. Results do not certify food
-          safety.
+
+        <View style={s.disclosureRule} />
+
+        <Text style={s.disclosureFoot}>
+          Images are not permanently stored. Results do not certify
+          food safety.
         </Text>
       </View>
 
-      <View style={styles.footer}>
-        <Ionicons name="leaf-outline" size={14} color="#929B91" />
-        <Text style={styles.footerText}>PRESERVE QUALITY · REDUCE LOSS</Text>
+      <View style={s.footer}>
+        <Ionicons name="leaf-outline" size={14} color="#91A095" />
+        <Text style={s.footerText}>PRESERVE QUALITY · REDUCE LOSS</Text>
       </View>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.page,
@@ -347,14 +345,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 14,
     paddingBottom: 34,
-    gap: 18,
+    gap: 17,
   },
-  contentWide: {
+  contentTablet: {
     paddingHorizontal: 30,
     paddingTop: 24,
-    gap: 21,
+    gap: 20,
   },
-  header: {
+  topBar: {
     minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
@@ -368,87 +366,91 @@ const styles = StyleSheet.create({
   brandMark: {
     width: 38,
     height: 38,
-    borderRadius: 12,
-    backgroundColor: C.green,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: C.green,
   },
   brandName: {
     color: C.ink,
     fontSize: 14,
     fontWeight: '800',
-    letterSpacing: -0.25,
+    letterSpacing: -0.2,
   },
-  brandMeta: {
+  brandCaption: {
     color: C.muted,
     fontSize: 8,
     fontWeight: '700',
     letterSpacing: 0.9,
     marginTop: 3,
   },
-  demoStatus: {
+  demoBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#E9EFE6',
+    backgroundColor: '#EAF1E6',
   },
-  statusDot: {
+  demoDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#6D8A54',
+    backgroundColor: '#63814E',
   },
-  demoStatusText: {
-    color: '#687B50',
+  demoBadgeText: {
+    color: '#647950',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.7,
+    letterSpacing: 0.8,
   },
-  greeting: {
+  intro: {
     paddingTop: 5,
   },
-  greetingOverline: {
-    color: '#72836F',
+  eyebrow: {
+    color: '#708269',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 1.2,
+    letterSpacing: 1.1,
   },
-  greetingTitle: {
+  headline: {
     color: C.ink,
-    fontSize: 32,
+    fontSize: 31,
     lineHeight: 38,
-    letterSpacing: -1,
+    letterSpacing: -0.9,
     fontWeight: '800',
     marginTop: 9,
   },
-  greetingTitleNarrow: {
-    fontSize: 28,
+  headlineNarrow: {
+    fontSize: 27,
     lineHeight: 34,
   },
-  greetingBody: {
-    color: C.muted,
+  headlineAccent: {
+    color: C.green,
+  },
+  introBody: {
+    color: C.body,
     fontSize: 13,
     lineHeight: 20,
     marginTop: 9,
     maxWidth: 520,
   },
-  featureCard: {
-    minHeight: 226,
+  feature: {
+    minHeight: 210,
     overflow: 'hidden',
     justifyContent: 'space-between',
     padding: 18,
-    borderRadius: 22,
-    backgroundColor: C.green,
+    borderRadius: 23,
+    backgroundColor: C.deepGreen,
   },
-  featureTopRow: {
+  featureTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
   },
-  featureLabel: {
+  featureTag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
@@ -457,26 +459,33 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.10)',
   },
-  featureLabelDot: {
+  featureTagDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: C.lime,
   },
-  featureLabelText: {
-    color: '#E2EBDD',
+  featureTagText: {
+    color: '#E0EBDD',
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
-  featureMiddle: {
-    minHeight: 127,
+  featureIndex: {
+    color: '#B5CDB7',
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 0.7,
+  },
+  featureMain: {
+    minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
   },
   featureCopy: {
     flex: 1,
     zIndex: 1,
+    maxWidth: '72%',
   },
   featureTitle: {
     color: '#FFFFFF',
@@ -485,134 +494,91 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.6,
   },
-  featureSubtitle: {
-    color: '#D0DFD1',
-    fontSize: 11,
+  featureDescription: {
+    color: '#C7DACB',
+    fontSize: 10,
+    lineHeight: 16,
     marginTop: 7,
   },
-  fruitArtwork: {
+  artwork: {
     position: 'absolute',
-    width: 145,
-    height: 145,
-    right: -13,
-    top: -8,
+    width: 132,
+    height: 132,
+    right: -8,
+    top: -5,
   },
-  fruitHalo: {
+  artworkHalo: {
     position: 'absolute',
-    width: 128,
-    height: 128,
-    left: 8,
-    top: 6,
-    borderRadius: 64,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    width: 122,
+    height: 122,
+    top: 4,
+    left: 5,
+    borderRadius: 61,
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  fruitShadow: {
+  tomatoShadow: {
     position: 'absolute',
-    width: 76,
-    height: 10,
-    left: 35,
-    bottom: 16,
-    borderRadius: 8,
+    width: 70,
+    height: 9,
+    left: 31,
+    bottom: 11,
+    borderRadius: 9,
     backgroundColor: 'rgba(0,0,0,0.14)',
   },
-  fruitBody: {
+  tomatoBody: {
     position: 'absolute',
-    width: 81,
-    height: 77,
-    left: 31,
-    top: 42,
-    borderRadius: 42,
+    width: 76,
+    height: 73,
+    left: 29,
+    top: 39,
+    borderRadius: 40,
     backgroundColor: C.coral,
     borderBottomWidth: 6,
-    borderBottomColor: '#CF694F',
+    borderBottomColor: '#CF684B',
     transform: [{rotate: '-8deg'}],
   },
-  fruitShine: {
+  tomatoHighlight: {
     position: 'absolute',
-    width: 14,
-    height: 26,
-    left: 47,
-    top: 55,
-    borderRadius: 9,
-    backgroundColor: 'rgba(255,255,255,0.24)',
-    transform: [{rotate: '25deg'}],
-  },
-  fruitStem: {
-    position: 'absolute',
-    width: 6,
-    height: 19,
-    left: 69,
-    top: 27,
-    borderRadius: 4,
-    backgroundColor: '#91A96C',
-    transform: [{rotate: '10deg'}],
-  },
-  fruitLeafOne: {
-    position: 'absolute',
-    width: 27,
-    height: 11,
-    left: 48,
-    top: 40,
+    width: 13,
+    height: 24,
+    left: 44,
+    top: 52,
     borderRadius: 8,
-    backgroundColor: '#A6B979',
+    backgroundColor: 'rgba(255,255,255,0.22)',
     transform: [{rotate: '24deg'}],
   },
-  fruitLeafTwo: {
+  tomatoStem: {
     position: 'absolute',
-    width: 27,
-    height: 11,
-    left: 66,
-    top: 40,
-    borderRadius: 8,
-    backgroundColor: '#829C5D',
-    transform: [{rotate: '-25deg'}],
+    width: 6,
+    height: 18,
+    left: 64,
+    top: 26,
+    borderRadius: 4,
+    backgroundColor: '#8CA66A',
+    transform: [{rotate: '10deg'}],
   },
-  fruitLeafThree: {
+  tomatoLeafLeft: {
     position: 'absolute',
-    width: 20,
-    height: 9,
-    left: 56,
-    top: 36,
+    width: 26,
+    height: 10,
+    left: 43,
+    top: 38,
     borderRadius: 8,
-    backgroundColor: '#90A767',
+    backgroundColor: '#9BB273',
+    transform: [{rotate: '24deg'}],
   },
-  featureBottom: {
-    minHeight: 33,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.15)',
-    paddingTop: 10,
+  tomatoLeafRight: {
+    position: 'absolute',
+    width: 26,
+    height: 10,
+    left: 61,
+    top: 38,
+    borderRadius: 8,
+    backgroundColor: '#77945D',
+    transform: [{rotate: '-24deg'}],
   },
-  featureBottomItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  featureBottomText: {
-    color: '#D5E1D5',
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  featureBottomDivider: {
-    width: 1,
-    height: 13,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-  },
-  featureDemo: {
-    marginLeft: 'auto',
-    color: '#D5E1D5',
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  actions: {
-    gap: 10,
-  },
-  startAction: {
-    minHeight: 76,
+  primaryAction: {
+    minHeight: 78,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -621,7 +587,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: C.green,
   },
-  startIconWrap: {
+  primaryIcon: {
     width: 42,
     height: 42,
     alignItems: 'center',
@@ -629,58 +595,74 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: C.lime,
   },
-  startTextWrap: {
+  primaryCopy: {
     flex: 1,
+    minWidth: 0,
   },
-  startEyebrow: {
-    color: '#C8DCCB',
+  primaryOverline: {
+    color: '#C9DCCB',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.7,
+    letterSpacing: 0.8,
   },
-  startTitle: {
+  primaryTitle: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '800',
     marginTop: 3,
+  },
+  primarySubtitle: {
+    color: '#D1E1D4',
+    fontSize: 10,
+    marginTop: 3,
+  },
+  arrowButton: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.14)',
   },
   historyAction: {
     minHeight: 66,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
-    paddingHorizontal: 13,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 17,
     borderWidth: 1,
-    borderColor: C.line,
-    backgroundColor: C.card,
+    borderColor: C.border,
+    backgroundColor: C.surface,
   },
-  iconButton: {
+  iconBox: {
     width: 38,
     height: 38,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
   },
-  historyTextWrap: {
+  historyCopy: {
     flex: 1,
+    minWidth: 0,
   },
   historyTitle: {
-    color: '#35483A',
+    color: '#354A3B',
     fontSize: 12,
     fontWeight: '800',
   },
   historySubtitle: {
     color: C.muted,
     fontSize: 10,
-    marginTop: 4,
+    lineHeight: 15,
+    marginTop: 3,
   },
-  sectionHeading: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
     marginTop: 3,
     marginBottom: -5,
   },
@@ -689,123 +671,125 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
-  sectionCaption: {
+  sectionSubtitle: {
     color: C.muted,
     fontSize: 10,
     marginTop: 4,
   },
-  sectionCount: {
-    color: '#71836F',
+  stepPill: {
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#EAF1E7',
+  },
+  stepPillText: {
+    color: '#647A59',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   },
-  stepsCard: {
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: C.line,
+  flowCard: {
+    paddingHorizontal: 13,
     borderRadius: 19,
-    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.surface,
   },
-  stepRow: {
+  flowItem: {
     minHeight: 77,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
   },
-  stepBorder: {
+  flowItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF0EA',
+    borderBottomColor: '#EEF1EB',
   },
-  stepIcon: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    backgroundColor: '#EEF3EA',
-  },
-  stepContent: {
+  flowCopy: {
     flex: 1,
     minWidth: 0,
+    paddingVertical: 11,
   },
-  stepTitleLine: {
+  flowTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
   },
-  stepNumber: {
-    color: '#82927A',
+  flowNumber: {
+    color: '#83917C',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.5,
   },
-  stepTitle: {
+  flowTitle: {
     flex: 1,
-    color: '#35493A',
+    color: '#3C5140',
     fontSize: 11,
     fontWeight: '800',
   },
-  stepDescription: {
+  flowDescription: {
     color: C.muted,
     fontSize: 9,
     lineHeight: 14,
     marginTop: 4,
   },
-  infoGrid: {
+  infoRow: {
     flexDirection: 'row',
     gap: 10,
   },
   infoCard: {
     flex: 1,
     minWidth: 0,
-    minHeight: 130,
+    minHeight: 131,
     padding: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5EAE1',
-    backgroundColor: '#EFF3EB',
+    borderColor: '#E4EAE0',
+    backgroundColor: '#EFF3EA',
   },
   infoTitle: {
-    color: '#465A44',
+    color: '#4B6148',
     fontSize: 10,
     fontWeight: '800',
     marginTop: 9,
   },
   infoBody: {
-    color: '#7D897B',
+    color: '#7C8979',
     fontSize: 9,
     lineHeight: 14,
     marginTop: 5,
   },
-  disclaimer: {
+  disclosure: {
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E9E4D5',
-    backgroundColor: '#F3F0E5',
+    borderColor: '#E9E4D4',
+    backgroundColor: '#F4F1E7',
   },
-  disclaimerHeading: {
+  disclosureTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
     marginBottom: 7,
   },
-  disclaimerTitle: {
-    color: '#696044',
+  disclosureTitle: {
+    color: '#696147',
     fontSize: 10,
     fontWeight: '800',
   },
-  disclaimerBody: {
+  disclosureBody: {
     color: '#79745F',
     fontSize: 9,
     lineHeight: 15,
   },
-  disclaimerFoot: {
-    color: '#89836D',
+  disclosureRule: {
+    height: 1,
+    backgroundColor: '#E4DFD0',
+    marginVertical: 9,
+  },
+  disclosureFoot: {
+    color: '#88836E',
     fontSize: 9,
     lineHeight: 14,
-    marginTop: 8,
   },
   footer: {
     flexDirection: 'row',
@@ -815,17 +799,17 @@ const styles = StyleSheet.create({
     paddingTop: 1,
   },
   footerText: {
-    color: C.faint,
+    color: '#929C91',
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
-  startActionPressed: {
-    opacity: 0.85,
+  primaryPressed: {
+    opacity: 0.86,
     transform: [{scale: 0.99}],
   },
-  historyActionPressed: {
-    backgroundColor: '#F0F4EE',
-    borderColor: '#CAD8C8',
+  historyPressed: {
+    backgroundColor: '#F1F5F0',
+    borderColor: '#C8D8C8',
   },
 });
