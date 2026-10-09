@@ -82,7 +82,6 @@ function WorkflowCard() {
     </View>
   );
 }
-
 export default function HomeScreen({
   onCapture,
   onHistory,
