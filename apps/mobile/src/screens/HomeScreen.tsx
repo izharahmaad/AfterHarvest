@@ -4,281 +4,355 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
 
 type Props = {
   onCapture: () => void;
   onHistory: () => void;
 };
 
+const COLORS = {
+  background: '#F6F8F5',
+  surface: '#FFFFFF',
+  ink: '#18372A',
+  muted: '#748277',
+  subtle: '#A0ACA3',
+  line: '#E6ECE6',
+  green: '#236B49',
+  greenDark: '#164B34',
+  greenSoft: '#EAF3EC',
+  orange: '#E98761',
+};
+
 const STEPS = [
   {
     number: '01',
-    title: 'Add a photo',
+    title: 'Photograph your produce',
     description: 'Take a photo or choose one from your gallery.',
+    icon: 'camera-outline' as const,
   },
   {
     number: '02',
-    title: 'Add storage details',
-    description: 'Enter temperature, humidity and storage days.',
+    title: 'Add storage conditions',
+    description: 'Record temperature, humidity and duration.',
+    icon: 'options-outline' as const,
   },
   {
     number: '03',
-    title: 'Review your result',
-    description: 'See the demo assessment and its context.',
+    title: 'Review the assessment',
+    description: 'See the result and the factors behind it.',
+    icon: 'analytics-outline' as const,
   },
 ];
 
-function Dot({color = '#6D9A78'}: {color?: string}) {
-  return <View style={[s.dot, {backgroundColor: color}]} />;
-}
-
-function TomatoMark() {
+function IconTile({
+  name,
+  size = 20,
+  color = COLORS.green,
+  background = COLORS.greenSoft,
+}: {
+  name: React.ComponentProps<typeof Ionicons>['name'];
+  size?: number;
+  color?: string;
+  background?: string;
+}) {
   return (
-    <View
-      accessible={false}
-      importantForAccessibility="no-hide-descendants"
-      style={s.tomatoMark}>
-      <View style={s.tomatoGlow} />
-      <View style={s.tomatoBody} />
-      <View style={s.tomatoShine} />
-      <View style={s.tomatoStem} />
-      <View style={s.tomatoLeafLeft} />
-      <View style={s.tomatoLeafRight} />
+    <View style={[styles.iconTile, {backgroundColor: background}]}>
+      <Ionicons name={name} size={size} color={color} />
     </View>
   );
 }
 
-function ActionArrow() {
+function WorkflowCard() {
   return (
-    <View accessible={false} style={s.arrowCircle}>
-      <Text style={s.arrowText}>→</Text>
-    </View>
-  );
-}
-
-function Workflow() {
-  return (
-    <View style={s.workflowCard}>
+    <View style={styles.workflowCard}>
       {STEPS.map((step, index) => (
-        <View key={step.number} style={s.workflowRow}>
-          <View style={s.timeline}>
-            <View style={s.stepCircle}>
-              <Text style={s.stepNumber}>{step.number}</Text>
-            </View>
-            {index < STEPS.length - 1 ? (
-              <View style={s.timelineLine} />
-            ) : null}
+        <View
+          key={step.number}
+          style={[
+            styles.workflowItem,
+            index < STEPS.length - 1 ? styles.workflowItemBorder : null,
+          ]}>
+          <View style={styles.workflowIconWrap}>
+            <Ionicons name={step.icon} size={19} color={COLORS.green} />
           </View>
 
-          <View
-            style={[
-              s.workflowCopy,
-              index < STEPS.length - 1 ? s.workflowCopyBorder : null,
-            ]}>
-            <Text style={s.workflowTitle}>{step.title}</Text>
-            <Text style={s.workflowDescription}>
+          <View style={styles.workflowCopy}>
+            <Text style={styles.workflowNumber}>STEP {step.number}</Text>
+            <Text style={styles.workflowTitle}>{step.title}</Text>
+            <Text style={styles.workflowDescription}>
               {step.description}
             </Text>
           </View>
+
+          <Ionicons
+            name="checkmark-circle-outline"
+            size={18}
+            color="#C5D4C8"
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
         </View>
       ))}
     </View>
   );
 }
 
-export default function HomeScreen({
-  onCapture,
-  onHistory,
-}: Props) {
+export default function HomeScreen({onCapture, onHistory}: Props) {
+  const {width} = useWindowDimensions();
+  const compact = width < 360;
+
   return (
     <ScrollView
-      style={s.screen}
-      contentContainerStyle={s.container}
+      style={styles.screen}
+      contentContainerStyle={[
+        styles.content,
+        width >= 700 ? styles.contentWide : null,
+      ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled">
-      <View style={s.topBar}>
-        <View style={s.brand}>
-          <View style={s.brandMark}>
-            <Text style={s.brandMarkText}>A</Text>
+      <View style={styles.header}>
+        <View style={styles.brand}>
+          <View style={styles.brandIcon}>
+            <Ionicons name="leaf" size={19} color="#FFFFFF" />
           </View>
+
           <View>
-            <Text style={s.brandName}>AfterHarvest</Text>
-            <Text style={s.brandCaption}>PRODUCE INSIGHTS</Text>
+            <Text style={styles.brandName}>AfterHarvest</Text>
+            <Text style={styles.brandCaption}>PRODUCE INTELLIGENCE</Text>
           </View>
         </View>
 
-        <View style={s.statusPill}>
-          <Dot color="#4B9362" />
-          <Text style={s.statusText}>DEMO</Text>
+        <View style={styles.modeBadge}>
+          <View style={styles.modeDot} />
+          <Text style={styles.modeText}>DEMO</Text>
         </View>
       </View>
 
-      <View style={s.welcome}>
-        <Text style={s.kicker}>TOMATO QUALITY WORKSPACE</Text>
-        <Text style={s.heading}>
-          Make better{'\n'}post-harvest decisions.
+      <View style={[styles.intro, compact ? styles.introCompact : null]}>
+        <Text style={styles.eyebrow}>TOMATO QUALITY WORKSPACE</Text>
+
+        <Text
+          accessibilityRole="header"
+          style={[styles.heading, compact ? styles.headingCompact : null]}>
+          Know your produce.{'\n'}
+          <Text style={styles.headingAccent}>Make informed decisions.</Text>
         </Text>
-        <Text style={s.subtitle}>
-          Start with a photo and a few storage details. Review a
-          transparent demo assessment in minutes.
+
+        <Text style={styles.introDescription}>
+          Assess a tomato using its photo and storage conditions—all in
+          one simple workflow.
         </Text>
       </View>
 
-      <View style={s.heroCard}>
-        <View pointerEvents="none" style={s.heroOrbTop} />
-        <View pointerEvents="none" style={s.heroOrbBottom} />
-
-        <View style={s.heroTop}>
-          <View style={s.heroTag}>
-            <Dot color="#B4D6B8" />
-            <Text style={s.heroTagText}>TOMATO EDITION</Text>
+      <View style={styles.hero}>
+        <View style={styles.heroCopy}>
+          <View style={styles.heroPill}>
+            <Ionicons
+              name="sparkles-outline"
+              size={13}
+              color="#D6E8DA"
+            />
+            <Text style={styles.heroPillText}>A SIMPLE QUALITY CHECK</Text>
           </View>
-          <Text style={s.heroEdition}>01 / MVP</Text>
+
+          <Text style={styles.heroTitle}>
+            Small inputs.{'\n'}Clearer context.
+          </Text>
+
+          <Text style={styles.heroDescription}>
+            Photo + storage information
+          </Text>
         </View>
 
-        <View style={s.heroMain}>
-          <View style={s.heroCopy}>
-            <Text style={s.heroTitle}>
-              Every detail{'\n'}helps tell the story.
-            </Text>
-            <Text style={s.heroDescription}>
-              Photo, temperature, humidity and storage duration.
-            </Text>
-          </View>
-          <TomatoMark />
+        <View
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={styles.produceArt}>
+          <View style={styles.produceHalo} />
+          <View style={styles.produceLeafLeft} />
+          <View style={styles.produceLeafRight} />
+          <View style={styles.produceStem} />
+          <View style={styles.produceFruit} />
+          <View style={styles.produceShine} />
         </View>
 
-        <View style={s.heroBottom}>
-          <Text style={s.heroBottomText}>A guided quality check</Text>
-          <Text style={s.heroBottomMeta}>3 SIMPLE STEPS</Text>
+        <View style={styles.heroBottom}>
+          <View style={styles.heroBottomLabel}>
+            <Ionicons
+              name="information-circle-outline"
+              size={15}
+              color="#C7DDCD"
+            />
+            <Text style={styles.heroBottomText}>
+              Demo results use storage heuristics
+            </Text>
+          </View>
+          <Text style={styles.heroEdition}>TOMATO · 01</Text>
         </View>
       </View>
 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Start a new tomato assessment"
+        accessibilityHint="Opens the screen to add a photo and storage conditions"
         onPress={onCapture}
         style={({pressed}) => [
-          s.primaryAction,
-          pressed ? s.primaryActionPressed : null,
+          styles.startButton,
+          pressed ? styles.startButtonPressed : null,
         ]}>
-        <View style={s.primaryCopy}>
-          <Text style={s.primaryEyebrow}>READY WHEN YOU ARE</Text>
-          <Text style={s.primaryTitle}>Start assessment</Text>
-          <Text style={s.primaryDescription}>
-            Add a produce photo and storage context
+        <View style={styles.startIcon}>
+          <Ionicons name="add" size={25} color="#FFFFFF" />
+        </View>
+
+        <View style={styles.startCopy}>
+          <Text style={styles.startEyebrow}>GET STARTED</Text>
+          <Text style={styles.startTitle}>New assessment</Text>
+          <Text style={styles.startDescription}>
+            Add a photo and storage details
           </Text>
         </View>
-        <ActionArrow />
+
+        <Ionicons
+          name="arrow-forward"
+          size={20}
+          color="#E3F0E6"
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        />
       </Pressable>
 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Open assessment history"
+        accessibilityHint="Shows results saved during this app session"
         onPress={onHistory}
         style={({pressed}) => [
-          s.historyAction,
-          pressed ? s.historyActionPressed : null,
+          styles.historyButton,
+          pressed ? styles.historyButtonPressed : null,
         ]}>
-        <View style={s.historyIcon}>
-          <Text style={s.historyIconText}>↺</Text>
-        </View>
+        <IconTile name="time-outline" size={19} />
 
-        <View style={s.historyCopy}>
-          <Text style={s.historyTitle}>Assessment history</Text>
-          <Text style={s.historyDescription}>
-            Revisit results saved in this session
+        <View style={styles.historyCopy}>
+          <Text style={styles.historyTitle}>Assessment history</Text>
+          <Text style={styles.historyDescription}>
+            Revisit results from this session
           </Text>
         </View>
 
-        <Text accessible={false} style={s.historyChevron}>›</Text>
+        <Ionicons
+          name="chevron-forward"
+          size={18}
+          color="#89988D"
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        />
       </Pressable>
 
-      <View style={s.sectionHeader}>
+      <View style={styles.sectionHeadingRow}>
         <View>
-          <Text style={s.sectionTitle}>How it works</Text>
-          <Text style={s.sectionSubtitle}>
-            A simple, guided workflow
+          <Text accessibilityRole="header" style={styles.sectionTitle}>
+            How it works
+          </Text>
+          <Text style={styles.sectionSubtitle}>
+            Three clear steps, from photo to result
           </Text>
         </View>
-        <View style={s.stepCount}>
-          <Text style={s.stepCountText}>3 STEPS</Text>
+
+        <View style={styles.stepsBadge}>
+          <Text style={styles.stepsBadgeText}>3 STEPS</Text>
         </View>
       </View>
 
-      <Workflow />
+      <WorkflowCard />
 
-      <View style={s.scopeRow}>
-        <View style={s.scopeCard}>
-          <View style={s.scopeIcon}>
-            <Text style={s.scopeIconText}>01</Text>
-          </View>
-          <Text style={s.scopeTitle}>Focused scope</Text>
-          <Text style={s.scopeDescription}>
-            Built for tomato assessments in this prototype.
+      <View style={styles.scopeGrid}>
+        <View style={styles.scopeCard}>
+          <IconTile
+            name="nutrition-outline"
+            size={18}
+            color="#517957"
+            background="#E6F0E7"
+          />
+          <Text style={styles.scopeTitle}>Focused prototype</Text>
+          <Text style={styles.scopeText}>
+            This release is designed for tomatoes.
           </Text>
         </View>
 
-        <View style={s.scopeCard}>
-          <View style={s.scopeIcon}>
-            <Text style={s.scopeIconText}>↺</Text>
-          </View>
-          <Text style={s.scopeTitle}>Session history</Text>
-          <Text style={s.scopeDescription}>
-            Results are available during the current app session.
+        <View style={styles.scopeCard}>
+          <IconTile
+            name="phone-portrait-outline"
+            size={18}
+            color="#517957"
+            background="#E6F0E7"
+          />
+          <Text style={styles.scopeTitle}>Session history</Text>
+          <Text style={styles.scopeText}>
+            History resets when the app restarts.
           </Text>
         </View>
       </View>
 
-      <View
-        accessible
-        accessibilityLabel="Prototype limitations. Results use demo storage-context heuristics. Images are validated but not analyzed by a trained AI model. Packaging does not affect demo scoring. Results do not certify food safety."
-        style={s.disclosure}>
-        <View style={s.disclosureHeader}>
-          <View style={s.infoIcon}>
-            <Text style={s.infoIconText}>i</Text>
-          </View>
-          <Text style={s.disclosureTitle}>
-            Know what this demo does
+      <View style={styles.disclosure}>
+        <View style={styles.disclosureTitleRow}>
+          <IconTile
+            name="information-circle-outline"
+            size={17}
+            color="#7B704A"
+            background="#F0EBD9"
+          />
+          <Text style={styles.disclosureTitle}>
+            What this demo does—and doesn’t do
           </Text>
         </View>
 
-        <Text style={s.disclosureText}>
-          Results use storage-context heuristics. Images are
-          validated, not analyzed by a trained AI model. Packaging
+        <Text style={styles.disclosureText}>
+          The current result uses storage-context heuristics. The image
+          is validated but not analyzed by a trained AI model. Packaging
           is recorded but does not affect demo scoring.
         </Text>
 
-        <View style={s.disclosureDivider} />
+        <View style={styles.disclosureDivider} />
 
-        <Text style={s.disclosureFootnote}>
-          Images are not permanently stored. This assessment does
-          not certify food safety.
+        <Text style={styles.disclosureFootnote}>
+          Images are not permanently stored. Results do not certify food
+          safety.
         </Text>
       </View>
 
-      <Text style={s.footer}>
-        PRESERVE QUALITY · REDUCE LOSS
-      </Text>
+      <View style={styles.footer}>
+        <Ionicons name="leaf-outline" size={14} color="#91A397" />
+        <Text style={styles.footerText}>PRESERVE QUALITY · REDUCE LOSS</Text>
+      </View>
     </ScrollView>
   );
 }
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F5F8F5',
+    backgroundColor: COLORS.background,
   },
-  container: {
+  content: {
+    width: '100%',
+    maxWidth: 620,
+    alignSelf: 'center',
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 32,
-    gap: 16,
+    paddingTop: 14,
+    paddingBottom: 36,
+    gap: 17,
   },
-  topBar: {
-    minHeight: 46,
+  contentWide: {
+    paddingHorizontal: 28,
+    paddingTop: 22,
+    gap: 20,
+  },
+  header: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -288,138 +362,110 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  brandMark: {
+  brandIcon: {
     width: 38,
     height: 38,
     borderRadius: 13,
-    backgroundColor: '#1C6846',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  brandMarkText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
+    backgroundColor: COLORS.green,
   },
   brandName: {
-    color: '#264934',
+    color: COLORS.ink,
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: -0.2,
   },
   brandCaption: {
-    color: '#8A9A8D',
+    color: COLORS.muted,
     fontSize: 8,
     fontWeight: '700',
     letterSpacing: 1,
     marginTop: 3,
   },
-  statusPill: {
-    minHeight: 30,
+  modeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
-    borderRadius: 16,
-    backgroundColor: '#E8F2EA',
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#EAF3EC',
   },
-  dot: {
+  modeDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
+    backgroundColor: '#458556',
   },
-  statusText: {
+  modeText: {
     color: '#477452',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
-  welcome: {
-    paddingTop: 7,
-    paddingBottom: 3,
+  intro: {
+    paddingTop: 8,
   },
-  kicker: {
+  introCompact: {
+    paddingTop: 2,
+  },
+  eyebrow: {
     color: '#548061',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
   heading: {
-    color: '#183B29',
-    fontSize: 34,
-    lineHeight: 40,
+    color: COLORS.ink,
+    fontSize: 30,
+    lineHeight: 37,
     fontWeight: '800',
-    letterSpacing: -1,
-    marginTop: 10,
+    letterSpacing: -0.9,
+    marginTop: 9,
   },
-  subtitle: {
-    color: '#697C6E',
-    fontSize: 14,
-    lineHeight: 22,
-    marginTop: 10,
+  headingCompact: {
+    fontSize: 27,
+    lineHeight: 34,
   },
-  heroCard: {
+  headingAccent: {
+    color: COLORS.green,
+  },
+  introDescription: {
+    maxWidth: 500,
+    color: COLORS.muted,
+    fontSize: 13,
+    lineHeight: 21,
+    marginTop: 9,
+  },
+  hero: {
+    minHeight: 198,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#194E35',
-    borderRadius: 24,
-    padding: 19,
-  },
-  heroOrbTop: {
-    position: 'absolute',
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    top: -95,
-    right: -48,
-    backgroundColor: 'rgba(114, 165, 119, 0.12)',
-  },
-  heroOrbBottom: {
-    position: 'absolute',
-    width: 125,
-    height: 125,
-    borderRadius: 63,
-    bottom: -88,
-    left: 98,
-    backgroundColor: 'rgba(114, 165, 119, 0.09)',
-  },
-  heroTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
-  },
-  heroTag: {
-    minHeight: 27,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 9,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.09)',
-  },
-  heroTagText: {
-    color: '#D5E7D8',
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.9,
-  },
-  heroEdition: {
-    color: '#A8C4AF',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  heroMain: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minHeight: 145,
-    paddingVertical: 14,
+    padding: 19,
+    borderRadius: 24,
+    backgroundColor: COLORS.greenDark,
   },
   heroCopy: {
-    flex: 1,
-    minWidth: 0,
+    maxWidth: '76%',
+    zIndex: 1,
+  },
+  heroPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.11)',
+  },
+  heroPillText: {
+    color: '#D6E8DA',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.7,
   },
   heroTitle: {
     color: '#FFFFFF',
@@ -427,310 +473,280 @@ const s = StyleSheet.create({
     lineHeight: 29,
     fontWeight: '800',
     letterSpacing: -0.5,
+    marginTop: 15,
   },
   heroDescription: {
-    maxWidth: 210,
-    color: '#BDD3C3',
+    color: '#C2D8C8',
     fontSize: 11,
-    lineHeight: 17,
-    marginTop: 9,
+    marginTop: 8,
   },
-  tomatoMark: {
-    width: 104,
-    height: 112,
-    flexShrink: 0,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tomatoGlow: {
+  produceArt: {
     position: 'absolute',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 145,
+    height: 145,
+    right: 5,
+    top: 25,
+  },
+  produceHalo: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    top: 4,
+    left: 8,
+    borderRadius: 65,
     backgroundColor: 'rgba(255,255,255,0.055)',
   },
-  tomatoBody: {
+  produceFruit: {
     position: 'absolute',
-    width: 73,
-    height: 72,
-    top: 27,
-    left: 16,
-    borderRadius: 36,
-    backgroundColor: '#E47758',
+    width: 82,
+    height: 78,
+    top: 39,
+    left: 33,
+    borderRadius: 42,
+    backgroundColor: COLORS.orange,
     borderBottomWidth: 6,
-    borderBottomColor: '#D66348',
-    transform: [{rotate: '-7deg'}],
+    borderBottomColor: '#D96D4E',
+    transform: [{rotate: '-8deg'}],
   },
-  tomatoShine: {
+  produceShine: {
     position: 'absolute',
-    width: 14,
-    height: 24,
-    top: 40,
-    left: 28,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    transform: [{rotate: '25deg'}],
+    width: 15,
+    height: 27,
+    top: 53,
+    left: 49,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.24)',
+    transform: [{rotate: '24deg'}],
   },
-  tomatoStem: {
+  produceStem: {
     position: 'absolute',
     width: 6,
-    height: 21,
-    top: 14,
-    left: 50,
+    height: 20,
+    top: 25,
+    left: 70,
     borderRadius: 4,
     backgroundColor: '#83A96A',
     transform: [{rotate: '10deg'}],
   },
-  tomatoLeafLeft: {
+  produceLeafLeft: {
     position: 'absolute',
-    width: 28,
-    height: 11,
-    top: 27,
-    left: 28,
-    borderRadius: 9,
-    backgroundColor: '#8EB577',
+    width: 29,
+    height: 12,
+    top: 39,
+    left: 48,
+    borderRadius: 10,
+    backgroundColor: '#91B779',
     transform: [{rotate: '25deg'}],
   },
-  tomatoLeafRight: {
+  produceLeafRight: {
     position: 'absolute',
-    width: 28,
-    height: 11,
-    top: 27,
-    left: 48,
-    borderRadius: 9,
-    backgroundColor: '#71985C',
+    width: 29,
+    height: 12,
+    top: 39,
+    left: 68,
+    borderRadius: 10,
+    backgroundColor: '#72995E',
     transform: [{rotate: '-25deg'}],
   },
   heroBottom: {
-    minHeight: 36,
+    minHeight: 31,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 7,
+    marginTop: 20,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.13)',
-    paddingTop: 11,
+    borderTopColor: 'rgba(255,255,255,0.14)',
+  },
+  heroBottomLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   heroBottomText: {
-    color: '#C2D7C9',
-    fontSize: 10,
+    color: '#C7DCCB',
+    fontSize: 9,
   },
-  heroBottomMeta: {
-    color: '#AFC8B5',
+  heroEdition: {
+    color: '#A7C3AE',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0.7,
   },
-  primaryAction: {
+  startButton: {
     minHeight: 82,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 13,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 19,
-    backgroundColor: '#1C6846',
+    backgroundColor: COLORS.green,
   },
-  primaryCopy: {
-    flex: 1,
-  },
-  primaryEyebrow: {
-    color: '#B8D6C1',
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  primaryTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-    marginTop: 4,
-  },
-  primaryDescription: {
-    color: '#C0D8C7',
-    fontSize: 10,
-    lineHeight: 15,
-    marginTop: 4,
-  },
-  arrowCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  startIcon: {
+    width: 43,
+    height: 43,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.13)',
   },
-  arrowText: {
-    color: '#FFFFFF',
-    fontSize: 21,
-    lineHeight: 24,
+  startCopy: {
+    flex: 1,
+    minWidth: 0,
   },
-  historyAction: {
-    minHeight: 72,
+  startEyebrow: {
+    color: '#C2DCC9',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.9,
+  },
+  startTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+    marginTop: 3,
+  },
+  startDescription: {
+    color: '#C8DDD0',
+    fontSize: 10,
+    lineHeight: 15,
+    marginTop: 3,
+  },
+  historyButton: {
+    minHeight: 67,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     borderWidth: 1,
-    borderColor: '#E2EAE3',
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORS.line,
+    borderRadius: 17,
+    backgroundColor: COLORS.surface,
   },
-  historyIcon: {
-    width: 39,
-    height: 39,
-    borderRadius: 12,
+  iconTile: {
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EDF4EF',
-  },
-  historyIconText: {
-    color: '#4C7A58',
-    fontSize: 22,
-    fontWeight: '600',
+    borderRadius: 12,
   },
   historyCopy: {
     flex: 1,
   },
   historyTitle: {
-    color: '#34513D',
-    fontSize: 13,
+    color: '#304C38',
+    fontSize: 12,
     fontWeight: '800',
   },
   historyDescription: {
-    color: '#87968A',
+    color: '#839187',
     fontSize: 10,
     lineHeight: 15,
     marginTop: 4,
   },
-  historyChevron: {
-    color: '#84958A',
-    fontSize: 27,
-  },
-  sectionHeader: {
+  sectionHeadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
     marginTop: 5,
-    marginBottom: -4,
   },
   sectionTitle: {
-    color: '#2A4934',
-    fontSize: 17,
+    color: '#284633',
+    fontSize: 16,
     fontWeight: '800',
   },
   sectionSubtitle: {
-    color: '#839186',
-    fontSize: 11,
+    color: '#829087',
+    fontSize: 10,
     marginTop: 4,
   },
-  stepCount: {
+  stepsBadge: {
     paddingHorizontal: 9,
     paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: '#EAF2EB',
   },
-  stepCountText: {
-    color: '#5F8067',
+  stepsBadgeText: {
+    color: '#5C7C64',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.7,
+    letterSpacing: 0.6,
   },
   workflowCard: {
-    paddingHorizontal: 16,
-    paddingVertical: 5,
+    paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E3EBE5',
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORS.line,
+    backgroundColor: COLORS.surface,
   },
-  workflowRow: {
-    minHeight: 76,
+  workflowItem: {
+    minHeight: 84,
     flexDirection: 'row',
-    gap: 13,
-  },
-  timeline: {
-    width: 34,
     alignItems: 'center',
+    gap: 12,
   },
-  stepCircle: {
-    width: 32,
-    height: 32,
-    marginTop: 16,
-    borderRadius: 11,
+  workflowItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#EDF1ED',
+  },
+  workflowIconWrap: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF5EF',
-  },
-  stepNumber: {
-    color: '#558362',
-    fontSize: 9,
-    fontWeight: '800',
-  },
-  timelineLine: {
-    position: 'absolute',
-    width: 1,
-    top: 48,
-    bottom: -1,
-    backgroundColor: '#E5EDE6',
+    borderRadius: 13,
+    backgroundColor: '#EDF4EE',
   },
   workflowCopy: {
     flex: 1,
-    justifyContent: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EDF2EE',
+    minWidth: 0,
     paddingVertical: 12,
   },
-  workflowCopyBorder: {
-    borderBottomColor: '#EDF2EE',
+  workflowNumber: {
+    color: '#75917B',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
   workflowTitle: {
-    color: '#385541',
+    color: '#354F3C',
     fontSize: 12,
     fontWeight: '800',
+    marginTop: 3,
   },
   workflowDescription: {
-    color: '#849388',
+    color: '#829087',
     fontSize: 10,
     lineHeight: 15,
-    marginTop: 4,
+    marginTop: 3,
   },
-  scopeRow: {
+  scopeGrid: {
     flexDirection: 'row',
     gap: 11,
   },
   scopeCard: {
     flex: 1,
-    minHeight: 132,
-    padding: 14,
+    minWidth: 0,
+    minHeight: 137,
+    padding: 13,
     borderRadius: 17,
     borderWidth: 1,
     borderColor: '#E2EAE3',
     backgroundColor: '#EFF5F0',
   },
-  scopeIcon: {
-    width: 29,
-    height: 29,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
-    backgroundColor: '#E0ECE3',
-    marginBottom: 11,
-  },
-  scopeIconText: {
-    color: '#5D8066',
-    fontSize: 9,
-    fontWeight: '800',
-  },
   scopeTitle: {
-    color: '#45634D',
+    color: '#45614C',
     fontSize: 11,
     fontWeight: '800',
+    marginTop: 10,
   },
-  scopeDescription: {
-    color: '#829387',
+  scopeText: {
+    color: '#819087',
     fontSize: 9,
     lineHeight: 14,
     marginTop: 5,
@@ -739,62 +755,55 @@ const s = StyleSheet.create({
     padding: 15,
     borderRadius: 17,
     borderWidth: 1,
-    borderColor: '#E2E9E3',
-    backgroundColor: '#F0F4F0',
+    borderColor: '#E8E5D8',
+    backgroundColor: '#F4F2E9',
   },
-  disclosureHeader: {
+  disclosureTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  infoIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#DFE9E1',
-  },
-  infoIconText: {
-    color: '#587760',
-    fontSize: 12,
-    fontWeight: '800',
+    gap: 9,
+    marginBottom: 9,
   },
   disclosureTitle: {
-    color: '#526D59',
+    flex: 1,
+    color: '#655F47',
     fontSize: 11,
     fontWeight: '800',
   },
   disclosureText: {
-    color: '#75877A',
+    color: '#77745F',
     fontSize: 10,
     lineHeight: 16,
   },
   disclosureDivider: {
     height: 1,
+    backgroundColor: '#E4E0D0',
     marginVertical: 10,
-    backgroundColor: '#DEE7E0',
   },
   disclosureFootnote: {
-    color: '#829286',
+    color: '#88836C',
     fontSize: 9,
     lineHeight: 15,
   },
   footer: {
-    color: '#9AA69D',
-    fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    textAlign: 'center',
-    marginTop: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    paddingTop: 1,
   },
-  primaryActionPressed: {
-    opacity: 0.84,
+  footerText: {
+    color: '#91A095',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.9,
+  },
+  startButtonPressed: {
+    opacity: 0.86,
     transform: [{scale: 0.99}],
   },
-  historyActionPressed: {
-    backgroundColor: '#F5F9F5',
-    borderColor: '#C8D9CC',
+  historyButtonPressed: {
+    backgroundColor: '#F1F6F2',
+    borderColor: '#C9D9CC',
   },
 });
