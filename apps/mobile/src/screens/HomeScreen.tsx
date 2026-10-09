@@ -14,318 +14,321 @@ type Props = {
   onHistory: () => void;
 };
 
-const COLORS = {
-  background: '#F6F8F5',
-  surface: '#FFFFFF',
-  ink: '#18372A',
-  muted: '#748277',
-  subtle: '#A0ACA3',
-  line: '#E6ECE6',
-  green: '#236B49',
-  greenDark: '#164B34',
-  greenSoft: '#EAF3EC',
-  orange: '#E98761',
+const C = {
+  page: '#F7F7F2',
+  card: '#FFFFFF',
+  ink: '#202B22',
+  muted: '#788077',
+  faint: '#9AA197',
+  line: '#E9EAE2',
+  green: '#244F38',
+  greenLight: '#E8EFE7',
+  lime: '#D2E3A6',
+  coral: '#E27D5E',
 };
 
 const STEPS = [
   {
-    number: '01',
-    title: 'Photograph your produce',
-    description: 'Take a photo or choose one from your gallery.',
+    n: '01',
+    title: 'Photograph',
+    description: 'Add a clear image of your tomato.',
     icon: 'camera-outline' as const,
   },
   {
-    number: '02',
-    title: 'Add storage conditions',
-    description: 'Record temperature, humidity and duration.',
-    icon: 'options-outline' as const,
+    n: '02',
+    title: 'Add context',
+    description: 'Enter storage temperature, humidity and days.',
+    icon: 'thermometer-outline' as const,
   },
   {
-    number: '03',
-    title: 'Review the assessment',
-    description: 'See the result and the factors behind it.',
-    icon: 'analytics-outline' as const,
+    n: '03',
+    title: 'Review',
+    description: 'See your demo result and its contributing factors.',
+    icon: 'bar-chart-outline' as const,
   },
 ];
 
-function IconTile({
+function IconButton({
   name,
-  size = 20,
-  color = COLORS.green,
-  background = COLORS.greenSoft,
+  color,
+  backgroundColor,
+  size = 19,
 }: {
   name: React.ComponentProps<typeof Ionicons>['name'];
+  color: string;
+  backgroundColor: string;
   size?: number;
-  color?: string;
-  background?: string;
 }) {
   return (
-    <View style={[styles.iconTile, {backgroundColor: background}]}>
+    <View style={[styles.iconButton, {backgroundColor}]}>
       <Ionicons name={name} size={size} color={color} />
     </View>
   );
 }
 
-function WorkflowCard() {
+function FruitArtwork() {
   return (
-    <View style={styles.workflowCard}>
-      {STEPS.map((step, index) => (
-        <View
-          key={step.number}
-          style={[
-            styles.workflowItem,
-            index < STEPS.length - 1 ? styles.workflowItemBorder : null,
-          ]}>
-          <View style={styles.workflowIconWrap}>
-            <Ionicons name={step.icon} size={19} color={COLORS.green} />
-          </View>
-
-          <View style={styles.workflowCopy}>
-            <Text style={styles.workflowNumber}>STEP {step.number}</Text>
-            <Text style={styles.workflowTitle}>{step.title}</Text>
-            <Text style={styles.workflowDescription}>
-              {step.description}
-            </Text>
-          </View>
-
-          <Ionicons
-            name="checkmark-circle-outline"
-            size={18}
-            color="#C5D4C8"
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        </View>
-      ))}
+    <View
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      style={styles.fruitArtwork}>
+      <View style={styles.fruitHalo} />
+      <View style={styles.fruitShadow} />
+      <View style={styles.fruitBody} />
+      <View style={styles.fruitShine} />
+      <View style={styles.fruitStem} />
+      <View style={styles.fruitLeafOne} />
+      <View style={styles.fruitLeafTwo} />
+      <View style={styles.fruitLeafThree} />
     </View>
   );
 }
 
 export default function HomeScreen({onCapture, onHistory}: Props) {
   const {width} = useWindowDimensions();
-  const compact = width < 360;
+  const isNarrow = width < 360;
 
   return (
     <ScrollView
       style={styles.screen}
       contentContainerStyle={[
         styles.content,
-        width >= 700 ? styles.contentWide : null,
+        width >= 720 ? styles.contentWide : null,
       ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled">
       <View style={styles.header}>
         <View style={styles.brand}>
-          <View style={styles.brandIcon}>
-            <Ionicons name="leaf" size={19} color="#FFFFFF" />
+          <View style={styles.brandMark}>
+            <Ionicons name="leaf" size={18} color="#FFFFFF" />
           </View>
-
           <View>
             <Text style={styles.brandName}>AfterHarvest</Text>
-            <Text style={styles.brandCaption}>PRODUCE INTELLIGENCE</Text>
+            <Text style={styles.brandMeta}>FIELD QUALITY TOOLS</Text>
           </View>
         </View>
 
-        <View style={styles.modeBadge}>
-          <View style={styles.modeDot} />
-          <Text style={styles.modeText}>DEMO</Text>
+        <View style={styles.demoStatus}>
+          <View style={styles.statusDot} />
+          <Text style={styles.demoStatusText}>PROTOTYPE</Text>
         </View>
       </View>
 
-      <View style={[styles.intro, compact ? styles.introCompact : null]}>
-        <Text style={styles.eyebrow}>TOMATO QUALITY WORKSPACE</Text>
-
+      <View style={styles.greeting}>
+        <Text style={styles.greetingOverline}>YOUR PRODUCE WORKSPACE</Text>
         <Text
           accessibilityRole="header"
-          style={[styles.heading, compact ? styles.headingCompact : null]}>
-          Know your produce.{'\n'}
-          <Text style={styles.headingAccent}>Make informed decisions.</Text>
+          style={[
+            styles.greetingTitle,
+            isNarrow ? styles.greetingTitleNarrow : null,
+          ]}>
+          Quality starts{'\n'}with good context.
         </Text>
-
-        <Text style={styles.introDescription}>
-          Assess a tomato using its photo and storage conditions—all in
-          one simple workflow.
+        <Text style={styles.greetingBody}>
+          Explore a tomato assessment using a photo and the conditions
+          it was stored in.
         </Text>
       </View>
 
-      <View style={styles.hero}>
-        <View style={styles.heroCopy}>
-          <View style={styles.heroPill}>
-            <Ionicons
-              name="sparkles-outline"
-              size={13}
-              color="#D6E8DA"
-            />
-            <Text style={styles.heroPillText}>A SIMPLE QUALITY CHECK</Text>
+      <View style={styles.featureCard}>
+        <View style={styles.featureTopRow}>
+          <View style={styles.featureLabel}>
+            <View style={styles.featureLabelDot} />
+            <Text style={styles.featureLabelText}>CURRENT PILOT</Text>
           </View>
-
-          <Text style={styles.heroTitle}>
-            Small inputs.{'\n'}Clearer context.
-          </Text>
-
-          <Text style={styles.heroDescription}>
-            Photo + storage information
-          </Text>
+          <Ionicons
+            name="arrow-up-right"
+            size={18}
+            color="#D8E5D5"
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
         </View>
 
-        <View
-          accessible={false}
-          importantForAccessibility="no-hide-descendants"
-          style={styles.produceArt}>
-          <View style={styles.produceHalo} />
-          <View style={styles.produceLeafLeft} />
-          <View style={styles.produceLeafRight} />
-          <View style={styles.produceStem} />
-          <View style={styles.produceFruit} />
-          <View style={styles.produceShine} />
-        </View>
-
-        <View style={styles.heroBottom}>
-          <View style={styles.heroBottomLabel}>
-            <Ionicons
-              name="information-circle-outline"
-              size={15}
-              color="#C7DDCD"
-            />
-            <Text style={styles.heroBottomText}>
-              Demo results use storage heuristics
+        <View style={styles.featureMiddle}>
+          <View style={styles.featureCopy}>
+            <Text style={styles.featureTitle}>Tomato quality</Text>
+            <Text style={styles.featureSubtitle}>
+              Photo-led · Context-aware
             </Text>
           </View>
-          <Text style={styles.heroEdition}>TOMATO · 01</Text>
+          <FruitArtwork />
+        </View>
+
+        <View style={styles.featureBottom}>
+          <View style={styles.featureBottomItem}>
+            <Ionicons
+              name="image-outline"
+              size={14}
+              color="#D5E3D5"
+            />
+            <Text style={styles.featureBottomText}>PHOTO</Text>
+          </View>
+          <View style={styles.featureBottomDivider} />
+          <View style={styles.featureBottomItem}>
+            <Ionicons
+              name="thermometer-outline"
+              size={14}
+              color="#D5E3D5"
+            />
+            <Text style={styles.featureBottomText}>STORAGE</Text>
+          </View>
+          <View style={styles.featureBottomDivider} />
+          <Text style={styles.featureDemo}>DEMO MODEL</Text>
         </View>
       </View>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Start a new tomato assessment"
-        accessibilityHint="Opens the screen to add a photo and storage conditions"
-        onPress={onCapture}
-        style={({pressed}) => [
-          styles.startButton,
-          pressed ? styles.startButtonPressed : null,
-        ]}>
-        <View style={styles.startIcon}>
-          <Ionicons name="add" size={25} color="#FFFFFF" />
-        </View>
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Start a new tomato assessment"
+          accessibilityHint="Opens the photo and storage details form"
+          onPress={onCapture}
+          style={({pressed}) => [
+            styles.startAction,
+            pressed ? styles.startActionPressed : null,
+          ]}>
+          <View style={styles.startIconWrap}>
+            <Ionicons name="add" size={24} color={C.green} />
+          </View>
+          <View style={styles.startTextWrap}>
+            <Text style={styles.startEyebrow}>START SOMETHING NEW</Text>
+            <Text style={styles.startTitle}>Create assessment</Text>
+          </View>
+          <Ionicons
+            name="arrow-forward"
+            size={19}
+            color="#EAF0E8"
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
+        </Pressable>
 
-        <View style={styles.startCopy}>
-          <Text style={styles.startEyebrow}>GET STARTED</Text>
-          <Text style={styles.startTitle}>New assessment</Text>
-          <Text style={styles.startDescription}>
-            Add a photo and storage details
-          </Text>
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open assessment history"
+          accessibilityHint="View assessments saved for this session"
+          onPress={onHistory}
+          style={({pressed}) => [
+            styles.historyAction,
+            pressed ? styles.historyActionPressed : null,
+          ]}>
+          <IconButton
+            name="time-outline"
+            color={C.green}
+            backgroundColor={C.greenLight}
+          />
+          <View style={styles.historyTextWrap}>
+            <Text style={styles.historyTitle}>Recent assessments</Text>
+            <Text style={styles.historySubtitle}>
+              View this session’s results
+            </Text>
+          </View>
+          <Ionicons
+            name="chevron-forward"
+            size={17}
+            color="#879087"
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
+        </Pressable>
+      </View>
 
-        <Ionicons
-          name="arrow-forward"
-          size={20}
-          color="#E3F0E6"
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-        />
-      </Pressable>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Open assessment history"
-        accessibilityHint="Shows results saved during this app session"
-        onPress={onHistory}
-        style={({pressed}) => [
-          styles.historyButton,
-          pressed ? styles.historyButtonPressed : null,
-        ]}>
-        <IconTile name="time-outline" size={19} />
-
-        <View style={styles.historyCopy}>
-          <Text style={styles.historyTitle}>Assessment history</Text>
-          <Text style={styles.historyDescription}>
-            Revisit results from this session
-          </Text>
-        </View>
-
-        <Ionicons
-          name="chevron-forward"
-          size={18}
-          color="#89988D"
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-        />
-      </Pressable>
-
-      <View style={styles.sectionHeadingRow}>
+      <View style={styles.sectionHeading}>
         <View>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            How it works
+            The process
           </Text>
-          <Text style={styles.sectionSubtitle}>
-            Three clear steps, from photo to result
+          <Text style={styles.sectionCaption}>
+            From a photo to a clearer picture
           </Text>
         </View>
-
-        <View style={styles.stepsBadge}>
-          <Text style={styles.stepsBadgeText}>3 STEPS</Text>
-        </View>
+        <Text style={styles.sectionCount}>03 STEPS</Text>
       </View>
 
-      <WorkflowCard />
+      <View style={styles.stepsCard}>
+        {STEPS.map((step, index) => (
+          <View
+            key={step.n}
+            style={[
+              styles.stepRow,
+              index < STEPS.length - 1 ? styles.stepBorder : null,
+            ]}>
+            <View style={styles.stepIcon}>
+              <Ionicons name={step.icon} size={18} color={C.green} />
+            </View>
 
-      <View style={styles.scopeGrid}>
-        <View style={styles.scopeCard}>
-          <IconTile
+            <View style={styles.stepContent}>
+              <View style={styles.stepTitleLine}>
+                <Text style={styles.stepNumber}>{step.n}</Text>
+                <Text style={styles.stepTitle}>{step.title}</Text>
+              </View>
+              <Text style={styles.stepDescription}>
+                {step.description}
+              </Text>
+            </View>
+
+            <Ionicons
+              name="chevron-forward"
+              size={15}
+              color="#BAC3B8"
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.infoGrid}>
+        <View style={styles.infoCard}>
+          <IconButton
             name="nutrition-outline"
+            color="#557455"
+            backgroundColor="#E9F0E5"
             size={18}
-            color="#517957"
-            background="#E6F0E7"
           />
-          <Text style={styles.scopeTitle}>Focused prototype</Text>
-          <Text style={styles.scopeText}>
-            This release is designed for tomatoes.
+          <Text style={styles.infoTitle}>Tomato-only pilot</Text>
+          <Text style={styles.infoBody}>
+            This prototype currently supports tomato assessments.
           </Text>
         </View>
 
-        <View style={styles.scopeCard}>
-          <IconTile
+        <View style={styles.infoCard}>
+          <IconButton
             name="phone-portrait-outline"
+            color="#557455"
+            backgroundColor="#E9F0E5"
             size={18}
-            color="#517957"
-            background="#E6F0E7"
           />
-          <Text style={styles.scopeTitle}>Session history</Text>
-          <Text style={styles.scopeText}>
-            History resets when the app restarts.
+          <Text style={styles.infoTitle}>Session-based</Text>
+          <Text style={styles.infoBody}>
+            Saved history resets when the app restarts.
           </Text>
         </View>
       </View>
 
-      <View style={styles.disclosure}>
-        <View style={styles.disclosureTitleRow}>
-          <IconTile
+      <View style={styles.disclaimer}>
+        <View style={styles.disclaimerHeading}>
+          <Ionicons
             name="information-circle-outline"
             size={17}
-            color="#7B704A"
-            background="#F0EBD9"
+            color="#756B49"
           />
-          <Text style={styles.disclosureTitle}>
-            What this demo does—and doesn’t do
-          </Text>
+          <Text style={styles.disclaimerTitle}>Prototype, clearly labeled</Text>
         </View>
-
-        <Text style={styles.disclosureText}>
-          The current result uses storage-context heuristics. The image
-          is validated but not analyzed by a trained AI model. Packaging
-          is recorded but does not affect demo scoring.
+        <Text style={styles.disclaimerBody}>
+          Results currently use storage-context heuristics. Images are
+          validated but not analyzed by a trained AI model. Packaging
+          does not affect demo scoring.
         </Text>
-
-        <View style={styles.disclosureDivider} />
-
-        <Text style={styles.disclosureFootnote}>
+        <Text style={styles.disclaimerFoot}>
           Images are not permanently stored. Results do not certify food
           safety.
         </Text>
       </View>
 
       <View style={styles.footer}>
-        <Ionicons name="leaf-outline" size={14} color="#91A397" />
+        <Ionicons name="leaf-outline" size={14} color="#929B91" />
         <Text style={styles.footerText}>PRESERVE QUALITY · REDUCE LOSS</Text>
       </View>
     </ScrollView>
@@ -335,21 +338,21 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: C.page,
   },
   content: {
     width: '100%',
-    maxWidth: 620,
+    maxWidth: 640,
     alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 14,
-    paddingBottom: 36,
-    gap: 17,
+    paddingBottom: 34,
+    gap: 18,
   },
   contentWide: {
-    paddingHorizontal: 28,
-    paddingTop: 22,
-    gap: 20,
+    paddingHorizontal: 30,
+    paddingTop: 24,
+    gap: 21,
   },
   header: {
     minHeight: 44,
@@ -362,448 +365,467 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  brandIcon: {
+  brandMark: {
     width: 38,
     height: 38,
-    borderRadius: 13,
+    borderRadius: 12,
+    backgroundColor: C.green,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.green,
   },
   brandName: {
-    color: COLORS.ink,
+    color: C.ink,
     fontSize: 14,
     fontWeight: '800',
-    letterSpacing: -0.2,
+    letterSpacing: -0.25,
   },
-  brandCaption: {
-    color: COLORS.muted,
+  brandMeta: {
+    color: C.muted,
     fontSize: 8,
     fontWeight: '700',
-    letterSpacing: 1,
+    letterSpacing: 0.9,
     marginTop: 3,
   },
-  modeBadge: {
+  demoStatus: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#EAF3EC',
+    backgroundColor: '#E9EFE6',
   },
-  modeDot: {
+  statusDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#458556',
+    backgroundColor: '#6D8A54',
   },
-  modeText: {
-    color: '#477452',
-    fontSize: 9,
+  demoStatusText: {
+    color: '#687B50',
+    fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0.7,
   },
-  intro: {
-    paddingTop: 8,
+  greeting: {
+    paddingTop: 5,
   },
-  introCompact: {
-    paddingTop: 2,
-  },
-  eyebrow: {
-    color: '#548061',
-    fontSize: 9,
+  greetingOverline: {
+    color: '#72836F',
+    fontSize: 8,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
-  heading: {
-    color: COLORS.ink,
-    fontSize: 30,
-    lineHeight: 37,
+  greetingTitle: {
+    color: C.ink,
+    fontSize: 32,
+    lineHeight: 38,
+    letterSpacing: -1,
     fontWeight: '800',
-    letterSpacing: -0.9,
     marginTop: 9,
   },
-  headingCompact: {
-    fontSize: 27,
+  greetingTitleNarrow: {
+    fontSize: 28,
     lineHeight: 34,
   },
-  headingAccent: {
-    color: COLORS.green,
-  },
-  introDescription: {
-    maxWidth: 500,
-    color: COLORS.muted,
+  greetingBody: {
+    color: C.muted,
     fontSize: 13,
-    lineHeight: 21,
+    lineHeight: 20,
     marginTop: 9,
+    maxWidth: 520,
   },
-  hero: {
-    minHeight: 198,
+  featureCard: {
+    minHeight: 226,
     overflow: 'hidden',
-    position: 'relative',
     justifyContent: 'space-between',
-    padding: 19,
-    borderRadius: 24,
-    backgroundColor: COLORS.greenDark,
+    padding: 18,
+    borderRadius: 22,
+    backgroundColor: C.green,
   },
-  heroCopy: {
-    maxWidth: '76%',
-    zIndex: 1,
-  },
-  heroPill: {
-    alignSelf: 'flex-start',
+  featureTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'space-between',
+  },
+  featureLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
     paddingHorizontal: 9,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.11)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
   },
-  heroPillText: {
-    color: '#D6E8DA',
+  featureLabelDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.lime,
+  },
+  featureLabelText: {
+    color: '#E2EBDD',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.7,
+    letterSpacing: 0.8,
   },
-  heroTitle: {
+  featureMiddle: {
+    minHeight: 127,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featureCopy: {
+    flex: 1,
+    zIndex: 1,
+  },
+  featureTitle: {
     color: '#FFFFFF',
-    fontSize: 23,
-    lineHeight: 29,
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: '800',
-    letterSpacing: -0.5,
-    marginTop: 15,
+    letterSpacing: -0.6,
   },
-  heroDescription: {
-    color: '#C2D8C8',
+  featureSubtitle: {
+    color: '#D0DFD1',
     fontSize: 11,
-    marginTop: 8,
+    marginTop: 7,
   },
-  produceArt: {
+  fruitArtwork: {
     position: 'absolute',
     width: 145,
     height: 145,
-    right: 5,
-    top: 25,
+    right: -13,
+    top: -8,
   },
-  produceHalo: {
+  fruitHalo: {
     position: 'absolute',
-    width: 130,
-    height: 130,
-    top: 4,
+    width: 128,
+    height: 128,
     left: 8,
-    borderRadius: 65,
-    backgroundColor: 'rgba(255,255,255,0.055)',
+    top: 6,
+    borderRadius: 64,
+    backgroundColor: 'rgba(255,255,255,0.07)',
   },
-  produceFruit: {
+  fruitShadow: {
     position: 'absolute',
-    width: 82,
-    height: 78,
-    top: 39,
-    left: 33,
+    width: 76,
+    height: 10,
+    left: 35,
+    bottom: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.14)',
+  },
+  fruitBody: {
+    position: 'absolute',
+    width: 81,
+    height: 77,
+    left: 31,
+    top: 42,
     borderRadius: 42,
-    backgroundColor: COLORS.orange,
+    backgroundColor: C.coral,
     borderBottomWidth: 6,
-    borderBottomColor: '#D96D4E',
+    borderBottomColor: '#CF694F',
     transform: [{rotate: '-8deg'}],
   },
-  produceShine: {
+  fruitShine: {
     position: 'absolute',
-    width: 15,
-    height: 27,
-    top: 53,
-    left: 49,
-    borderRadius: 10,
+    width: 14,
+    height: 26,
+    left: 47,
+    top: 55,
+    borderRadius: 9,
     backgroundColor: 'rgba(255,255,255,0.24)',
-    transform: [{rotate: '24deg'}],
-  },
-  produceStem: {
-    position: 'absolute',
-    width: 6,
-    height: 20,
-    top: 25,
-    left: 70,
-    borderRadius: 4,
-    backgroundColor: '#83A96A',
-    transform: [{rotate: '10deg'}],
-  },
-  produceLeafLeft: {
-    position: 'absolute',
-    width: 29,
-    height: 12,
-    top: 39,
-    left: 48,
-    borderRadius: 10,
-    backgroundColor: '#91B779',
     transform: [{rotate: '25deg'}],
   },
-  produceLeafRight: {
+  fruitStem: {
     position: 'absolute',
-    width: 29,
-    height: 12,
-    top: 39,
-    left: 68,
-    borderRadius: 10,
-    backgroundColor: '#72995E',
+    width: 6,
+    height: 19,
+    left: 69,
+    top: 27,
+    borderRadius: 4,
+    backgroundColor: '#91A96C',
+    transform: [{rotate: '10deg'}],
+  },
+  fruitLeafOne: {
+    position: 'absolute',
+    width: 27,
+    height: 11,
+    left: 48,
+    top: 40,
+    borderRadius: 8,
+    backgroundColor: '#A6B979',
+    transform: [{rotate: '24deg'}],
+  },
+  fruitLeafTwo: {
+    position: 'absolute',
+    width: 27,
+    height: 11,
+    left: 66,
+    top: 40,
+    borderRadius: 8,
+    backgroundColor: '#829C5D',
     transform: [{rotate: '-25deg'}],
   },
-  heroBottom: {
-    minHeight: 31,
+  fruitLeafThree: {
+    position: 'absolute',
+    width: 20,
+    height: 9,
+    left: 56,
+    top: 36,
+    borderRadius: 8,
+    backgroundColor: '#90A767',
+  },
+  featureBottom: {
+    minHeight: 33,
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 7,
-    marginTop: 20,
-    paddingTop: 10,
+    gap: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.14)',
+    borderTopColor: 'rgba(255,255,255,0.15)',
+    paddingTop: 10,
   },
-  heroBottomLabel: {
+  featureBottomItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
-  heroBottomText: {
-    color: '#C7DCCB',
-    fontSize: 9,
-  },
-  heroEdition: {
-    color: '#A7C3AE',
+  featureBottomText: {
+    color: '#D5E1D5',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.7,
+    letterSpacing: 0.5,
   },
-  startButton: {
-    minHeight: 82,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 13,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 19,
-    backgroundColor: COLORS.green,
+  featureBottomDivider: {
+    width: 1,
+    height: 13,
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
-  startIcon: {
-    width: 43,
-    height: 43,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.13)',
-  },
-  startCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  startEyebrow: {
-    color: '#C2DCC9',
+  featureDemo: {
+    marginLeft: 'auto',
+    color: '#D5E1D5',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.9,
+    letterSpacing: 0.5,
   },
-  startTitle: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-    marginTop: 3,
+  actions: {
+    gap: 10,
   },
-  startDescription: {
-    color: '#C8DDD0',
-    fontSize: 10,
-    lineHeight: 15,
-    marginTop: 3,
-  },
-  historyButton: {
-    minHeight: 67,
+  startAction: {
+    minHeight: 76,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderWidth: 1,
-    borderColor: COLORS.line,
-    borderRadius: 17,
-    backgroundColor: COLORS.surface,
+    paddingVertical: 12,
+    borderRadius: 18,
+    backgroundColor: C.green,
   },
-  iconTile: {
+  startIconWrap: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: C.lime,
+  },
+  startTextWrap: {
+    flex: 1,
+  },
+  startEyebrow: {
+    color: '#C8DCCB',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.7,
+  },
+  startTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 3,
+  },
+  historyAction: {
+    minHeight: 66,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: C.line,
+    backgroundColor: C.card,
+  },
+  iconButton: {
     width: 38,
     height: 38,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
   },
-  historyCopy: {
+  historyTextWrap: {
     flex: 1,
   },
   historyTitle: {
-    color: '#304C38',
+    color: '#35483A',
     fontSize: 12,
     fontWeight: '800',
   },
-  historyDescription: {
-    color: '#839187',
+  historySubtitle: {
+    color: C.muted,
     fontSize: 10,
-    lineHeight: 15,
     marginTop: 4,
   },
-  sectionHeadingRow: {
+  sectionHeading: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    marginTop: 5,
+    marginTop: 3,
+    marginBottom: -5,
   },
   sectionTitle: {
-    color: '#284633',
+    color: C.ink,
     fontSize: 16,
     fontWeight: '800',
   },
-  sectionSubtitle: {
-    color: '#829087',
+  sectionCaption: {
+    color: C.muted,
     fontSize: 10,
     marginTop: 4,
   },
-  stepsBadge: {
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#EAF2EB',
-  },
-  stepsBadgeText: {
-    color: '#5C7C64',
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  workflowCard: {
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.line,
-    backgroundColor: COLORS.surface,
-  },
-  workflowItem: {
-    minHeight: 84,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  workflowItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#EDF1ED',
-  },
-  workflowIconWrap: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 13,
-    backgroundColor: '#EDF4EE',
-  },
-  workflowCopy: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: 12,
-  },
-  workflowNumber: {
-    color: '#75917B',
+  sectionCount: {
+    color: '#71836F',
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
-  workflowTitle: {
-    color: '#354F3C',
-    fontSize: 12,
-    fontWeight: '800',
-    marginTop: 3,
+  stepsCard: {
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 19,
+    backgroundColor: C.card,
   },
-  workflowDescription: {
-    color: '#829087',
-    fontSize: 10,
-    lineHeight: 15,
-    marginTop: 3,
-  },
-  scopeGrid: {
+  stepRow: {
+    minHeight: 77,
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 11,
   },
-  scopeCard: {
+  stepBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF0EA',
+  },
+  stepIcon: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: '#EEF3EA',
+  },
+  stepContent: {
     flex: 1,
     minWidth: 0,
-    minHeight: 137,
-    padding: 13,
-    borderRadius: 17,
-    borderWidth: 1,
-    borderColor: '#E2EAE3',
-    backgroundColor: '#EFF5F0',
   },
-  scopeTitle: {
-    color: '#45614C',
+  stepTitleLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  stepNumber: {
+    color: '#82927A',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  stepTitle: {
+    flex: 1,
+    color: '#35493A',
     fontSize: 11,
     fontWeight: '800',
-    marginTop: 10,
   },
-  scopeText: {
-    color: '#819087',
+  stepDescription: {
+    color: C.muted,
+    fontSize: 9,
+    lineHeight: 14,
+    marginTop: 4,
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  infoCard: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 130,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5EAE1',
+    backgroundColor: '#EFF3EB',
+  },
+  infoTitle: {
+    color: '#465A44',
+    fontSize: 10,
+    fontWeight: '800',
+    marginTop: 9,
+  },
+  infoBody: {
+    color: '#7D897B',
     fontSize: 9,
     lineHeight: 14,
     marginTop: 5,
   },
-  disclosure: {
-    padding: 15,
-    borderRadius: 17,
+  disclaimer: {
+    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E8E5D8',
-    backgroundColor: '#F4F2E9',
+    borderColor: '#E9E4D5',
+    backgroundColor: '#F3F0E5',
   },
-  disclosureTitleRow: {
+  disclaimerHeading: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
-    marginBottom: 9,
+    gap: 7,
+    marginBottom: 7,
   },
-  disclosureTitle: {
-    flex: 1,
-    color: '#655F47',
-    fontSize: 11,
+  disclaimerTitle: {
+    color: '#696044',
+    fontSize: 10,
     fontWeight: '800',
   },
-  disclosureText: {
-    color: '#77745F',
-    fontSize: 10,
-    lineHeight: 16,
-  },
-  disclosureDivider: {
-    height: 1,
-    backgroundColor: '#E4E0D0',
-    marginVertical: 10,
-  },
-  disclosureFootnote: {
-    color: '#88836C',
+  disclaimerBody: {
+    color: '#79745F',
     fontSize: 9,
     lineHeight: 15,
+  },
+  disclaimerFoot: {
+    color: '#89836D',
+    fontSize: 9,
+    lineHeight: 14,
+    marginTop: 8,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
+    gap: 6,
     paddingTop: 1,
   },
   footerText: {
-    color: '#91A095',
+    color: C.faint,
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.9,
+    letterSpacing: 0.8,
   },
-  startButtonPressed: {
-    opacity: 0.86,
+  startActionPressed: {
+    opacity: 0.85,
     transform: [{scale: 0.99}],
   },
-  historyButtonPressed: {
-    backgroundColor: '#F1F6F2',
-    borderColor: '#C9D9CC',
+  historyActionPressed: {
+    backgroundColor: '#F0F4EE',
+    borderColor: '#CAD8C8',
   },
 });
