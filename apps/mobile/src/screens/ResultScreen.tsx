@@ -1,10 +1,13 @@
 import React from 'react';
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
 
 import type {Assessment} from '../types/assessment';
 
@@ -13,11 +16,27 @@ type Props = {
   onNew: () => void;
 };
 
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
 type StatusStyle = {
   label: string;
   color: string;
   background: string;
   description: string;
+};
+
+const C = {
+  page: '#F5F6F2',
+  surface: '#FFFFFF',
+  ink: '#1F3025',
+  body: '#5A6A5E',
+  muted: '#7C897D',
+  faint: '#9AA397',
+  border: '#E5EAE2',
+  green: '#216744',
+  greenDark: '#193E2B',
+  greenPale: '#E8F0E8',
+  lime: '#D8E6B9',
 };
 
 const STATUS_STYLES: Record<string, StatusStyle> = {
@@ -119,10 +138,8 @@ function getFactorLabel(value: unknown): string {
 }
 
 function getRecommendation(value: unknown): string {
-  const recommendation = normalizeString(value);
-
   return (
-    recommendation ||
+    normalizeString(value) ||
     'No recommendation was returned for this assessment.'
   );
 }
@@ -140,7 +157,57 @@ function getProduceName(value: unknown): string {
   );
 }
 
+function IconTile({
+  name,
+  color = C.green,
+  background = C.greenPale,
+  size = 19,
+}: {
+  name: IconName;
+  color?: string;
+  background?: string;
+  size?: number;
+}) {
+  return (
+    <View style={[s.iconTile, {backgroundColor: background}]}>
+      <Ionicons name={name} size={size} color={color} />
+    </View>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: IconName;
+}) {
+  return (
+    <View style={s.detailRow}>
+      <View style={s.detailLabelGroup}>
+        <Ionicons
+          name={icon}
+          size={15}
+          color={C.muted}
+          accessible={false}
+        />
+        <Text style={s.detailLabel}>{label}</Text>
+      </View>
+
+      <Text style={s.detailValue} numberOfLines={2}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 export default function ResultScreen({result, onNew}: Props) {
+  const {width} = useWindowDimensions();
+  const narrow = width < 360;
+  const tablet = width >= 700;
+
   const isDemo = result.inference_mode === 'demo';
   const score = displayScore(result.quality_score);
   const confidence = displayScore(result.confidence);
@@ -156,28 +223,53 @@ export default function ResultScreen({result, onNew}: Props) {
     normalizeString(result.model_version) || 'Unavailable';
 
   return (
-    <View style={s.container}>
+    <ScrollView
+      style={s.screen}
+      contentContainerStyle={[
+        s.content,
+        tablet ? s.contentTablet : null,
+      ]}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled">
       <View style={s.header}>
-        <View style={s.badge}>
-          <View style={s.badgeDot} />
-          <Text style={s.badgeText}>ASSESSMENT RESULT</Text>
+        <View style={s.headerTop}>
+          <View style={s.brand}>
+            <View style={s.brandIcon}>
+              <Ionicons name="analytics" size={18} color="#FFFFFF" />
+            </View>
+
+            <View>
+              <Text style={s.brandName}>Assessment result</Text>
+              <Text style={s.brandCaption}>TOMATO QUALITY</Text>
+            </View>
+          </View>
+
+          <View style={s.modePill}>
+            <View style={s.modeDot} />
+            <Text style={s.modePillText}>
+              {isDemo ? 'DEMO MODE' : 'MODEL MODE'}
+            </Text>
+          </View>
         </View>
 
-        <Text style={s.heading}>
-          Your assessment,{'\n'}explained.
+        <Text
+          accessibilityRole="header"
+          style={[s.heading, narrow ? s.headingNarrow : null]}>
+          Your assessment,{'\n'}
+          <Text style={s.headingAccent}>explained.</Text>
         </Text>
 
         <Text style={s.subtitle}>
-          Review the score, storage-context indicators and
-          recommendation together.
+          Review the score, context indicators and recommendation
+          together.
         </Text>
       </View>
 
       <View style={s.scoreCard}>
-        <View style={s.scoreCardHeader}>
+        <View style={s.scoreHeader}>
           <View
             style={[
-              s.statusBadge,
+              s.statusPill,
               {backgroundColor: status.background},
             ]}>
             <View
@@ -187,21 +279,17 @@ export default function ResultScreen({result, onNew}: Props) {
               ]}
             />
 
-            <Text style={[s.statusText, {color: status.color}]}>
+            <Text style={[s.statusLabel, {color: status.color}]}>
               {status.label}
             </Text>
           </View>
 
-          <View style={s.modeBadge}>
-            <Text style={s.modeText}>
-              {isDemo ? 'DEMO MODE' : 'MODEL MODE'}
-            </Text>
-          </View>
+          <Text style={s.scoreCaption}>
+            {isDemo
+              ? 'Illustrative quality score'
+              : 'Quality score'}
+          </Text>
         </View>
-
-        <Text style={s.scoreLabel}>
-          {isDemo ? 'Illustrative quality score' : 'Quality score'}
-        </Text>
 
         <View style={s.scoreValueRow}>
           <Text style={[s.scoreValue, {color: status.color}]}>
@@ -229,9 +317,9 @@ export default function ResultScreen({result, onNew}: Props) {
           />
         </View>
 
-        <View style={s.scaleLabels}>
-          <Text style={s.scaleText}>Lower score</Text>
-          <Text style={s.scaleText}>Higher score</Text>
+        <View style={s.scoreScale}>
+          <Text style={s.scoreScaleText}>LOWER</Text>
+          <Text style={s.scoreScaleText}>HIGHER</Text>
         </View>
 
         <Text style={s.stateDescription}>
@@ -259,31 +347,33 @@ export default function ResultScreen({result, onNew}: Props) {
 
       <View style={s.recommendationCard}>
         <View style={s.sectionHeader}>
-          <View style={s.recommendationIcon}>
-            <Text style={s.recommendationIconText}>→</Text>
-          </View>
+          <IconTile
+            name="arrow-forward"
+            color={C.green}
+            background="#DDEDE1"
+          />
 
           <View style={s.sectionCopy}>
-            <Text style={s.sectionTitle}>Recommendation</Text>
+            <Text accessibilityRole="header" style={s.sectionTitle}>
+              Recommendation
+            </Text>
             <Text style={s.sectionSubtitle}>
               Read alongside the prototype limitations.
             </Text>
           </View>
         </View>
 
-        <Text style={s.recommendationText}>
-          {recommendation}
-        </Text>
+        <Text style={s.recommendationText}>{recommendation}</Text>
       </View>
 
       <View style={s.card}>
         <View style={s.sectionHeader}>
-          <View style={s.sectionIcon}>
-            <Text style={s.sectionIconText}>C</Text>
-          </View>
+          <IconTile name="options-outline" />
 
           <View style={s.sectionCopy}>
-            <Text style={s.sectionTitle}>Context indicators</Text>
+            <Text accessibilityRole="header" style={s.sectionTitle}>
+              Context indicators
+            </Text>
             <Text style={s.sectionSubtitle}>
               {isDemo
                 ? 'Heuristic values reported by the demo.'
@@ -300,7 +390,6 @@ export default function ResultScreen({result, onNew}: Props) {
           <View style={s.factorList}>
             {factors.map((factor, index) => {
               const rawWeight = factor?.weight;
-
               const hasValidWeight =
                 typeof rawWeight === 'number' &&
                 Number.isFinite(rawWeight);
@@ -315,7 +404,6 @@ export default function ResultScreen({result, onNew}: Props) {
                 <View key={`${label}-${index}`}>
                   <View style={s.factorHeader}>
                     <Text style={s.factorName}>{label}</Text>
-
                     <Text style={s.factorValue}>
                       {hasValidWeight
                         ? rawWeight.toFixed(2)
@@ -354,50 +442,59 @@ export default function ResultScreen({result, onNew}: Props) {
       </View>
 
       <View style={s.card}>
-        <Text style={s.sectionTitle}>Inference details</Text>
+        <Text accessibilityRole="header" style={s.cardTitle}>
+          Inference details
+        </Text>
 
-        <View style={s.detailRow}>
-          <Text style={s.detailLabel}>Mode</Text>
-          <Text style={s.detailValue}>
-            {isDemo ? 'Demo inference' : 'Model inference'}
-          </Text>
-        </View>
+        <View style={s.detailList}>
+          <DetailRow
+            label="Mode"
+            value={isDemo ? 'Demo inference' : 'Model inference'}
+            icon="sparkles-outline"
+          />
 
-        <View style={s.detailDivider} />
+          <View style={s.detailDivider} />
 
-        <View style={s.detailRow}>
-          <Text style={s.detailLabel}>Confidence</Text>
-          <Text style={s.detailValue}>
-            {isDemo
-              ? 'Not estimated'
-              : confidence === null
-                ? 'Unavailable'
-                : `${confidence}% reported`}
-          </Text>
-        </View>
+          <DetailRow
+            label="Confidence"
+            value={
+              isDemo
+                ? 'Not estimated'
+                : confidence === null
+                  ? 'Unavailable'
+                  : `${confidence}% reported`
+            }
+            icon="pulse-outline"
+          />
 
-        <View style={s.detailDivider} />
+          <View style={s.detailDivider} />
 
-        <View style={s.detailRow}>
-          <Text style={s.detailLabel}>Score meaning</Text>
-          <Text style={s.detailValue}>
-            {isDemo ? 'Illustrative only' : 'Not a safety rating'}
-          </Text>
-        </View>
+          <DetailRow
+            label="Score meaning"
+            value={
+              isDemo ? 'Illustrative only' : 'Not a safety rating'
+            }
+            icon="information-circle-outline"
+          />
 
-        <View style={s.detailDivider} />
+          <View style={s.detailDivider} />
 
-        <View style={s.detailRow}>
-          <Text style={s.detailLabel}>Model version</Text>
-          <Text style={s.detailValue}>{modelVersion}</Text>
+          <DetailRow
+            label="Model version"
+            value={modelVersion}
+            icon="cube-outline"
+          />
         </View>
       </View>
 
       <View style={s.notice}>
         <View style={s.noticeHeader}>
-          <View style={s.noticeIcon}>
-            <Text style={s.noticeIconText}>i</Text>
-          </View>
+          <IconTile
+            name="shield-checkmark-outline"
+            color="#776D49"
+            background="#EAE3D1"
+            size={17}
+          />
 
           <Text style={s.noticeTitle}>
             Know what this result means
@@ -413,90 +510,156 @@ export default function ResultScreen({result, onNew}: Props) {
         <View style={s.noticeDivider} />
 
         <Text style={s.noticeFootnote}>
-          Inspect the produce manually. Do not use this result
-          alone to decide whether food is safe to eat.
+          Inspect the produce manually. Do not use this result alone
+          to decide whether food is safe to eat.
         </Text>
       </View>
 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Start a new tomato assessment"
+        accessibilityHint="Returns to the photo and storage details form"
         onPress={onNew}
         style={({pressed}) => [
           s.newButton,
-          pressed ? s.pressed : null,
+          pressed ? s.newButtonPressed : null,
         ]}>
+        <Ionicons
+          name="add"
+          size={22}
+          color={C.greenDark}
+          accessible={false}
+        />
+
         <Text style={s.newButtonText}>New assessment</Text>
-        <Text style={s.newButtonArrow}>→</Text>
+
+        <Ionicons
+          name="arrow-forward"
+          size={18}
+          color={C.greenDark}
+          accessible={false}
+        />
       </Pressable>
 
       <Text style={s.footer}>
         Educational decision support · Not food-safety certification
       </Text>
-    </View>
+    </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  container: {
-    gap: 18,
-    paddingTop: 8,
-    paddingBottom: 12,
+  screen: {
+    flex: 1,
+    backgroundColor: C.page,
+  },
+  content: {
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 36,
+    gap: 17,
+  },
+  contentTablet: {
+    paddingHorizontal: 30,
+    paddingTop: 24,
+    gap: 20,
   },
   header: {
-    gap: 0,
+    paddingTop: 5,
   },
-  badge: {
-    alignSelf: 'flex-start',
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    backgroundColor: '#E8F2EB',
-    paddingHorizontal: 11,
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  brandIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: C.green,
+  },
+  brandName: {
+    color: C.ink,
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  brandCaption: {
+    color: C.muted,
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 0.9,
+    marginTop: 3,
+  },
+  modePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 20,
+    backgroundColor: '#EAF1E7',
   },
-  badgeDot: {
+  modeDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#26744E',
+    backgroundColor: '#63814E',
   },
-  badgeText: {
-    fontSize: 10,
+  modePillText: {
+    color: '#647950',
+    fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 1.2,
-    color: '#26744E',
+    letterSpacing: 0.7,
   },
   heading: {
-    fontSize: 30,
-    lineHeight: 37,
+    color: C.ink,
+    fontSize: 31,
+    lineHeight: 38,
     fontWeight: '800',
-    letterSpacing: -0.8,
-    color: '#173C2A',
+    letterSpacing: -0.9,
     marginTop: 16,
   },
+  headingNarrow: {
+    fontSize: 27,
+    lineHeight: 34,
+  },
+  headingAccent: {
+    color: C.green,
+  },
   subtitle: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#718174',
-    marginTop: 10,
+    color: C.body,
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 9,
+    maxWidth: 520,
   },
   scoreCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    padding: 20,
+    borderRadius: 23,
     borderWidth: 1,
-    borderColor: '#E3EBE5',
-    padding: 22,
+    borderColor: C.border,
+    backgroundColor: C.surface,
   },
-  scoreCardHeader: {
+  scoreHeader: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
   },
-  statusBadge: {
+  statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
@@ -509,72 +672,64 @@ const s = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  statusText: {
+  statusLabel: {
     fontSize: 12,
+    fontWeight: '800',
+  },
+  scoreCaption: {
+    color: C.muted,
+    fontSize: 10,
     fontWeight: '700',
-  },
-  modeBadge: {
-    backgroundColor: '#F0F4F1',
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: 7,
-  },
-  modeText: {
-    fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    color: '#829487',
-  },
-  scoreLabel: {
-    fontSize: 12,
-    color: '#819386',
-    marginTop: 25,
   },
   scoreValueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 5,
-    marginTop: 4,
+    marginTop: 18,
   },
   scoreValue: {
-    fontSize: 64,
+    fontSize: 60,
+    lineHeight: 68,
     fontWeight: '800',
     letterSpacing: -2,
   },
   scoreMaximum: {
-    fontSize: 19,
-    color: '#A0AEA3',
+    color: C.faint,
+    fontSize: 18,
+    fontWeight: '700',
   },
   scoreTrack: {
-    height: 8,
-    borderRadius: 4,
+    height: 9,
     overflow: 'hidden',
+    borderRadius: 5,
     backgroundColor: '#EDF2EE',
     marginTop: 12,
   },
   scoreFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 5,
   },
-  scaleLabels: {
+  scoreScale: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 7,
   },
-  scaleText: {
-    fontSize: 9,
-    color: '#9AAA9E',
+  scoreScaleText: {
+    color: C.faint,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.7,
   },
   stateDescription: {
-    fontSize: 12,
-    lineHeight: 19,
-    color: '#748779',
-    marginTop: 18,
+    color: C.body,
+    fontSize: 11,
+    lineHeight: 18,
+    marginTop: 17,
   },
   scoreDivider: {
     height: 1,
     backgroundColor: '#EAF0EB',
-    marginVertical: 18,
+    marginVertical: 17,
   },
   metadataRow: {
     flexDirection: 'row',
@@ -584,149 +739,149 @@ const s = StyleSheet.create({
   metadataItem: {
     flexGrow: 1,
     flexShrink: 1,
+    minWidth: 130,
   },
   metadataLabel: {
+    color: C.faint,
     fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: '#96A599',
+    fontWeight: '800',
+    letterSpacing: 0.9,
   },
   metadataValue: {
+    color: '#5F7A66',
     fontSize: 11,
-    fontWeight: '600',
-    color: '#607D69',
+    fontWeight: '700',
     marginTop: 6,
   },
   recommendationCard: {
-    padding: 18,
+    padding: 17,
     borderRadius: 20,
-    backgroundColor: '#EDF6EF',
     borderWidth: 1,
     borderColor: '#DCEBDD',
+    backgroundColor: '#EDF6EF',
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
-    marginBottom: 17,
+    marginBottom: 16,
+  },
+  iconTile: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
   },
   sectionCopy: {
     flex: 1,
     minWidth: 0,
   },
   sectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
     color: '#31523D',
+    fontSize: 15,
+    fontWeight: '800',
   },
   sectionSubtitle: {
+    color: '#85998B',
     fontSize: 10,
     lineHeight: 16,
-    color: '#85998B',
     marginTop: 4,
   },
-  recommendationIcon: {
-    width: 35,
-    height: 35,
-    borderRadius: 11,
-    backgroundColor: '#DDEDE1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recommendationIconText: {
-    fontSize: 22,
-    color: '#4E835E',
-  },
   recommendationText: {
+    color: '#597761',
     fontSize: 13,
     lineHeight: 22,
-    color: '#597761',
   },
   card: {
-    padding: 18,
+    padding: 17,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E3EBE5',
+    borderColor: C.border,
+    backgroundColor: C.surface,
   },
-  sectionIcon: {
-    width: 35,
-    height: 35,
-    borderRadius: 11,
-    backgroundColor: '#EEF5EF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionIconText: {
-    fontSize: 16,
+  cardTitle: {
+    color: '#2B4A36',
+    fontSize: 15,
     fontWeight: '800',
-    color: '#638A6D',
+    marginBottom: 12,
   },
   factorList: {
-    gap: 19,
+    gap: 18,
   },
   factorHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 10,
     marginBottom: 8,
   },
   factorName: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: '600',
+    minWidth: 0,
     color: '#627C6A',
+    fontSize: 12,
+    fontWeight: '700',
   },
   factorValue: {
-    fontSize: 11,
-    fontWeight: '700',
     color: '#51775D',
+    fontSize: 11,
+    fontWeight: '800',
   },
   factorTrack: {
-    height: 6,
-    borderRadius: 3,
+    height: 7,
     overflow: 'hidden',
+    borderRadius: 4,
     backgroundColor: '#EFF4F0',
   },
   factorFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 4,
     backgroundColor: '#76A783',
   },
   factorNotice: {
-    backgroundColor: '#F5F8F5',
     padding: 12,
-    borderRadius: 11,
-    marginTop: 19,
+    borderRadius: 12,
+    backgroundColor: '#F5F8F5',
+    marginTop: 18,
   },
   factorNoticeText: {
+    color: '#8A9C8F',
     fontSize: 10,
     lineHeight: 17,
-    color: '#8A9C8F',
   },
   emptyText: {
+    color: C.muted,
     fontSize: 12,
-    color: '#8A9C8F',
+  },
+  detailList: {
+    gap: 0,
   },
   detailRow: {
+    minHeight: 48,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 10,
-    paddingVertical: 14,
+    paddingVertical: 13,
+  },
+  detailLabelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
   },
   detailLabel: {
-    fontSize: 12,
-    color: '#85978B',
+    color: C.muted,
+    fontSize: 11,
+    fontWeight: '700',
   },
   detailValue: {
     flexShrink: 1,
-    textAlign: 'right',
-    fontSize: 11,
-    fontWeight: '600',
     color: '#5B7864',
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'right',
   },
   detailDivider: {
     height: 1,
@@ -735,9 +890,9 @@ const s = StyleSheet.create({
   notice: {
     padding: 16,
     borderRadius: 17,
-    backgroundColor: '#F5F2E9',
     borderWidth: 1,
     borderColor: '#EAE4D5',
+    backgroundColor: '#F5F2E9',
   },
   noticeHeader: {
     flexDirection: 'row',
@@ -745,29 +900,16 @@ const s = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
-  noticeIcon: {
-    width: 23,
-    height: 23,
-    borderRadius: 7,
-    backgroundColor: '#EAE3D1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  noticeIconText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#938253',
-  },
   noticeTitle: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: '700',
     color: '#82754F',
+    fontSize: 12,
+    fontWeight: '800',
   },
   noticeText: {
+    color: '#9A8E6D',
     fontSize: 11,
     lineHeight: 18,
-    color: '#9A8E6D',
   },
   noticeDivider: {
     height: 1,
@@ -775,37 +917,34 @@ const s = StyleSheet.create({
     marginVertical: 11,
   },
   noticeFootnote: {
+    color: '#958765',
     fontSize: 10,
     lineHeight: 17,
-    color: '#958765',
   },
   newButton: {
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 13,
-    minHeight: 56,
+    gap: 11,
     paddingHorizontal: 20,
-    borderRadius: 16,
-    backgroundColor: '#1C6846',
+    borderRadius: 17,
+    backgroundColor: C.lime,
   },
   newButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    color: C.greenDark,
+    fontSize: 15,
+    fontWeight: '800',
   },
-  newButtonArrow: {
-    fontSize: 22,
-    color: '#D5EADB',
+  newButtonPressed: {
+    opacity: 0.84,
+    transform: [{scale: 0.99}],
   },
   footer: {
+    color: C.faint,
     fontSize: 10,
     lineHeight: 17,
-    color: '#91A095',
     textAlign: 'center',
     paddingHorizontal: 10,
-  },
-  pressed: {
-    opacity: 0.8,
   },
 });
