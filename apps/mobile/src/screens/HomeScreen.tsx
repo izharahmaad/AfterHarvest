@@ -15,44 +15,44 @@ type Props = {
 };
 
 const C = {
-  page: '#F7F8F4',
+  background: '#F5F6F2',
   surface: '#FFFFFF',
-  ink: '#1E3327',
-  body: '#627267',
-  muted: '#89958B',
-  border: '#E5EBE5',
-  green: '#216744',
-  deepGreen: '#174D34',
-  paleGreen: '#EAF3EC',
-  lime: '#D9E8B8',
-  coral: '#E77C5B',
+  ink: '#1F3025',
+  text: '#526257',
+  muted: '#7D897F',
+  border: '#E5E9E2',
+  green: '#225A3C',
+  greenDark: '#193E2B',
+  greenPale: '#E8F0E8',
+  lime: '#D8E6B9',
+  tomato: '#E47758',
 };
 
-const FLOW = [
+const STEPS = [
   {
     number: '01',
-    title: 'Add a produce photo',
-    description: 'Take a picture or select one from your gallery.',
+    title: 'Photograph',
+    description: 'Capture a tomato or select an existing photo.',
     icon: 'camera-outline' as const,
   },
   {
     number: '02',
-    title: 'Enter storage conditions',
-    description: 'Add temperature, humidity and storage duration.',
+    title: 'Add conditions',
+    description: 'Enter temperature, humidity and storage days.',
     icon: 'options-outline' as const,
   },
   {
     number: '03',
-    title: 'Review the result',
-    description: 'See the demo assessment and its context.',
+    title: 'Explore results',
+    description: 'Review the demo assessment and its context.',
     icon: 'analytics-outline' as const,
   },
 ];
 
-function IconBox({
+function IconTile({
   name,
   color = C.green,
-  background = C.paleGreen,
+  background = C.greenPale,
   size = 19,
 }: {
   name: React.ComponentProps<typeof Ionicons>['name'];
@@ -61,20 +61,19 @@ function IconBox({
   size?: number;
 }) {
   return (
-    <View style={[s.iconBox, {backgroundColor: background}]}>
+    <View style={[s.iconTile, {backgroundColor: background}]}>
       <Ionicons name={name} size={size} color={color} />
     </View>
   );
 }
 
-function TomatoArtwork() {
+function TomatoMark() {
   return (
     <View
       accessible={false}
       importantForAccessibility="no-hide-descendants"
-      style={s.artwork}>
-      <View style={s.artworkHalo} />
-      <View style={s.tomatoShadow} />
+      style={s.tomatoMark}>
+      <View style={s.tomatoHalo} />
       <View style={s.tomatoBody} />
       <View style={s.tomatoHighlight} />
       <View style={s.tomatoStem} />
@@ -87,94 +86,109 @@ function TomatoArtwork() {
 export default function HomeScreen({onCapture, onHistory}: Props) {
   const {width} = useWindowDimensions();
   const narrow = width < 360;
+  const tablet = width >= 700;
 
   return (
     <ScrollView
       style={s.screen}
       contentContainerStyle={[
         s.content,
-        width >= 720 ? s.contentTablet : null,
+        tablet ? s.contentTablet : null,
       ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled">
-      <View style={s.topBar}>
+      <View style={s.header}>
         <View style={s.brand}>
-          <View style={s.brandMark}>
+          <View style={s.brandIcon}>
             <Ionicons name="leaf" size={19} color="#FFFFFF" />
           </View>
 
           <View>
             <Text style={s.brandName}>AfterHarvest</Text>
-            <Text style={s.brandCaption}>PRODUCE QUALITY</Text>
+            <Text style={s.brandCaption}>PRODUCE INSIGHTS</Text>
           </View>
         </View>
 
-        <View style={s.demoBadge}>
+        <View style={s.demoPill}>
           <View style={s.demoDot} />
-          <Text style={s.demoBadgeText}>DEMO</Text>
+          <Text style={s.demoText}>PROTOTYPE</Text>
         </View>
       </View>
 
       <View style={s.intro}>
-        <Text style={s.eyebrow}>YOUR QUALITY WORKSPACE</Text>
+        <Text style={s.eyebrow}>TOMATO QUALITY WORKSPACE</Text>
 
         <Text
           accessibilityRole="header"
-          style={[s.headline, narrow ? s.headlineNarrow : null]}>
-          Better context,{'\n'}
-          <Text style={s.headlineAccent}>clearer decisions.</Text>
+          style={[s.heading, narrow ? s.headingNarrow : null]}>
+          Understand your{'\n'}
+          <Text style={s.headingAccent}>produce better.</Text>
         </Text>
 
-        <Text style={s.introBody}>
-          Start with a tomato photo. Add its storage conditions.
-          Review a transparent demo assessment.
+        <Text style={s.introText}>
+          Combine a tomato photo with its storage conditions to explore
+          a clear, transparent demo assessment.
         </Text>
       </View>
 
-      <View style={s.feature}>
-        <View style={s.featureTop}>
-          <View style={s.featureTag}>
-            <View style={s.featureTagDot} />
-            <Text style={s.featureTagText}>CURRENT PILOT</Text>
+      <View style={s.hero}>
+        <View style={s.heroOrb} />
+
+        <View style={s.heroHeader}>
+          <View style={s.heroLabel}>
+            <Ionicons
+              name="sparkles-outline"
+              size={13}
+              color="#D9E8DA"
+            />
+            <Text style={s.heroLabelText}>CURRENT PILOT</Text>
           </View>
 
-          <Text style={s.featureIndex}>01 / TOMATO</Text>
+          <Ionicons
+            name="arrow-up-right-box"
+            size={19}
+            color="#D7E4D8"
+            accessible={false}
+          />
         </View>
 
-        <View style={s.featureMain}>
-          <View style={s.featureCopy}>
-            <Text style={s.featureTitle}>Tomato quality</Text>
-            <Text style={s.featureDescription}>
-              Photo-led assessment with storage context.
+        <View style={s.heroContent}>
+          <View style={s.heroCopy}>
+            <Text style={s.heroTitle}>
+              Tomato{'\n'}quality check
+            </Text>
+            <Text style={s.heroDescription}>
+              Photo-led. Storage-aware.
             </Text>
           </View>
 
-          <TomatoArtwork />
+          <TomatoMark />
         </View>
 
-        <View style={s.featureFooter}>
-          <View style={s.featureMeta}>
+        <View style={s.heroFooter}>
+          <View style={s.heroMetadata}>
             <Ionicons
               name="image-outline"
               size={14}
-              color="#D7E6D9"
+              color="#D3E0D4"
             />
-            <Text style={s.featureMetaText}>PHOTO</Text>
+            <Text style={s.heroMetadataText}>PHOTO</Text>
           </View>
 
-          <View style={s.metaDivider} />
+          <View style={s.heroMetadataDivider} />
 
-          <View style={s.featureMeta}>
+          <View style={s.heroMetadata}>
             <Ionicons
               name="thermometer-outline"
               size={14}
-              color="#D7E6D9"
+              color="#D3E0D4"
             />
-            <Text style={s.featureMetaText}>STORAGE</Text>
+            <Text style={s.heroMetadataText}>STORAGE DATA</Text>
           </View>
 
-          <View style={s.metaSpacer} />
-          <Text style={s.featureMode}>HEURISTIC DEMO</Text>
+          <View style={s.heroFooterSpace} />
+
+          <Text style={s.heroDemo}>DEMO</Text>
         </View>
       </View>
 
@@ -188,18 +202,18 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
           pressed ? s.primaryPressed : null,
         ]}>
         <View style={s.primaryIcon}>
-          <Ionicons name="add" size={25} color={C.deepGreen} />
+          <Ionicons name="add" size={25} color={C.greenDark} />
         </View>
 
         <View style={s.primaryCopy}>
-          <Text style={s.primaryOverline}>START HERE</Text>
+          <Text style={s.primaryOverline}>GET STARTED</Text>
           <Text style={s.primaryTitle}>New assessment</Text>
-          <Text style={s.primarySubtitle}>
-            Photo and storage details
+          <Text style={s.primaryDescription}>
+            Add a photo and storage conditions
           </Text>
         </View>
 
-        <View style={s.arrowButton}>
+        <View style={s.primaryArrow}>
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
         </View>
       </Pressable>
@@ -207,17 +221,17 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Open assessment history"
-        accessibilityHint="View results saved during this session"
+        accessibilityHint="View assessments saved during this session"
         onPress={onHistory}
         style={({pressed}) => [
           s.historyAction,
           pressed ? s.historyPressed : null,
         ]}>
-        <IconBox name="time-outline" />
+        <IconTile name="time-outline" />
 
         <View style={s.historyCopy}>
           <Text style={s.historyTitle}>Assessment history</Text>
-          <Text style={s.historySubtitle}>
+          <Text style={s.historyDescription}>
             Revisit results from this session
           </Text>
         </View>
@@ -226,47 +240,47 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
           name="chevron-forward"
           size={17}
           color={C.muted}
-          accessibilityElementsHidden
-          importantForAccessibility="no"
+          accessible={false}
         />
       </Pressable>
 
       <View style={s.sectionHeader}>
-        <View>
+        <View style={s.sectionHeadingCopy}>
           <Text accessibilityRole="header" style={s.sectionTitle}>
             How it works
           </Text>
           <Text style={s.sectionSubtitle}>
-            A guided process from photo to result
+            Three steps from photo to result
           </Text>
         </View>
 
-        <View style={s.stepPill}>
-          <Text style={s.stepPillText}>3 STEPS</Text>
+        <View style={s.stepCount}>
+          <Text style={s.stepCountText}>03 STEPS</Text>
         </View>
       </View>
 
-      <View style={s.flowCard}>
-        {FLOW.map((item, index) => (
+      <View style={s.stepsCard}>
+        {STEPS.map((step, index) => (
           <View
-            key={item.number}
+            key={step.number}
             style={[
-              s.flowItem,
-              index < FLOW.length - 1 ? s.flowItemBorder : null,
+              s.stepRow,
+              index < STEPS.length - 1 ? s.stepRowBorder : null,
             ]}>
-            <IconBox
-              name={item.icon}
+            <IconTile
+              name={step.icon}
               size={18}
-              background="#EFF4EC"
+              background="#EFF4ED"
             />
 
-            <View style={s.flowCopy}>
-              <View style={s.flowTitleRow}>
-                <Text style={s.flowNumber}>{item.number}</Text>
-                <Text style={s.flowTitle}>{item.title}</Text>
+            <View style={s.stepCopy}>
+              <View style={s.stepTitleRow}>
+                <Text style={s.stepNumber}>{step.number}</Text>
+                <Text style={s.stepTitle}>{step.title}</Text>
               </View>
-              <Text style={s.flowDescription}>
-                {item.description}
+
+              <Text style={s.stepDescription}>
+                {step.description}
               </Text>
             </View>
           </View>
@@ -275,58 +289,58 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
 
       <View style={s.infoRow}>
         <View style={s.infoCard}>
-          <IconBox
+          <IconTile
             name="nutrition-outline"
             size={18}
             color="#57764F"
-            background="#E7EFE2"
+            background="#E6EEE1"
           />
-          <Text style={s.infoTitle}>Tomato-only pilot</Text>
-          <Text style={s.infoBody}>
-            This prototype is currently focused on tomatoes.
+          <Text style={s.infoTitle}>Tomato-first</Text>
+          <Text style={s.infoDescription}>
+            This prototype currently focuses on tomatoes.
           </Text>
         </View>
 
         <View style={s.infoCard}>
-          <IconBox
+          <IconTile
             name="phone-portrait-outline"
             size={18}
             color="#57764F"
-            background="#E7EFE2"
+            background="#E6EEE1"
           />
           <Text style={s.infoTitle}>Session history</Text>
-          <Text style={s.infoBody}>
+          <Text style={s.infoDescription}>
             History resets when the app restarts.
           </Text>
         </View>
       </View>
 
       <View style={s.disclosure}>
-        <View style={s.disclosureTitleRow}>
+        <View style={s.disclosureHeader}>
           <Ionicons
             name="information-circle-outline"
             size={18}
-            color="#796F4C"
+            color="#776D49"
           />
-          <Text style={s.disclosureTitle}>About this prototype</Text>
+          <Text style={s.disclosureTitle}>About this demo</Text>
         </View>
 
-        <Text style={s.disclosureBody}>
-          Results use storage-context heuristics. Images are validated,
-          not analyzed by a trained AI model. Packaging is recorded but
-          does not affect demo scoring.
+        <Text style={s.disclosureText}>
+          Results use storage-context heuristics. Images are validated
+          but not analyzed by a trained AI model. Packaging is recorded
+          but does not affect demo scoring.
         </Text>
 
-        <View style={s.disclosureRule} />
+        <View style={s.disclosureDivider} />
 
-        <Text style={s.disclosureFoot}>
-          Images are not permanently stored. Results do not certify
-          food safety.
+        <Text style={s.disclosureFootnote}>
+          Images are not permanently stored. Results do not certify food
+          safety.
         </Text>
       </View>
 
       <View style={s.footer}>
-        <Ionicons name="leaf-outline" size={14} color="#91A095" />
+        <Ionicons name="leaf-outline" size={14} color="#929C91" />
         <Text style={s.footerText}>PRESERVE QUALITY · REDUCE LOSS</Text>
       </View>
     </ScrollView>
@@ -336,7 +350,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
 const s = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: C.page,
+    backgroundColor: C.background,
   },
   content: {
     width: '100%',
@@ -344,7 +358,7 @@ const s = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 14,
-    paddingBottom: 34,
+    paddingBottom: 36,
     gap: 17,
   },
   contentTablet: {
@@ -352,7 +366,7 @@ const s = StyleSheet.create({
     paddingTop: 24,
     gap: 20,
   },
-  topBar: {
+  header: {
     minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
@@ -363,7 +377,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  brandMark: {
+  brandIcon: {
     width: 38,
     height: 38,
     borderRadius: 13,
@@ -384,14 +398,14 @@ const s = StyleSheet.create({
     letterSpacing: 0.9,
     marginTop: 3,
   },
-  demoBadge: {
+  demoPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#EAF1E6',
+    backgroundColor: '#EAF1E7',
   },
   demoDot: {
     width: 6,
@@ -399,131 +413,118 @@ const s = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: '#63814E',
   },
-  demoBadgeText: {
+  demoText: {
     color: '#647950',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0.7,
   },
   intro: {
     paddingTop: 5,
   },
   eyebrow: {
-    color: '#708269',
+    color: '#73836E',
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 1.1,
   },
-  headline: {
+  heading: {
     color: C.ink,
     fontSize: 31,
     lineHeight: 38,
-    letterSpacing: -0.9,
     fontWeight: '800',
+    letterSpacing: -0.9,
     marginTop: 9,
   },
-  headlineNarrow: {
+  headingNarrow: {
     fontSize: 27,
     lineHeight: 34,
   },
-  headlineAccent: {
+  headingAccent: {
     color: C.green,
   },
-  introBody: {
-    color: C.body,
+  introText: {
+    maxWidth: 520,
+    color: C.text,
     fontSize: 13,
     lineHeight: 20,
     marginTop: 9,
-    maxWidth: 520,
   },
-  feature: {
+  hero: {
     minHeight: 210,
     overflow: 'hidden',
     justifyContent: 'space-between',
     padding: 18,
     borderRadius: 23,
-    backgroundColor: C.deepGreen,
+    backgroundColor: C.greenDark,
   },
-  featureTop: {
+  heroOrb: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    top: -95,
+    right: -55,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255,255,255,0.045)',
+  },
+  heroHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
   },
-  featureTag: {
+  heroLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 6,
     paddingHorizontal: 9,
     paddingVertical: 6,
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.10)',
   },
-  featureTagDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: C.lime,
-  },
-  featureTagText: {
+  heroLabelText: {
     color: '#E0EBDD',
     fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  featureIndex: {
-    color: '#B5CDB7',
-    fontSize: 8,
-    fontWeight: '700',
     letterSpacing: 0.7,
   },
-  featureMain: {
+  heroContent: {
     minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  featureCopy: {
+  heroCopy: {
     flex: 1,
     zIndex: 1,
     maxWidth: '72%',
   },
-  featureTitle: {
+  heroTitle: {
     color: '#FFFFFF',
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '800',
     letterSpacing: -0.6,
   },
-  featureDescription: {
-    color: '#C7DACB',
+  heroDescription: {
+    color: '#C8D9CA',
     fontSize: 10,
-    lineHeight: 16,
+    lineHeight: 15,
     marginTop: 7,
   },
-  artwork: {
+  tomatoMark: {
     position: 'absolute',
     width: 132,
     height: 132,
-    right: -8,
+    right: -6,
     top: -5,
   },
-  artworkHalo: {
+  tomatoHalo: {
     position: 'absolute',
     width: 122,
     height: 122,
-    top: 4,
     left: 5,
+    top: 4,
     borderRadius: 61,
     backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  tomatoShadow: {
-    position: 'absolute',
-    width: 70,
-    height: 9,
-    left: 31,
-    bottom: 11,
-    borderRadius: 9,
-    backgroundColor: 'rgba(0,0,0,0.14)',
   },
   tomatoBody: {
     position: 'absolute',
@@ -532,7 +533,7 @@ const s = StyleSheet.create({
     left: 29,
     top: 39,
     borderRadius: 40,
-    backgroundColor: C.coral,
+    backgroundColor: C.tomato,
     borderBottomWidth: 6,
     borderBottomColor: '#CF684B',
     transform: [{rotate: '-8deg'}],
@@ -577,6 +578,40 @@ const s = StyleSheet.create({
     backgroundColor: '#77945D',
     transform: [{rotate: '-24deg'}],
   },
+  heroFooter: {
+    minHeight: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.14)',
+    paddingTop: 9,
+  },
+  heroMetadata: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  heroMetadataText: {
+    color: '#D5E1D5',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  heroMetadataDivider: {
+    width: 1,
+    height: 13,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+  },
+  heroFooterSpace: {
+    flex: 1,
+  },
+  heroDemo: {
+    color: '#C6D8C8',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   primaryAction: {
     minHeight: 78,
     flexDirection: 'row',
@@ -611,12 +646,13 @@ const s = StyleSheet.create({
     fontWeight: '800',
     marginTop: 3,
   },
-  primarySubtitle: {
+  primaryDescription: {
     color: '#D1E1D4',
     fontSize: 10,
+    lineHeight: 14,
     marginTop: 3,
   },
-  arrowButton: {
+  primaryArrow: {
     width: 34,
     height: 34,
     alignItems: 'center',
@@ -636,7 +672,7 @@ const s = StyleSheet.create({
     borderColor: C.border,
     backgroundColor: C.surface,
   },
-  iconBox: {
+  iconTile: {
     width: 38,
     height: 38,
     alignItems: 'center',
@@ -652,7 +688,7 @@ const s = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  historySubtitle: {
+  historyDescription: {
     color: C.muted,
     fontSize: 10,
     lineHeight: 15,
@@ -666,6 +702,9 @@ const s = StyleSheet.create({
     marginTop: 3,
     marginBottom: -5,
   },
+  sectionHeadingCopy: {
+    flex: 1,
+  },
   sectionTitle: {
     color: C.ink,
     fontSize: 16,
@@ -676,57 +715,57 @@ const s = StyleSheet.create({
     fontSize: 10,
     marginTop: 4,
   },
-  stepPill: {
+  stepCount: {
     paddingHorizontal: 9,
     paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: '#EAF1E7',
   },
-  stepPillText: {
+  stepCountText: {
     color: '#647A59',
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.6,
   },
-  flowCard: {
+  stepsCard: {
     paddingHorizontal: 13,
     borderRadius: 19,
     borderWidth: 1,
     borderColor: C.border,
     backgroundColor: C.surface,
   },
-  flowItem: {
+  stepRow: {
     minHeight: 77,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
   },
-  flowItemBorder: {
+  stepRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: '#EEF1EB',
   },
-  flowCopy: {
+  stepCopy: {
     flex: 1,
     minWidth: 0,
     paddingVertical: 11,
   },
-  flowTitleRow: {
+  stepTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
   },
-  flowNumber: {
+  stepNumber: {
     color: '#83917C',
     fontSize: 8,
     fontWeight: '800',
   },
-  flowTitle: {
+  stepTitle: {
     flex: 1,
     color: '#3C5140',
     fontSize: 11,
     fontWeight: '800',
   },
-  flowDescription: {
+  stepDescription: {
     color: C.muted,
     fontSize: 9,
     lineHeight: 14,
@@ -739,7 +778,7 @@ const s = StyleSheet.create({
   infoCard: {
     flex: 1,
     minWidth: 0,
-    minHeight: 131,
+    minHeight: 132,
     padding: 12,
     borderRadius: 16,
     borderWidth: 1,
@@ -752,7 +791,7 @@ const s = StyleSheet.create({
     fontWeight: '800',
     marginTop: 9,
   },
-  infoBody: {
+  infoDescription: {
     color: '#7C8979',
     fontSize: 9,
     lineHeight: 14,
@@ -765,7 +804,7 @@ const s = StyleSheet.create({
     borderColor: '#E9E4D4',
     backgroundColor: '#F4F1E7',
   },
-  disclosureTitleRow: {
+  disclosureHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
@@ -776,17 +815,17 @@ const s = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
   },
-  disclosureBody: {
+  disclosureText: {
     color: '#79745F',
     fontSize: 9,
     lineHeight: 15,
   },
-  disclosureRule: {
+  disclosureDivider: {
     height: 1,
     backgroundColor: '#E4DFD0',
     marginVertical: 9,
   },
-  disclosureFoot: {
+  disclosureFootnote: {
     color: '#88836E',
     fontSize: 9,
     lineHeight: 14,
