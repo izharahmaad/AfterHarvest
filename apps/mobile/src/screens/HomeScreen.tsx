@@ -82,6 +82,7 @@ function TomatoMark() {
     </View>
   );
 }
+
 export default function HomeScreen({onCapture, onHistory}: Props) {
   const {width} = useWindowDimensions();
   const narrow = width < 360;
