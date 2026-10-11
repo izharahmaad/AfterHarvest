@@ -9,24 +9,8 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
 
-import {
-  colors,
-  radius,
-  shadow,
-  spacing,
-  typography,
-} from '../theme/tokens';
-
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
-
-type ButtonVariant =
-  | 'primary'
-  | 'secondary'
-  | 'outline'
-  | 'danger'
-  | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger';
 
 type ButtonProps = {
   label: string;
@@ -34,7 +18,6 @@ type ButtonProps = {
   disabled?: boolean;
   loading?: boolean;
   variant?: ButtonVariant;
-  icon?: IconName;
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
@@ -60,25 +43,7 @@ type StatusPillProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-type EmptyStateProps = {
-  icon: IconName;
-  title: string;
-  description: string;
-  actionLabel?: string;
-  onActionPress?: () => void;
-};
-
-type ListRowProps = {
-  icon: IconName;
-  title: string;
-  description?: string;
-  trailing?: React.ReactNode;
-  onPress?: () => void;
-  disabled?: boolean;
-  style?: StyleProp<ViewStyle>;
-};
-
-const BUTTON_VARIANTS: Record<
+const BUTTON_STYLES: Record<
   ButtonVariant,
   {
     container: ViewStyle;
@@ -88,74 +53,64 @@ const BUTTON_VARIANTS: Record<
 > = {
   primary: {
     container: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
+      backgroundColor: '#176B46',
+      borderColor: '#176B46',
     },
     text: {
-      color: colors.white,
+      color: '#FFFFFF',
     },
-    spinner: colors.white,
+    spinner: '#FFFFFF',
   },
   secondary: {
     container: {
-      backgroundColor: colors.primarySoft,
-      borderColor: colors.primarySoft,
+      backgroundColor: '#EAF4ED',
+      borderColor: '#EAF4ED',
     },
     text: {
-      color: colors.primary,
+      color: '#1B633F',
     },
-    spinner: colors.primary,
+    spinner: '#1B633F',
   },
   outline: {
     container: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
+      backgroundColor: '#FFFFFF',
+      borderColor: '#BFD8C6',
     },
     text: {
-      color: colors.primary,
+      color: '#1B633F',
     },
-    spinner: colors.primary,
+    spinner: '#1B633F',
   },
   danger: {
     container: {
-      backgroundColor: colors.danger,
-      borderColor: colors.danger,
+      backgroundColor: '#B94C45',
+      borderColor: '#B94C45',
     },
     text: {
-      color: colors.white,
+      color: '#FFFFFF',
     },
-    spinner: colors.white,
-  },
-  ghost: {
-    container: {
-      backgroundColor: 'transparent',
-      borderColor: 'transparent',
-    },
-    text: {
-      color: colors.primary,
-    },
-    spinner: colors.primary,
+    spinner: '#FFFFFF',
   },
 };
 
-const PILL_TONES = {
+const PILL_STYLES = {
   success: {
-    background: colors.successSoft,
-    color: colors.success,
+    backgroundColor: '#E6F4EA',
+    textColor: '#28764A',
   },
   warning: {
-    background: colors.warningSoft,
-    color: colors.warning,
+    backgroundColor: '#FBF1DC',
+    textColor: '#9A6B20',
   },
   danger: {
-    background: colors.dangerSoft,
-    color: colors.danger,
+    backgroundColor: '#FBEAE7',
+    textColor: '#AD514B',
   },
   neutral: {
-    background: colors.neutralSoft,
-    color: colors.neutral,
+    backgroundColor: '#EEF2EF',
+    textColor: '#63766A',
   },
-} as const;
+};
 
 export function Button({
   label,
@@ -163,12 +118,11 @@ export function Button({
   disabled = false,
   loading = false,
   variant = 'primary',
-  icon,
   accessibilityLabel,
   style,
   textStyle,
 }: ButtonProps) {
-  const variantStyle = BUTTON_VARIANTS[variant];
+  const buttonStyle = BUTTON_STYLES[variant];
   const isDisabled = disabled || loading;
 
   return (
@@ -183,18 +137,15 @@ export function Button({
       onPress={onPress}
       style={({pressed}) => [
         styles.button,
-        variantStyle.container,
+        buttonStyle.container,
         pressed && !isDisabled ? styles.buttonPressed : null,
         isDisabled ? styles.buttonDisabled : null,
         style,
       ]}>
       {loading ? (
-        <ActivityIndicator color={variantStyle.spinner} size="small" />
-      ) : icon ? (
-        <Ionicons
-          name={icon}
-          size={18}
-          color={variantStyle.text.color}
+        <ActivityIndicator
+          color={buttonStyle.spinner}
+          size="small"
         />
       ) : null}
 
@@ -202,7 +153,8 @@ export function Button({
         numberOfLines={1}
         style={[
           styles.buttonText,
-          variantStyle.text,
+          buttonStyle.text,
+          loading ? styles.buttonTextLoading : null,
           textStyle,
         ]}>
         {loading ? 'Please wait…' : label}
@@ -273,130 +225,43 @@ export function StatusPill({
   tone = 'neutral',
   style,
 }: StatusPillProps) {
-  const toneStyle = PILL_TONES[tone];
+  const pillStyle = PILL_STYLES[tone];
 
   return (
     <View
       accessibilityRole="text"
       style={[
         styles.statusPill,
-        {backgroundColor: toneStyle.background},
+        {backgroundColor: pillStyle.backgroundColor},
         style,
       ]}>
       <View
         style={[
           styles.statusDot,
-          {backgroundColor: toneStyle.color},
+          {backgroundColor: pillStyle.textColor},
         ]}
       />
 
-      <Text style={[styles.statusPillText, {color: toneStyle.color}]}>
+      <Text
+        style={[
+          styles.statusPillText,
+          {color: pillStyle.textColor},
+        ]}>
         {label}
       </Text>
     </View>
   );
 }
 
-export function EmptyState({
-  icon,
-  title,
-  description,
-  actionLabel,
-  onActionPress,
-}: EmptyStateProps) {
-  return (
-    <View style={styles.emptyState}>
-      <View style={styles.emptyIcon}>
-        <Ionicons name={icon} size={26} color={colors.primary} />
-      </View>
-
-      <Text style={styles.emptyTitle}>{title}</Text>
-      <Text style={styles.emptyDescription}>{description}</Text>
-
-      {actionLabel && onActionPress ? (
-        <Button
-          label={actionLabel}
-          onPress={onActionPress}
-          variant="secondary"
-          style={styles.emptyAction}
-        />
-      ) : null}
-    </View>
-  );
-}
-
-export function ListRow({
-  icon,
-  title,
-  description,
-  trailing,
-  onPress,
-  disabled = false,
-  style,
-}: ListRowProps) {
-  const content = (
-    <>
-      <View style={styles.listIcon}>
-        <Ionicons name={icon} size={19} color={colors.primary} />
-      </View>
-
-      <View style={styles.listCopy}>
-        <Text style={styles.listTitle} numberOfLines={1}>
-          {title}
-        </Text>
-
-        {description ? (
-          <Text style={styles.listDescription} numberOfLines={2}>
-            {description}
-          </Text>
-        ) : null}
-      </View>
-
-      {trailing ?? (
-        <Ionicons
-          name="chevron-forward"
-          size={17}
-          color={colors.faint}
-        />
-      )}
-    </>
-  );
-
-  if (!onPress) {
-    return <View style={[styles.listRow, style]}>{content}</View>;
-  }
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={title}
-      accessibilityState={{disabled}}
-      disabled={disabled}
-      onPress={onPress}
-      style={({pressed}) => [
-        styles.listRow,
-        pressed ? styles.listRowPressed : null,
-        disabled ? styles.disabled : null,
-        style,
-      ]}>
-      {content}
-    </Pressable>
-  );
-}
-
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F5F9F6',
   },
   content: {
-    width: '100%',
-    maxWidth: 640,
-    alignSelf: 'center',
     paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 36,
-    gap: 17,
+    paddingTop: 8,
+    paddingBottom: 32,
   },
   button: {
     minHeight: 54,
@@ -404,7 +269,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    borderRadius: radius.lg,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 18,
     marginVertical: 6,
@@ -422,15 +287,25 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
   },
+  buttonTextLoading: {
+    opacity: 0.94,
+  },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#E1EAE3',
     padding: 18,
     marginVertical: 8,
     gap: 10,
-    ...shadow.card,
+    shadowColor: '#183C29',
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    elevation: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -445,25 +320,31 @@ export const styles = StyleSheet.create({
     minWidth: 0,
   },
   eyebrow: {
-    ...typography.overline,
-    color: colors.primary,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    color: '#398058',
     marginBottom: 6,
   },
   sectionTitle: {
-    ...typography.title,
-    color: colors.ink,
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    color: '#1A3C2A',
   },
   sectionDescription: {
-    ...typography.body,
-    color: colors.muted,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#6B8072',
     marginTop: 6,
   },
   sectionAction: {
     minHeight: 36,
     justifyContent: 'center',
     paddingHorizontal: 10,
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
+    borderRadius: 10,
+    backgroundColor: '#EAF4ED',
   },
   sectionActionPressed: {
     opacity: 0.72,
@@ -471,7 +352,7 @@ export const styles = StyleSheet.create({
   sectionActionText: {
     fontSize: 12,
     fontWeight: '800',
-    color: colors.primary,
+    color: '#1B633F',
   },
   statusPill: {
     alignSelf: 'flex-start',
@@ -480,7 +361,7 @@ export const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    borderRadius: radius.md,
+    borderRadius: 10,
   },
   statusDot: {
     width: 6,
@@ -491,114 +372,57 @@ export const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
   },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 36,
-    paddingHorizontal: 20,
-  },
-  emptyIcon: {
-    width: 62,
-    height: 62,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
-    backgroundColor: colors.primarySoft,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    ...typography.heading,
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  emptyDescription: {
-    ...typography.body,
-    color: colors.muted,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  emptyAction: {
-    marginTop: 16,
-    minWidth: 180,
-  },
-  listRow: {
-    minHeight: 68,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  listRowPressed: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primary,
-  },
-  listIcon: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
-  },
-  listCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  listTitle: {
-    ...typography.label,
-    color: colors.ink,
-  },
-  listDescription: {
-    ...typography.caption,
-    color: colors.muted,
-    marginTop: 3,
-  },
   title: {
-    ...typography.display,
-    color: colors.ink,
+    fontSize: 28,
+    lineHeight: 35,
+    fontWeight: '800',
+    letterSpacing: -0.7,
+    color: '#18382A',
     marginTop: 12,
     marginBottom: 8,
   },
   text: {
-    ...typography.body,
-    color: colors.text,
+    fontSize: 15,
+    lineHeight: 23,
+    color: '#647A6D',
   },
   caption: {
-    ...typography.caption,
-    color: colors.faint,
+    fontSize: 11,
+    lineHeight: 17,
+    color: '#85978B',
   },
   label: {
-    ...typography.label,
-    color: colors.text,
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '700',
+    color: '#496555',
     marginBottom: 7,
   },
   input: {
     minHeight: 52,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    color: colors.ink,
+    borderColor: '#D6E3D9',
+    backgroundColor: '#FBFDFC',
+    color: '#203E2D',
     fontSize: 16,
-    borderRadius: radius.lg,
+    borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginVertical: 6,
   },
   inputFocused: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
+    borderColor: '#2F8052',
+    backgroundColor: '#F4FAF5',
   },
   divider: {
     height: 1,
-    backgroundColor: colors.divider,
+    backgroundColor: '#EDF2EE',
     marginVertical: 8,
   },
-  disabled: {
-    opacity: 0.52,
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 36,
+    paddingHorizontal: 20,
   },
 });
