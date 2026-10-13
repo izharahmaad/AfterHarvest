@@ -9,13 +9,6 @@ import {
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 
-import {
-  colors,
-  layout,
-  radius,
-  shadow,
-  typography,
-} from '../theme/tokens';
 import type {Assessment} from '../types/assessment';
 
 type Props = {
@@ -33,6 +26,20 @@ type StatusStyle = {
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
+const C = {
+  page: '#F5F6F2',
+  surface: '#FFFFFF',
+  ink: '#1F3025',
+  body: '#5A6A5E',
+  muted: '#7C897D',
+  faint: '#9AA397',
+  border: '#E5EAE2',
+  green: '#216744',
+  greenDark: '#193E2B',
+  greenPale: '#E8F0E8',
+  lime: '#D8E6B9',
+};
+
 const FILTERS: Array<{
   value: Filter;
   label: string;
@@ -47,25 +54,25 @@ const FILTERS: Array<{
 const STATUS_STYLES: Record<string, StatusStyle> = {
   fresh: {
     label: 'Fresh',
-    color: colors.success,
-    background: colors.successSoft,
+    color: '#28764A',
+    background: '#EAF5EC',
   },
   aging: {
     label: 'Aging',
-    color: colors.warning,
-    background: colors.warningSoft,
+    color: '#9A6B20',
+    background: '#FBF2DE',
   },
   spoiled: {
     label: 'Spoiled',
-    color: colors.danger,
-    background: colors.dangerSoft,
+    color: '#AD514B',
+    background: '#FBECE9',
   },
 };
 
 const UNKNOWN_STATUS: StatusStyle = {
   label: 'Uncertain',
-  color: colors.neutral,
-  background: colors.neutralSoft,
+  color: '#64748B',
+  background: '#EDF1F4',
 };
 
 function normalizeString(value: unknown): string {
@@ -183,13 +190,7 @@ function SummaryTile({
         emphasized ? s.summaryTileEmphasized : null,
       ]}>
       <View style={s.summaryTop}>
-        <Text
-          style={[
-            s.summaryLabel,
-            emphasized ? s.summaryLabelEmphasized : null,
-          ]}>
-          {label}
-        </Text>
+        <Text style={s.summaryLabel}>{label}</Text>
 
         <View
           style={[
@@ -199,7 +200,7 @@ function SummaryTile({
           <Ionicons
             name={icon}
             size={15}
-            color={emphasized ? colors.white : colors.primary}
+            color={emphasized ? '#EAF3EA' : C.green}
           />
         </View>
       </View>
@@ -251,11 +252,7 @@ function AssessmentCard({
       ]}>
       <View style={s.cardHeader}>
         <View style={s.produceIcon}>
-          <Ionicons
-            name="nutrition-outline"
-            size={19}
-            color={colors.primary}
-          />
+          <Ionicons name="nutrition-outline" size={19} color={C.green} />
         </View>
 
         <View style={s.produceCopy}>
@@ -269,7 +266,7 @@ function AssessmentCard({
         <Ionicons
           name="chevron-forward"
           size={17}
-          color={colors.faint}
+          color={C.faint}
           accessible={false}
         />
       </View>
@@ -320,18 +317,9 @@ function AssessmentCard({
         />
       </View>
 
-      <View style={s.recommendationRow}>
-        <Ionicons
-          name="sparkles-outline"
-          size={14}
-          color={colors.primary}
-          accessible={false}
-        />
-
-        <Text style={s.recommendation} numberOfLines={2}>
-          {recommendation}
-        </Text>
-      </View>
+      <Text style={s.recommendation} numberOfLines={2}>
+        {recommendation}
+      </Text>
 
       <View style={s.cardFooter}>
         <View style={s.modePill}>
@@ -345,7 +333,7 @@ function AssessmentCard({
           <Ionicons
             name="chevron-forward"
             size={14}
-            color={colors.primary}
+            color={C.green}
             accessible={false}
           />
         </View>
@@ -417,11 +405,7 @@ export default function HistoryScreen({
         <View style={s.headerTop}>
           <View style={s.brand}>
             <View style={s.brandIcon}>
-              <Ionicons
-                name="time"
-                size={18}
-                color={colors.white}
-              />
+              <Ionicons name="time" size={18} color="#FFFFFF" />
             </View>
 
             <View>
@@ -471,7 +455,7 @@ export default function HistoryScreen({
           <Ionicons
             name="information-circle-outline"
             size={17}
-            color={colors.primary}
+            color={C.green}
           />
         </View>
 
@@ -503,7 +487,7 @@ export default function HistoryScreen({
               <Ionicons
                 name={option.icon}
                 size={14}
-                color={selected ? colors.white : colors.muted}
+                color={selected ? '#FFFFFF' : C.muted}
                 accessible={false}
               />
 
@@ -548,9 +532,9 @@ export default function HistoryScreen({
         <View style={s.emptyCard}>
           <View style={s.emptyIcon}>
             <Ionicons
-              name={items.length === 0 ? 'leaf-outline' : 'search-outline'}
+              name="search-outline"
               size={25}
-              color={colors.primary}
+              color={C.green}
             />
           </View>
 
@@ -578,7 +562,7 @@ export default function HistoryScreen({
               <Ionicons
                 name="apps-outline"
                 size={15}
-                color={colors.primary}
+                color={C.green}
                 accessible={false}
               />
               <Text style={s.resetButtonText}>View all results</Text>
@@ -608,13 +592,13 @@ export default function HistoryScreen({
 const s = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: C.page,
   },
   content: {
     width: '100%',
-    maxWidth: layout.screenMaxWidth,
+    maxWidth: 640,
     alignSelf: 'center',
-    paddingHorizontal: layout.screenPadding,
+    paddingHorizontal: 20,
     paddingTop: 14,
     paddingBottom: 36,
     gap: 17,
@@ -641,19 +625,19 @@ const s = StyleSheet.create({
   brandIcon: {
     width: 38,
     height: 38,
-    borderRadius: radius.md,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: C.green,
   },
   brandName: {
-    color: colors.ink,
+    color: C.ink,
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: -0.2,
   },
   brandCaption: {
-    color: colors.muted,
+    color: C.muted,
     fontSize: 8,
     fontWeight: '700',
     letterSpacing: 0.9,
@@ -665,24 +649,27 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
+    borderRadius: 20,
+    backgroundColor: '#EAF1E7',
   },
   sessionDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.primary,
+    backgroundColor: '#63814E',
   },
   sessionPillText: {
-    color: colors.primary,
+    color: '#647950',
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.7,
   },
   heading: {
-    ...typography.display,
-    color: colors.ink,
+    color: C.ink,
+    fontSize: 31,
+    lineHeight: 38,
+    fontWeight: '800',
+    letterSpacing: -0.9,
     marginTop: 16,
   },
   headingNarrow: {
@@ -690,11 +677,12 @@ const s = StyleSheet.create({
     lineHeight: 34,
   },
   headingAccent: {
-    color: colors.primary,
+    color: C.green,
   },
   subtitle: {
-    ...typography.body,
-    color: colors.text,
+    color: C.body,
+    fontSize: 13,
+    lineHeight: 20,
     marginTop: 9,
     maxWidth: 520,
   },
@@ -706,15 +694,14 @@ const s = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     padding: 15,
-    borderRadius: radius.xl,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
+    borderColor: C.border,
+    backgroundColor: C.surface,
   },
   summaryTileEmphasized: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: C.green,
+    borderColor: C.green,
   },
   summaryTop: {
     flexDirection: 'row',
@@ -723,69 +710,69 @@ const s = StyleSheet.create({
     gap: 8,
   },
   summaryLabel: {
-    ...typography.overline,
-    color: colors.muted,
-  },
-  summaryLabelEmphasized: {
-    color: colors.white,
+    color: C.muted,
+    fontSize: 10,
+    fontWeight: '700',
   },
   summaryIcon: {
     width: 27,
     height: 27,
-    borderRadius: radius.sm,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: C.greenPale,
   },
   summaryIconEmphasized: {
-    backgroundColor: colors.overlay,
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
   summaryValue: {
-    color: colors.ink,
+    color: C.ink,
     fontSize: 31,
     fontWeight: '800',
     marginTop: 10,
   },
   summaryValueEmphasized: {
-    color: colors.white,
+    color: '#FFFFFF',
   },
   summaryHint: {
-    ...typography.overline,
-    color: colors.faint,
+    color: C.faint,
+    fontSize: 9,
     marginTop: 4,
   },
   summaryHintEmphasized: {
-    color: colors.primaryDark,
+    color: '#C9DCCB',
   },
   sessionNotice: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
     padding: 14,
-    borderRadius: radius.lg,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceMuted,
+    borderColor: '#E6EAE0',
+    backgroundColor: '#EFF3EA',
   },
   noticeIcon: {
     width: 27,
     height: 27,
-    borderRadius: radius.sm,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: '#E1EBDD',
   },
   noticeCopy: {
     flex: 1,
     minWidth: 0,
   },
   noticeTitle: {
-    ...typography.label,
-    color: colors.ink,
+    color: '#4B6148',
+    fontSize: 11,
+    fontWeight: '800',
   },
   noticeDescription: {
-    ...typography.caption,
-    color: colors.muted,
+    color: '#7C897B',
+    fontSize: 10,
+    lineHeight: 16,
     marginTop: 4,
   },
   filterRow: {
@@ -799,44 +786,44 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 11,
-    borderRadius: radius.md,
+    borderRadius: 13,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: C.border,
+    backgroundColor: C.surface,
   },
   filterSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: C.green,
+    borderColor: C.green,
   },
   filterPressed: {
     opacity: 0.8,
   },
   filterText: {
-    color: colors.text,
+    color: C.body,
     fontSize: 11,
     fontWeight: '700',
   },
   filterTextSelected: {
-    color: colors.white,
+    color: '#FFFFFF',
   },
   filterCount: {
     minWidth: 20,
     paddingHorizontal: 5,
     paddingVertical: 3,
-    borderRadius: radius.sm,
+    borderRadius: 7,
     alignItems: 'center',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: '#F0F4F0',
   },
   filterCountSelected: {
-    backgroundColor: colors.overlay,
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
   filterCountText: {
-    color: colors.muted,
+    color: C.muted,
     fontSize: 9,
     fontWeight: '800',
   },
   filterCountTextSelected: {
-    color: colors.white,
+    color: '#E8F5EB',
   },
   listHeader: {
     flexDirection: 'row',
@@ -848,27 +835,28 @@ const s = StyleSheet.create({
   listTitle: {
     flex: 1,
     minWidth: 0,
-    ...typography.heading,
-    color: colors.ink,
+    color: '#2B4A36',
+    fontSize: 16,
+    fontWeight: '800',
   },
   listCount: {
-    ...typography.overline,
-    color: colors.faint,
+    color: C.faint,
+    fontSize: 10,
+    fontWeight: '700',
   },
   list: {
     gap: 12,
   },
   card: {
     padding: 16,
-    borderRadius: radius.xl,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
+    borderColor: C.border,
+    backgroundColor: C.surface,
   },
   cardPressed: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primary,
+    backgroundColor: '#F5FAF6',
+    borderColor: '#B9D2C1',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -878,27 +866,29 @@ const s = StyleSheet.create({
   produceIcon: {
     width: 42,
     height: 42,
-    borderRadius: radius.md,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: '#EDF4EE',
   },
   produceCopy: {
     flex: 1,
     minWidth: 0,
   },
   produceTitle: {
-    ...typography.label,
-    color: colors.ink,
+    color: '#2D4D38',
+    fontSize: 13,
+    fontWeight: '800',
   },
   produceDate: {
-    ...typography.caption,
-    color: colors.faint,
+    color: C.faint,
+    fontSize: 10,
+    lineHeight: 15,
     marginTop: 4,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: colors.divider,
+    backgroundColor: '#EDF1ED',
     marginVertical: 13,
   },
   resultRow: {
@@ -913,7 +903,7 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    borderRadius: radius.sm,
+    borderRadius: 9,
   },
   statusDot: {
     width: 5,
@@ -928,8 +918,9 @@ const s = StyleSheet.create({
     alignItems: 'flex-end',
   },
   scoreLabel: {
-    ...typography.overline,
-    color: colors.faint,
+    color: C.faint,
+    fontSize: 9,
+    fontWeight: '700',
   },
   scoreRow: {
     flexDirection: 'row',
@@ -938,36 +929,31 @@ const s = StyleSheet.create({
     marginTop: 2,
   },
   scoreValue: {
-    color: colors.ink,
+    color: '#31553D',
     fontSize: 24,
     fontWeight: '800',
   },
   scoreMax: {
-    ...typography.overline,
-    color: colors.faint,
+    color: C.faint,
+    fontSize: 10,
+    fontWeight: '700',
   },
   progressTrack: {
     height: 6,
     overflow: 'hidden',
     borderRadius: 3,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: '#EFF3EF',
     marginTop: 12,
   },
   progressFill: {
     height: '100%',
     borderRadius: 3,
   },
-  recommendationRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 7,
-    marginTop: 12,
-  },
   recommendation: {
-    flex: 1,
-    ...typography.caption,
+    color: C.body,
+    fontSize: 11,
     lineHeight: 18,
-    color: colors.text,
+    marginTop: 12,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -980,11 +966,11 @@ const s = StyleSheet.create({
   modePill: {
     paddingHorizontal: 7,
     paddingVertical: 5,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceMuted,
+    borderRadius: 6,
+    backgroundColor: '#F2F5F2',
   },
   modeText: {
-    color: colors.muted,
+    color: '#85958A',
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -995,7 +981,7 @@ const s = StyleSheet.create({
     gap: 3,
   },
   detailsLinkText: {
-    color: colors.primary,
+    color: C.green,
     fontSize: 11,
     fontWeight: '800',
   },
@@ -1003,29 +989,30 @@ const s = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 34,
     paddingHorizontal: 24,
-    borderRadius: radius.xl,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
+    borderColor: C.border,
+    backgroundColor: C.surface,
   },
   emptyIcon: {
     width: 61,
     height: 61,
-    borderRadius: radius.lg,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 17,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: C.greenPale,
   },
   emptyTitle: {
-    ...typography.heading,
-    color: colors.ink,
+    color: '#34553E',
+    fontSize: 16,
+    fontWeight: '800',
     textAlign: 'center',
   },
   emptyDescription: {
-    ...typography.body,
-    color: colors.muted,
+    color: C.muted,
+    fontSize: 12,
+    lineHeight: 20,
     marginTop: 8,
     textAlign: 'center',
   },
@@ -1036,21 +1023,22 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 7,
     paddingHorizontal: 16,
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
+    borderRadius: 12,
+    backgroundColor: C.greenPale,
     marginTop: 16,
   },
   resetPressed: {
     opacity: 0.8,
   },
   resetButtonText: {
-    color: colors.primary,
+    color: C.green,
     fontSize: 12,
     fontWeight: '800',
   },
   footer: {
-    ...typography.overline,
-    color: colors.faint,
+    color: C.faint,
+    fontSize: 10,
+    lineHeight: 17,
     textAlign: 'center',
     paddingHorizontal: 12,
   },
