@@ -6,19 +6,30 @@ import {
   Keyboard,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import {Ionicons} from '@expo/vector-icons';
 
 import {predict} from '../services/api';
+import {
+  colors,
+  layout,
+  radius,
+  shadow,
+  typography,
+} from '../theme/tokens';
 import type {Assessment, Context} from '../types/assessment';
 
 type Props = {
   onResult: (result: Assessment) => void;
 };
+
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 type NumericField = 'temperature' | 'humidity' | 'days';
 
@@ -26,7 +37,7 @@ type PackagingOption = {
   value: Context['packaging'];
   title: string;
   description: string;
-  badge: string;
+  icon: IconName;
 };
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -44,19 +55,19 @@ const PACKAGING_OPTIONS: PackagingOption[] = [
     value: 'open_crate',
     title: 'Open crate',
     description: 'Uncovered storage',
-    badge: 'OPEN',
+    icon: 'grid-outline',
   },
   {
     value: 'sealed_bag',
     title: 'Sealed bag',
     description: 'Closed packaging',
-    badge: 'SEALED',
+    icon: 'lock-closed-outline',
   },
   {
     value: 'ventilated_box',
     title: 'Ventilated box',
     description: 'Airflow openings',
-    badge: 'AIRFLOW',
+    icon: 'leaf-outline',
   },
 ];
 
@@ -66,6 +77,7 @@ const FIELDS: Array<{
   unit: string;
   hint: string;
   placeholder: string;
+  icon: IconName;
 }> = [
   {
     key: 'temperature',
@@ -73,6 +85,7 @@ const FIELDS: Array<{
     unit: '°C',
     hint: '−20 to 60°C',
     placeholder: '8.5',
+    icon: 'thermometer-outline',
   },
   {
     key: 'humidity',
@@ -80,6 +93,7 @@ const FIELDS: Array<{
     unit: '%',
     hint: '0 to 100%',
     placeholder: '72',
+    icon: 'water-outline',
   },
   {
     key: 'days',
@@ -87,6 +101,7 @@ const FIELDS: Array<{
     unit: 'days',
     hint: 'Whole days from 0 to 365',
     placeholder: '4',
+    icon: 'time-outline',
   },
 ];
 
@@ -153,7 +168,7 @@ function StepHeader({
         <Text style={s.stepNumberText}>{number}</Text>
       </View>
 
-      <View style={s.stepHeaderCopy}>
+      <View style={s.stepCopy}>
         <View style={s.stepTitleRow}>
           <Text style={s.stepTitle}>{title}</Text>
 
@@ -381,33 +396,39 @@ export default function CaptureScreen({onResult}: Props) {
   }
 
   return (
-    <View style={s.container}>
-      <View style={s.intro}>
-        <View style={s.eyebrow}>
-          <View style={s.eyebrowDot} />
-          <Text style={s.eyebrowText}>TOMATO ASSESSMENT</Text>
+    <ScrollView
+      style={s.screen}
+      contentContainerStyle={s.content}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled">
+      <View style={s.header}>
+        <View style={s.brand}>
+          <View style={s.brandIcon}>
+            <Ionicons name="camera" size={18} color={colors.white} />
+          </View>
+
+          <View>
+            <Text style={s.brandName}>New assessment</Text>
+            <Text style={s.brandCaption}>TOMATO QUALITY</Text>
+          </View>
         </View>
 
-        <Text style={s.heading}>
-          Assess quality{'\n'}with context.
+        <View style={s.stepChip}>
+          <Text style={s.stepChipText}>3 STEPS</Text>
+        </View>
+      </View>
+
+      <View style={s.intro}>
+        <Text
+          accessibilityRole="header"
+          style={s.heading}>
+          Assess quality{'\n'}
+          <Text style={s.headingAccent}>with context.</Text>
         </Text>
 
         <Text style={s.subtitle}>
-          Add a clear photo and the storage conditions for this
-          tomato batch.
+          Add a clear tomato photo and the conditions it was stored in.
         </Text>
-      </View>
-
-      <View style={s.progressCard}>
-        <View style={s.progressCopy}>
-          <Text style={s.progressTitle}>Assessment checklist</Text>
-          <Text style={s.progressDescription}>
-            Complete three short steps to get a transparent demo
-            result.
-          </Text>
-        </View>
-
-        <Text style={s.progressValue}>3 STEPS</Text>
       </View>
 
       <View style={s.card}>
@@ -427,11 +448,9 @@ export default function CaptureScreen({onResult}: Props) {
               accessibilityLabel="Selected tomato photo"
             />
 
-            <View style={s.previewOverlay}>
-              <View style={s.photoReadyBadge}>
-                <View style={s.photoReadyDot} />
-                <Text style={s.photoReadyText}>PHOTO READY</Text>
-              </View>
+            <View style={s.previewBadge}>
+              <View style={s.previewBadgeDot} />
+              <Text style={s.previewBadgeText}>PHOTO READY</Text>
             </View>
 
             <Pressable
@@ -446,7 +465,11 @@ export default function CaptureScreen({onResult}: Props) {
                 pressed ? s.pressed : null,
                 disabled ? s.disabled : null,
               ]}>
-              <Text style={s.removeText}>×</Text>
+              <Ionicons
+                name="close"
+                size={21}
+                color={colors.ink}
+              />
             </Pressable>
           </View>
         ) : (
@@ -462,15 +485,17 @@ export default function CaptureScreen({onResult}: Props) {
               disabled ? s.disabled : null,
             ]}>
             <View style={s.uploadIcon}>
-              <Text style={s.uploadIconText}>+</Text>
+              <Ionicons
+                name="image-outline"
+                size={27}
+                color={colors.primary}
+              />
             </View>
 
             <Text style={s.uploadTitle}>Add a tomato photo</Text>
-
             <Text style={s.uploadDescription}>
               Tap here to choose an image from your gallery.
             </Text>
-
             <Text style={s.uploadHint}>
               JPEG, PNG or WebP · Maximum 5 MB
             </Text>
@@ -490,6 +515,11 @@ export default function CaptureScreen({onResult}: Props) {
               pressed ? s.pressed : null,
               disabled ? s.disabled : null,
             ]}>
+            <Ionicons
+              name="camera-outline"
+              size={16}
+              color={colors.primary}
+            />
             <Text style={s.cameraButtonText}>Take photo</Text>
           </Pressable>
 
@@ -509,6 +539,11 @@ export default function CaptureScreen({onResult}: Props) {
               pressed ? s.pressed : null,
               disabled ? s.disabled : null,
             ]}>
+            <Ionicons
+              name="images-outline"
+              size={16}
+              color={colors.text}
+            />
             <Text style={s.galleryButtonText}>
               {asset ? 'Replace photo' : 'Choose image'}
             </Text>
@@ -517,7 +552,7 @@ export default function CaptureScreen({onResult}: Props) {
 
         {picking ? (
           <View style={s.loadingRow}>
-            <ActivityIndicator color="#1C6846" size="small" />
+            <ActivityIndicator color={colors.primary} size="small" />
             <Text style={s.loadingText}>Opening image picker…</Text>
           </View>
         ) : null}
@@ -539,7 +574,14 @@ export default function CaptureScreen({onResult}: Props) {
               <View
                 key={field.key}
                 style={isDays ? s.fullField : s.halfField}>
-                <Text style={s.fieldLabel}>{field.label}</Text>
+                <View style={s.fieldLabelRow}>
+                  <Ionicons
+                    name={field.icon}
+                    size={14}
+                    color={colors.primary}
+                  />
+                  <Text style={s.fieldLabel}>{field.label}</Text>
+                </View>
 
                 <View
                   style={[
@@ -560,8 +602,8 @@ export default function CaptureScreen({onResult}: Props) {
                     autoCorrect={false}
                     autoCapitalize="none"
                     placeholder={field.placeholder}
-                    placeholderTextColor="#94A298"
-                    selectionColor="#26744E"
+                    placeholderTextColor={colors.faint}
+                    selectionColor={colors.primary}
                     style={s.input}
                   />
 
@@ -607,18 +649,14 @@ export default function CaptureScreen({onResult}: Props) {
                 ]}>
                 <View
                   style={[
-                    s.packagingBadge,
-                    selected ? s.packagingBadgeSelected : null,
+                    s.packagingIcon,
+                    selected ? s.packagingIconSelected : null,
                   ]}>
-                  <Text
-                    style={[
-                      s.packagingBadgeText,
-                      selected
-                        ? s.packagingBadgeTextSelected
-                        : null,
-                    ]}>
-                    {option.badge}
-                  </Text>
+                  <Ionicons
+                    name={option.icon}
+                    size={19}
+                    color={selected ? colors.primary : colors.muted}
+                  />
                 </View>
 
                 <View style={s.packagingCopy}>
@@ -646,16 +684,20 @@ export default function CaptureScreen({onResult}: Props) {
       <View style={s.notice}>
         <View style={s.noticeHeader}>
           <View style={s.noticeIcon}>
-            <Text style={s.noticeIconText}>i</Text>
+            <Ionicons
+              name="information-circle-outline"
+              size={17}
+              color="#776D49"
+            />
           </View>
 
           <Text style={s.noticeTitle}>Demo assessment</Text>
         </View>
 
         <Text style={s.noticeText}>
-          Results use storage-context heuristics. The selected image
-          is validated for upload but is not yet analyzed by a trained
-          AI model. Results do not certify food safety.
+          Results use storage-context heuristics. The selected image is
+          validated for upload but is not yet analyzed by a trained AI
+          model. Results do not certify food safety.
         </Text>
       </View>
 
@@ -673,126 +715,137 @@ export default function CaptureScreen({onResult}: Props) {
           disabled ? s.disabled : null,
         ]}>
         {busy ? (
-          <ActivityIndicator color="#FFFFFF" size="small" />
-        ) : null}
+          <ActivityIndicator color={colors.white} size="small" />
+        ) : (
+          <Ionicons
+            name="analytics-outline"
+            size={20}
+            color={colors.primaryDark}
+          />
+        )}
 
         <Text style={s.submitText}>
           {busy ? 'Assessing…' : 'Run demo assessment'}
         </Text>
 
-        {!busy ? <Text style={s.submitArrow}>→</Text> : null}
+        {!busy ? (
+          <Ionicons
+            name="arrow-forward"
+            size={18}
+            color={colors.primaryDark}
+          />
+        ) : null}
       </Pressable>
 
       <Text style={s.footer}>
         Tomato-only prototype · Images are not permanently stored
       </Text>
-    </View>
+    </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  container: {
-    gap: 18,
-    paddingTop: 8,
-    paddingBottom: 12,
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  intro: {
-    marginBottom: 2,
+  content: {
+    width: '100%',
+    maxWidth: layout.screenMaxWidth,
+    alignSelf: 'center',
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 14,
+    paddingBottom: 36,
+    gap: 17,
   },
-  eyebrow: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    backgroundColor: '#E8F2EB',
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  eyebrowDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#26744E',
-  },
-  eyebrowText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.1,
-    color: '#26744E',
-  },
-  heading: {
-    fontSize: 31,
-    lineHeight: 38,
-    fontWeight: '800',
-    letterSpacing: -0.8,
-    color: '#173C2A',
-    marginTop: 16,
-  },
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#64796B',
-    marginTop: 10,
-  },
-  progressCard: {
+  header: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 14,
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: '#EEF6F0',
-    borderWidth: 1,
-    borderColor: '#DAEBDD',
   },
-  progressCopy: {
-    flex: 1,
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  progressTitle: {
-    fontSize: 13,
+  brandIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  brandName: {
+    color: colors.ink,
+    fontSize: 14,
     fontWeight: '800',
-    color: '#2D6242',
+    letterSpacing: -0.2,
   },
-  progressDescription: {
-    fontSize: 11,
-    lineHeight: 17,
-    color: '#6E8876',
-    marginTop: 4,
+  brandCaption: {
+    color: colors.muted,
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 0.9,
+    marginTop: 3,
   },
-  progressValue: {
-    fontSize: 10,
+  stepChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primarySoft,
+  },
+  stepChipText: {
+    color: colors.primary,
+    fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 0.8,
-    color: '#3C8057',
+    letterSpacing: 0.7,
+  },
+  intro: {
+    paddingTop: 5,
+  },
+  heading: {
+    ...typography.display,
+    color: colors.ink,
+  },
+  headingAccent: {
+    color: colors.primary,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.text,
+    marginTop: 9,
+    maxWidth: 520,
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 18,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: 17,
     borderWidth: 1,
-    borderColor: '#E2EBE4',
+    borderColor: colors.border,
+    ...shadow.card,
   },
   stepHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
-    marginBottom: 18,
+    marginBottom: 17,
   },
   stepNumber: {
     width: 34,
     height: 34,
-    borderRadius: 11,
-    backgroundColor: '#EEF5EF',
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepNumberText: {
+    color: colors.primary,
     fontSize: 11,
     fontWeight: '800',
-    color: '#36764D',
   },
-  stepHeaderCopy: {
+  stepCopy: {
     flex: 1,
     minWidth: 0,
   },
@@ -803,108 +856,96 @@ const s = StyleSheet.create({
     gap: 8,
   },
   stepTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#203D2D',
+    ...typography.heading,
+    color: colors.ink,
   },
   stepDescription: {
-    fontSize: 11,
-    lineHeight: 16,
-    color: '#6D8273',
+    ...typography.caption,
+    color: colors.muted,
     marginTop: 3,
   },
   requiredBadge: {
     paddingHorizontal: 7,
     paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#F8EEE8',
+    borderRadius: radius.sm,
+    backgroundColor: colors.warningSoft,
   },
   requiredBadgeText: {
+    color: colors.warning,
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.7,
-    color: '#A25647',
   },
   uploadArea: {
-    minHeight: 202,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: '#BFD5C6',
-    borderRadius: 18,
-    backgroundColor: '#F8FBF8',
+    minHeight: 205,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
   },
   uploadIcon: {
     width: 54,
     height: 54,
-    borderRadius: 18,
-    backgroundColor: '#E1EFE5',
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: radius.lg,
+    backgroundColor: colors.primarySoft,
     marginBottom: 13,
   },
-  uploadIconText: {
-    color: '#26744E',
-    fontSize: 29,
-    lineHeight: 33,
-    fontWeight: '400',
-  },
   uploadTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#31563E',
+    ...typography.label,
+    color: colors.ink,
     textAlign: 'center',
   },
   uploadDescription: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: '#6B8072',
+    ...typography.caption,
+    color: colors.muted,
     textAlign: 'center',
     marginTop: 5,
   },
   uploadHint: {
-    fontSize: 10,
-    color: '#829589',
-    marginTop: 15,
+    ...typography.overline,
+    color: colors.faint,
     textAlign: 'center',
+    marginTop: 15,
   },
   preview: {
     height: 230,
-    borderRadius: 18,
+    borderRadius: radius.lg,
     overflow: 'hidden',
-    backgroundColor: '#EEF3EE',
+    backgroundColor: colors.surfaceMuted,
   },
   previewImage: {
     width: '100%',
     height: '100%',
   },
-  previewOverlay: {
+  previewBadge: {
     position: 'absolute',
     bottom: 12,
     left: 12,
-  },
-  photoReadyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(24, 78, 53, 0.9)',
     paddingHorizontal: 10,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: radius.pill,
+    backgroundColor: colors.overlay,
   },
-  photoReadyDot: {
+  previewBadgeDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#A9D9B1',
+    backgroundColor: colors.accent,
   },
-  photoReadyText: {
-    color: '#FFFFFF',
+  previewBadgeText: {
+    color: colors.white,
     fontSize: 9,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0.7,
   },
   removeButton: {
     position: 'absolute',
@@ -913,14 +954,9 @@ const s = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.96)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  removeText: {
-    fontSize: 25,
-    lineHeight: 28,
-    color: '#31513C',
+    backgroundColor: colors.white,
   },
   photoActions: {
     flexDirection: 'row',
@@ -930,28 +966,30 @@ const s = StyleSheet.create({
   photoButton: {
     flex: 1,
     minHeight: 48,
-    borderRadius: 13,
-    paddingHorizontal: 10,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 7,
+    borderRadius: radius.md,
+    paddingHorizontal: 10,
   },
   cameraButton: {
-    backgroundColor: '#EAF4ED',
+    backgroundColor: colors.primarySoft,
   },
   galleryButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#D7E4DA',
+    borderColor: colors.border,
   },
   cameraButtonText: {
+    color: colors.primary,
     fontSize: 12,
     fontWeight: '800',
-    color: '#1C6642',
   },
   galleryButtonText: {
+    color: colors.text,
     fontSize: 12,
     fontWeight: '700',
-    color: '#536D5C',
   },
   loadingRow: {
     flexDirection: 'row',
@@ -961,8 +999,8 @@ const s = StyleSheet.create({
     marginTop: 14,
   },
   loadingText: {
-    fontSize: 11,
-    color: '#647B6B',
+    ...typography.caption,
+    color: colors.muted,
   },
   fields: {
     flexDirection: 'row',
@@ -976,44 +1014,46 @@ const s = StyleSheet.create({
   fullField: {
     width: '100%',
   },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#496555',
+  fieldLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 8,
+  },
+  fieldLabel: {
+    ...typography.label,
+    color: colors.text,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 54,
-    borderRadius: 14,
-    backgroundColor: '#FAFCFA',
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#DCE7DE',
+    borderColor: colors.border,
     paddingHorizontal: 13,
   },
   inputFocused: {
-    borderColor: '#2E7C50',
-    backgroundColor: '#F4FAF5',
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
   },
   input: {
     flex: 1,
     minWidth: 0,
+    color: colors.ink,
     fontSize: 18,
     fontWeight: '700',
-    color: '#244A32',
     paddingVertical: 12,
   },
   unit: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#718577',
+    ...typography.label,
+    color: colors.muted,
     marginLeft: 6,
   },
   fieldHint: {
-    fontSize: 10,
-    lineHeight: 15,
-    color: '#7B8D80',
+    ...typography.overline,
+    color: colors.faint,
     marginTop: 6,
   },
   packagingList: {
@@ -1025,48 +1065,37 @@ const s = StyleSheet.create({
     gap: 12,
     minHeight: 72,
     padding: 12,
-    borderRadius: 15,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: '#E2EAE3',
-    backgroundColor: '#FFFFFF',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   packagingSelected: {
-    backgroundColor: '#F1F8F2',
-    borderColor: '#71A685',
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
   },
-  packagingBadge: {
-    minWidth: 48,
-    paddingHorizontal: 7,
-    paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: '#F0F4F1',
+  packagingIcon: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
   },
-  packagingBadgeSelected: {
-    backgroundColor: '#DDEDE1',
-  },
-  packagingBadgeText: {
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    color: '#69806F',
-  },
-  packagingBadgeTextSelected: {
-    color: '#36764D',
+  packagingIconSelected: {
+    backgroundColor: colors.white,
   },
   packagingCopy: {
     flex: 1,
     minWidth: 0,
   },
   packagingTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#34543F',
+    ...typography.label,
+    color: colors.ink,
   },
   packagingDescription: {
-    fontSize: 11,
-    lineHeight: 16,
-    color: '#748679',
+    ...typography.caption,
+    color: colors.muted,
     marginTop: 3,
   },
   radio: {
@@ -1074,25 +1103,25 @@ const s = StyleSheet.create({
     height: 21,
     borderRadius: 11,
     borderWidth: 1.5,
-    borderColor: '#C6D4C9',
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioSelected: {
-    borderColor: '#2C7C4E',
+    borderColor: colors.primary,
   },
   radioDot: {
     width: 11,
     height: 11,
     borderRadius: 6,
-    backgroundColor: '#2C7C4E',
+    backgroundColor: colors.primary,
   },
   notice: {
     padding: 16,
-    borderRadius: 17,
-    backgroundColor: '#F4F0E7',
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: '#E9E1CF',
+    borderColor: '#E9E4D4',
+    backgroundColor: '#F4F1E7',
   },
   noticeHeader: {
     flexDirection: 'row',
@@ -1101,52 +1130,41 @@ const s = StyleSheet.create({
     marginBottom: 9,
   },
   noticeIcon: {
-    width: 23,
-    height: 23,
-    borderRadius: 7,
-    backgroundColor: '#EAE2CF',
+    width: 27,
+    height: 27,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  noticeIconText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#89784E',
+    backgroundColor: '#EAE3D1',
   },
   noticeTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#7D704E',
+    ...typography.label,
+    color: '#696147',
   },
   noticeText: {
-    fontSize: 11,
-    lineHeight: 18,
-    color: '#8B8064',
+    ...typography.caption,
+    lineHeight: 17,
+    color: '#79745F',
   },
   submitButton: {
     minHeight: 58,
-    backgroundColor: '#1B6A45',
-    borderRadius: 17,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: 11,
     paddingHorizontal: 20,
+    borderRadius: radius.lg,
+    backgroundColor: colors.accent,
   },
   submitText: {
+    color: colors.primaryDark,
     fontSize: 15,
     fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  submitArrow: {
-    fontSize: 22,
-    color: '#D8EBDD',
   },
   footer: {
-    fontSize: 10,
-    lineHeight: 16,
+    ...typography.overline,
+    color: colors.faint,
     textAlign: 'center',
-    color: '#7E9083',
     paddingHorizontal: 8,
   },
   pressed: {
