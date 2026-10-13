@@ -15,7 +15,6 @@ import {
   colors,
   radius,
   shadow,
-  spacing,
   typography,
 } from '../theme/tokens';
 
@@ -78,63 +77,52 @@ type ListRowProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-const BUTTON_VARIANTS: Record<
-  ButtonVariant,
-  {
-    container: ViewStyle;
-    text: TextStyle;
-    spinner: string;
-  }
-> = {
+type ButtonVariantStyle = {
+  container: ViewStyle;
+  textColor: string;
+  spinnerColor: string;
+};
+
+const BUTTON_VARIANTS: Record<ButtonVariant, ButtonVariantStyle> = {
   primary: {
     container: {
       backgroundColor: colors.primary,
       borderColor: colors.primary,
     },
-    text: {
-      color: colors.white,
-    },
-    spinner: colors.white,
+    textColor: colors.white,
+    spinnerColor: colors.white,
   },
   secondary: {
     container: {
       backgroundColor: colors.primarySoft,
       borderColor: colors.primarySoft,
     },
-    text: {
-      color: colors.primary,
-    },
-    spinner: colors.primary,
+    textColor: colors.primary,
+    spinnerColor: colors.primary,
   },
   outline: {
     container: {
       backgroundColor: colors.surface,
       borderColor: colors.border,
     },
-    text: {
-      color: colors.primary,
-    },
-    spinner: colors.primary,
+    textColor: colors.primary,
+    spinnerColor: colors.primary,
   },
   danger: {
     container: {
       backgroundColor: colors.danger,
       borderColor: colors.danger,
     },
-    text: {
-      color: colors.white,
-    },
-    spinner: colors.white,
+    textColor: colors.white,
+    spinnerColor: colors.white,
   },
   ghost: {
     container: {
       backgroundColor: 'transparent',
       borderColor: 'transparent',
     },
-    text: {
-      color: colors.primary,
-    },
-    spinner: colors.primary,
+    textColor: colors.primary,
+    spinnerColor: colors.primary,
   },
 };
 
@@ -189,12 +177,15 @@ export function Button({
         style,
       ]}>
       {loading ? (
-        <ActivityIndicator color={variantStyle.spinner} size="small" />
+        <ActivityIndicator
+          color={variantStyle.spinnerColor}
+          size="small"
+        />
       ) : icon ? (
         <Ionicons
           name={icon}
           size={18}
-          color={variantStyle.text.color}
+          color={variantStyle.textColor}
         />
       ) : null}
 
@@ -202,7 +193,7 @@ export function Button({
         numberOfLines={1}
         style={[
           styles.buttonText,
-          variantStyle.text,
+          {color: variantStyle.textColor},
           textStyle,
         ]}>
         {loading ? 'Please wait…' : label}
