@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -40,6 +40,15 @@ type PackagingOption = {
   icon: IconName;
 };
 
+type StoragePreset = {
+  id: string;
+  title: string;
+  temperature: string;
+  humidity: string;
+  days: string;
+  icon: IconName;
+};
+
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_PIXELS = 20_000_000;
 
@@ -68,6 +77,33 @@ const PACKAGING_OPTIONS: PackagingOption[] = [
     title: 'Ventilated box',
     description: 'Airflow openings',
     icon: 'leaf-outline',
+  },
+];
+
+const STORAGE_PRESETS: StoragePreset[] = [
+  {
+    id: 'room',
+    title: 'Room',
+    temperature: '22',
+    humidity: '65',
+    days: '2',
+    icon: 'home-outline',
+  },
+  {
+    id: 'cooler',
+    title: 'Cooler',
+    temperature: '8',
+    humidity: '80',
+    days: '4',
+    icon: 'snow-outline',
+  },
+  {
+    id: 'transport',
+    title: 'Transport',
+    temperature: '12',
+    humidity: '75',
+    days: '1',
+    icon: 'car-outline',
   },
 ];
 
@@ -151,21 +187,51 @@ function validateImage(
   return null;
 }
 
+function formatBytes(value: number | undefined): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return 'Size unavailable';
+  }
+
+  if (value < 1024) {
+    return `${value} B`;
+  }
+
+  if (value < 1024 * 1024) {
+    return `${Math.round(value / 1024)} KB`;
+  }
+
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function StepHeader({
   number,
   title,
   description,
   required = false,
+  complete = false,
 }: {
   number: string;
   title: string;
   description: string;
   required?: boolean;
+  complete?: boolean;
 }) {
   return (
     <View style={s.stepHeader}>
-      <View style={s.stepNumber}>
-        <Text style={s.stepNumberText}>{number}</Text>
+      <View
+        style={[
+          s.stepNumber,
+          complete ? s.stepNumberComplete : null,
+        ]}>
+        <Ionicons
+          name={complete ? 'checkmark' : undefined}
+          size={16}
+          color={colors.white}
+        />
+
+        {!complete ? (
+          <Text style={s.stepNumberText}>{number}</Text>
+        ) : null}
       </View>
 
       <View style={s.stepCopy}>
@@ -219,10 +285,58 @@ export default function CaptureScreen({onResult}: Props) {
   const operationLocked = useRef(false);
   const disabled = busy || picking;
 
+  const photoReady = Boolean(asset);
+  const temperature = parseDecimal(context.temperature);
+  const humidity = parseDecimal(context.humidity);
+  const days = Number(context.days.trim());
+
+  const conditionsReady =
+    temperature !== null &&
+    temperature >= -20 &&
+    temperature <= 60 &&
+    humidity !== null &&
+    humidity >= 0 &&
+    humidity <= 100 &&
+    Number.isSafeInteger(days) &&
+    days >= 0 &&
+    days <= 365;
+
+  const packagingReady = PACKAGING_OPTIONS.some(
+    option => option.value === context.packaging,
+  );
+
+  const completedSteps = [
+    photoReady,
+    conditionsReady,
+    packagingReady,
+  ].filter(Boolean).length;
+
+  const progressPercent = Math.round(
+    (completedSteps / 3) * 100,
+  );
+
+  const activePreset = useMemo(() => {
+    return STORAGE_PRESETS.find(
+      preset =>
+        preset.temperature === context.temperature &&
+        preset.humidity === context.humidity &&
+        preset.days === context.days,
+    );
+  }, [context]);
+
   function updateContext(key: keyof Context, value: string) {
     setContext(previous => ({
       ...previous,
       [key]: value,
+    }));
+  }
+
+  function applyPreset(preset: StoragePreset) {
+    setContext(previous => ({
+      ...previous,
+      temperature: preset.temperature,
+      humidity: preset.humidity,
+      days: preset.days,
     }));
   }
 
@@ -310,14 +424,14 @@ export default function CaptureScreen({onResult}: Props) {
       return;
     }
 
-    const temperature = parseDecimal(context.temperature);
-    const humidity = parseDecimal(context.humidity);
+    const currentTemperature = parseDecimal(context.temperature);
+    const currentHumidity = parseDecimal(context.humidity);
     const daysText = context.days.trim();
 
     if (
-      temperature === null ||
-      temperature < -20 ||
-      temperature > 60
+      currentTemperature === null ||
+      currentTemperature < -20 ||
+      currentTemperature > 60
     ) {
       Alert.alert(
         'Invalid temperature',
@@ -327,9 +441,9 @@ export default function CaptureScreen({onResult}: Props) {
     }
 
     if (
-      humidity === null ||
-      humidity < 0 ||
-      humidity > 100
+      currentHumidity === null ||
+      currentHumidity < 0 ||
+      currentHumidity > 100
     ) {
       Alert.alert(
         'Invalid humidity',
@@ -346,9 +460,9 @@ export default function CaptureScreen({onResult}: Props) {
       return;
     }
 
-    const days = Number(daysText);
+    const currentDays = Number(daysText);
 
-    if (!Number.isSafeInteger(days) || days > 365) {
+    if (!Number.isSafeInteger(currentDays) || currentDays > 365) {
       Alert.alert(
         'Invalid storage duration',
         'Enter a whole number from 0 to 365.',
@@ -369,9 +483,9 @@ export default function CaptureScreen({onResult}: Props) {
     }
 
     const requestContext: Context = {
-      temperature: String(temperature),
-      humidity: String(humidity),
-      days: String(days),
+      temperature: String(currentTemperature),
+      humidity: String(currentHumidity),
+      days: String(currentDays),
       packaging: context.packaging,
     };
 
@@ -404,7 +518,11 @@ export default function CaptureScreen({onResult}: Props) {
       <View style={s.header}>
         <View style={s.brand}>
           <View style={s.brandIcon}>
-            <Ionicons name="camera" size={18} color={colors.white} />
+            <Ionicons
+              name="camera"
+              size={18}
+              color={colors.white}
+            />
           </View>
 
           <View>
@@ -414,7 +532,9 @@ export default function CaptureScreen({onResult}: Props) {
         </View>
 
         <View style={s.stepChip}>
-          <Text style={s.stepChipText}>3 STEPS</Text>
+          <Text style={s.stepChipText}>
+            {completedSteps}/3
+          </Text>
         </View>
       </View>
 
@@ -431,12 +551,42 @@ export default function CaptureScreen({onResult}: Props) {
         </Text>
       </View>
 
+      <View style={s.progressCard}>
+        <View style={s.progressHeader}>
+          <Text style={s.progressTitle}>
+            Assessment readiness
+          </Text>
+
+          <Text style={s.progressValue}>
+            {progressPercent}%
+          </Text>
+        </View>
+
+        <View style={s.progressTrack}>
+          <View
+            style={[
+              s.progressFill,
+              {width: `${progressPercent}%`},
+            ]}
+          />
+        </View>
+
+        <Text style={s.progressHint}>
+          {completedSteps === 3
+            ? 'All required details are ready.'
+            : `${3 - completedSteps} more step${
+                3 - completedSteps === 1 ? '' : 's'
+              } to complete.`}
+        </Text>
+      </View>
+
       <View style={s.card}>
         <StepHeader
           number="01"
           title="Produce photo"
           description="Use one clear image of the tomato."
           required
+          complete={photoReady}
         />
 
         {asset ? (
@@ -502,6 +652,34 @@ export default function CaptureScreen({onResult}: Props) {
           </Pressable>
         )}
 
+        {asset ? (
+          <View style={s.photoMetadata}>
+            <View style={s.metadataItem}>
+              <Ionicons
+                name="resize-outline"
+                size={13}
+                color={colors.muted}
+              />
+              <Text style={s.metadataText}>
+                {asset.width} × {asset.height}
+              </Text>
+            </View>
+
+            <View style={s.metadataDivider} />
+
+            <View style={s.metadataItem}>
+              <Ionicons
+                name="document-outline"
+                size={13}
+                color={colors.muted}
+              />
+              <Text style={s.metadataText}>
+                {formatBytes(asset.fileSize)}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
         <View style={s.photoActions}>
           <Pressable
             accessibilityRole="button"
@@ -552,8 +730,13 @@ export default function CaptureScreen({onResult}: Props) {
 
         {picking ? (
           <View style={s.loadingRow}>
-            <ActivityIndicator color={colors.primary} size="small" />
-            <Text style={s.loadingText}>Opening image picker…</Text>
+            <ActivityIndicator
+              color={colors.primary}
+              size="small"
+            />
+            <Text style={s.loadingText}>
+              Opening image picker…
+            </Text>
           </View>
         ) : null}
       </View>
@@ -563,7 +746,45 @@ export default function CaptureScreen({onResult}: Props) {
           number="02"
           title="Storage conditions"
           description="Enter the known storage environment."
+          complete={conditionsReady}
         />
+
+        <View style={s.presetRow}>
+          {STORAGE_PRESETS.map(preset => {
+            const selected = activePreset?.id === preset.id;
+
+            return (
+              <Pressable
+                key={preset.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Use ${preset.title} storage preset`}
+                accessibilityState={{selected, disabled}}
+                disabled={disabled}
+                onPress={() => applyPreset(preset)}
+                style={({pressed}) => [
+                  s.preset,
+                  selected ? s.presetSelected : null,
+                  pressed ? s.pressed : null,
+                  disabled ? s.disabled : null,
+                ]}>
+                <Ionicons
+                  name={preset.icon}
+                  size={14}
+                  color={
+                    selected ? colors.primary : colors.muted
+                  }
+                />
+                <Text
+                  style={[
+                    s.presetText,
+                    selected ? s.presetTextSelected : null,
+                  ]}>
+                  {preset.title}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
         <View style={s.fields}>
           {FIELDS.map(field => {
@@ -580,7 +801,9 @@ export default function CaptureScreen({onResult}: Props) {
                     size={14}
                     color={colors.primary}
                   />
-                  <Text style={s.fieldLabel}>{field.label}</Text>
+                  <Text style={s.fieldLabel}>
+                    {field.label}
+                  </Text>
                 </View>
 
                 <View
@@ -599,6 +822,8 @@ export default function CaptureScreen({onResult}: Props) {
                     onFocus={() => setFocusedField(field.key)}
                     onBlur={() => setFocusedField(null)}
                     keyboardType={getKeyboardType(field.key)}
+                    returnKeyType={isDays ? 'done' : 'next'}
+                    onSubmitEditing={() => Keyboard.dismiss()}
                     autoCorrect={false}
                     autoCapitalize="none"
                     placeholder={field.placeholder}
@@ -622,6 +847,7 @@ export default function CaptureScreen({onResult}: Props) {
           number="03"
           title="Packaging type"
           description="Select how this tomato is currently stored."
+          complete={packagingReady}
         />
 
         <View style={s.packagingList}>
@@ -655,7 +881,9 @@ export default function CaptureScreen({onResult}: Props) {
                   <Ionicons
                     name={option.icon}
                     size={19}
-                    color={selected ? colors.primary : colors.muted}
+                    color={
+                      selected ? colors.primary : colors.muted
+                    }
                   />
                 </View>
 
@@ -673,7 +901,9 @@ export default function CaptureScreen({onResult}: Props) {
                     s.radio,
                     selected ? s.radioSelected : null,
                   ]}>
-                  {selected ? <View style={s.radioDot} /> : null}
+                  {selected ? (
+                    <View style={s.radioDot} />
+                  ) : null}
                 </View>
               </Pressable>
             );
@@ -715,7 +945,10 @@ export default function CaptureScreen({onResult}: Props) {
           disabled ? s.disabled : null,
         ]}>
         {busy ? (
-          <ActivityIndicator color={colors.white} size="small" />
+          <ActivityIndicator
+            color={colors.white}
+            size="small"
+          />
         ) : (
           <Ionicons
             name="analytics-outline"
@@ -791,16 +1024,16 @@ const s = StyleSheet.create({
     marginTop: 3,
   },
   stepChip: {
-    paddingHorizontal: 9,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
   },
   stepChipText: {
     color: colors.primary,
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.7,
+    letterSpacing: 0.5,
   },
   intro: {
     paddingTop: 5,
@@ -817,6 +1050,46 @@ const s = StyleSheet.create({
     color: colors.text,
     marginTop: 9,
     maxWidth: 520,
+  },
+  progressCard: {
+    padding: 15,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  progressTitle: {
+    ...typography.label,
+    color: colors.ink,
+  },
+  progressValue: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  progressTrack: {
+    height: 7,
+    overflow: 'hidden',
+    borderRadius: 4,
+    backgroundColor: colors.surfaceMuted,
+    marginTop: 11,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  progressHint: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 8,
   },
   card: {
     backgroundColor: colors.surface,
@@ -839,6 +1112,9 @@ const s = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  stepNumberComplete: {
+    backgroundColor: colors.success,
   },
   stepNumberText: {
     color: colors.primary,
@@ -958,6 +1234,30 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.white,
   },
+  photoMetadata: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 11,
+    paddingVertical: 9,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+  },
+  metadataItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  metadataText: {
+    ...typography.caption,
+    color: colors.muted,
+  },
+  metadataDivider: {
+    width: 1,
+    height: 13,
+    backgroundColor: colors.divider,
+  },
   photoActions: {
     flexDirection: 'row',
     gap: 10,
@@ -1001,6 +1301,36 @@ const s = StyleSheet.create({
   loadingText: {
     ...typography.caption,
     color: colors.muted,
+  },
+  presetRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  preset: {
+    flex: 1,
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
+  },
+  presetSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
+  },
+  presetText: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  presetTextSelected: {
+    color: colors.primary,
+    fontWeight: '800',
   },
   fields: {
     flexDirection: 'row',
