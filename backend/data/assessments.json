@@ -1,0 +1,62 @@
+[
+  {
+    "assessment_id": "2dbf3464-d76a-4d20-b17a-8b515d81057d",
+    "produce_type": "tomato",
+    "quality_state": "aging",
+    "quality_score": 0.692,
+    "confidence": 0.68,
+    "temperature": 8.5,
+    "humidity": 72.0,
+    "storage_days": 4,
+    "packaging": "open_crate",
+    "recommendation": "Prioritize this batch for use or sale soon and inspect it manually.",
+    "model_version": "afterharvest-tomato-v0-demo",
+    "inference_mode": "demo",
+    "created_at": "2026-10-10T18:50:55.059611+00:00"
+  },
+  {
+    "assessment_id": "3f06036b-94d0-4ca6-8e93-5cd2ce3fb0f7",
+    "produce_type": "tomato",
+    "quality_state": "aging",
+    "quality_score": 0.692,
+    "confidence": 0.68,
+    "temperature": 8.5,
+    "humidity": 72.0,
+    "storage_days": 4,
+    "packaging": "open_crate",
+    "recommendation": "Prioritize this batch for use or sale soon and inspect it manually.",
+    "model_version": "afterharvest-tomato-v0-demo",
+    "inference_mode": "demo",
+    "created_at": "2026-10-10T20:03:18.271656+00:00"
+  },
+  {
+    "assessment_id": "3e7049cd-aba6-40a6-8686-a54265a83f58",
+    "produce_type": "tomato",
+    "quality_state": "aging",
+    "quality_score": 0.692,
+    "confidence": 0.68,
+    "temperature": 8.5,
+    "humidity": 72.0,
+    "storage_days": 4,
+    "packaging": "open_crate",
+    "recommendation": "Prioritize this batch for use or sale soon and inspect it manually.",
+    "model_version": "afterharvest-tomato-v0-demo",
+    "inference_mode": "demo",
+    "created_at": "2026-10-10T20:03:52.039553+00:00"
+  },
+  {
+    "assessment_id": "c05c6940-ee0b-4fb9-bc95-3e4d9957c056",
+    "produce_type": "tomato",
+    "quality_state": "fresh",
+    "quality_score": 0.705,
+    "confidence": 0.72,
+    "temperature": 8.5,
+    "humidity": 72.0,
+    "storage_days": 4,
+    "packaging": "sealed_bag",
+    "recommendation": "Low visible spoilage risk. Use or sell this batch soon.",
+    "model_version": "afterharvest-tomato-v0-demo",
+    "inference_mode": "demo",
+    "created_at": "2026-10-10T20:04:11.406514+00:00"
+  }
+]
