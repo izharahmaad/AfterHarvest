@@ -176,6 +176,7 @@ export const layout = {
   narrowBreakpoint: 360,
   touchTarget: 44,
 } as const;
+
 export const motion = {
   fast: 120,
   normal: 180,
