@@ -1,13 +1,10 @@
 import React from 'react';
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
 
 import type {Assessment} from '../types/assessment';
 
@@ -16,8 +13,6 @@ type Props = {
   onNew: () => void;
 };
 
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
-
 type StatusStyle = {
   label: string;
   color: string;
@@ -25,21 +20,7 @@ type StatusStyle = {
   description: string;
 };
 
-const C = {
-  page: '#F5F6F2',
-  surface: '#FFFFFF',
-  ink: '#1F3025',
-  body: '#5A6A5E',
-  muted: '#7C897D',
-  faint: '#9AA397',
-  border: '#E5EAE2',
-  green: '#216744',
-  greenDark: '#193E2B',
-  greenPale: '#E8F0E8',
-  lime: '#D8E6B9',
-};
-
-const STATUS_STYLES: Record<string, StatusStyle> = {
+const STATUS: Record<string, StatusStyle> = {
   fresh: {
     label: 'Fresh',
     color: '#2B794D',
@@ -96,17 +77,15 @@ function displayScore(value: unknown): number | null {
 }
 
 function getStatus(value: unknown): StatusStyle {
-  return STATUS_STYLES[normalizeState(value)] ?? UNKNOWN_STATUS;
+  return STATUS[normalizeState(value)] ?? UNKNOWN_STATUS;
 }
 
 function formatDate(value: unknown): string {
-  const rawDate = normalizeString(value);
-
-  if (!rawDate) {
+  if (typeof value !== 'string') {
     return 'Date unavailable';
   }
 
-  const date = new Date(rawDate);
+  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return 'Date unavailable';
@@ -128,18 +107,19 @@ function getFactorLabel(value: unknown): string {
     return 'Unknown factor';
   }
 
-  if (FACTOR_LABELS[normalized]) {
-    return FACTOR_LABELS[normalized];
-  }
-
-  return normalized
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, character => character.toUpperCase());
+  return (
+    FACTOR_LABELS[normalized] ??
+    normalized
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, letter => letter.toUpperCase())
+  );
 }
 
 function getRecommendation(value: unknown): string {
+  const recommendation = normalizeString(value);
+
   return (
-    normalizeString(value) ||
+    recommendation ||
     'No recommendation was returned for this assessment.'
   );
 }
@@ -157,119 +137,40 @@ function getProduceName(value: unknown): string {
   );
 }
 
-function IconTile({
-  name,
-  color = C.green,
-  background = C.greenPale,
-  size = 19,
-}: {
-  name: IconName;
-  color?: string;
-  background?: string;
-  size?: number;
-}) {
-  return (
-    <View style={[s.iconTile, {backgroundColor: background}]}>
-      <Ionicons name={name} size={size} color={color} />
-    </View>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon: IconName;
-}) {
-  return (
-    <View style={s.detailRow}>
-      <View style={s.detailLabelGroup}>
-        <Ionicons
-          name={icon}
-          size={15}
-          color={C.muted}
-          accessible={false}
-        />
-        <Text style={s.detailLabel}>{label}</Text>
-      </View>
-
-      <Text style={s.detailValue} numberOfLines={2}>
-        {value}
-      </Text>
-    </View>
-  );
-}
-
 export default function ResultScreen({result, onNew}: Props) {
-  const {width} = useWindowDimensions();
-  const narrow = width < 360;
-  const tablet = width >= 700;
-
-  const isDemo = result.inference_mode === 'demo';
+  const demo = result.inference_mode === 'demo';
   const score = displayScore(result.quality_score);
   const confidence = displayScore(result.confidence);
   const status = getStatus(result.quality_state);
-
   const factors = Array.isArray(result.contributing_factors)
     ? result.contributing_factors
     : [];
-
   const recommendation = getRecommendation(result.recommendation);
   const produceName = getProduceName(result.produce_type);
-  const modelVersion =
-    normalizeString(result.model_version) || 'Unavailable';
 
   return (
-    <ScrollView
-      style={s.screen}
-      contentContainerStyle={[
-        s.content,
-        tablet ? s.contentTablet : null,
-      ]}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled">
-      <View style={s.header}>
-        <View style={s.headerTop}>
-          <View style={s.brand}>
-            <View style={s.brandIcon}>
-              <Ionicons name="analytics" size={18} color="#FFFFFF" />
-            </View>
-
-            <View>
-              <Text style={s.brandName}>Assessment result</Text>
-              <Text style={s.brandCaption}>TOMATO QUALITY</Text>
-            </View>
-          </View>
-
-          <View style={s.modePill}>
-            <View style={s.modeDot} />
-            <Text style={s.modePillText}>
-              {isDemo ? 'DEMO MODE' : 'MODEL MODE'}
-            </Text>
-          </View>
+    <View style={s.container}>
+      <View>
+        <View style={s.badge}>
+          <View style={s.badgeDot} />
+          <Text style={s.badgeText}>ASSESSMENT RESULT</Text>
         </View>
 
-        <Text
-          accessibilityRole="header"
-          style={[s.heading, narrow ? s.headingNarrow : null]}>
-          Your assessment,{'\n'}
-          <Text style={s.headingAccent}>explained.</Text>
+        <Text style={s.heading}>
+          Your assessment,{'\n'}explained.
         </Text>
 
         <Text style={s.subtitle}>
-          Review the score, context indicators and recommendation
-          together.
+          Review the score, storage-context indicators and
+          recommendation together.
         </Text>
       </View>
 
       <View style={s.scoreCard}>
-        <View style={s.scoreHeader}>
+        <View style={s.scoreCardHeader}>
           <View
             style={[
-              s.statusPill,
+              s.statusBadge,
               {backgroundColor: status.background},
             ]}>
             <View
@@ -278,18 +179,21 @@ export default function ResultScreen({result, onNew}: Props) {
                 {backgroundColor: status.color},
               ]}
             />
-
-            <Text style={[s.statusLabel, {color: status.color}]}>
+            <Text style={[s.statusText, {color: status.color}]}>
               {status.label}
             </Text>
           </View>
 
-          <Text style={s.scoreCaption}>
-            {isDemo
-              ? 'Illustrative quality score'
-              : 'Quality score'}
-          </Text>
+          <View style={s.modeBadge}>
+            <Text style={s.modeText}>
+              {demo ? 'DEMO MODE' : 'MODEL MODE'}
+            </Text>
+          </View>
         </View>
+
+        <Text style={s.scoreLabel}>
+          {demo ? 'Illustrative quality score' : 'Quality score'}
+        </Text>
 
         <View style={s.scoreValueRow}>
           <Text style={[s.scoreValue, {color: status.color}]}>
@@ -317,13 +221,13 @@ export default function ResultScreen({result, onNew}: Props) {
           />
         </View>
 
-        <View style={s.scoreScale}>
-          <Text style={s.scoreScaleText}>LOWER</Text>
-          <Text style={s.scoreScaleText}>HIGHER</Text>
+        <View style={s.scaleLabels}>
+          <Text style={s.scaleText}>Lower score</Text>
+          <Text style={s.scaleText}>Higher score</Text>
         </View>
 
         <Text style={s.stateDescription}>
-          {isDemo
+          {demo
             ? `${status.label} is a demo label from storage-context heuristics, not an image-based finding.`
             : status.description}
         </Text>
@@ -347,35 +251,33 @@ export default function ResultScreen({result, onNew}: Props) {
 
       <View style={s.recommendationCard}>
         <View style={s.sectionHeader}>
-          <IconTile
-            name="arrow-forward"
-            color={C.green}
-            background="#DDEDE1"
-          />
+          <View style={s.recommendationIcon}>
+            <Text style={s.recommendationIconText}>→</Text>
+          </View>
 
           <View style={s.sectionCopy}>
-            <Text accessibilityRole="header" style={s.sectionTitle}>
-              Recommendation
-            </Text>
+            <Text style={s.sectionTitle}>Recommendation</Text>
             <Text style={s.sectionSubtitle}>
               Read alongside the prototype limitations.
             </Text>
           </View>
         </View>
 
-        <Text style={s.recommendationText}>{recommendation}</Text>
+        <Text style={s.recommendationText}>
+          {recommendation}
+        </Text>
       </View>
 
       <View style={s.card}>
         <View style={s.sectionHeader}>
-          <IconTile name="options-outline" />
+          <View style={s.sectionIcon}>
+            <Text style={s.sectionIconText}>≡</Text>
+          </View>
 
           <View style={s.sectionCopy}>
-            <Text accessibilityRole="header" style={s.sectionTitle}>
-              Context indicators
-            </Text>
+            <Text style={s.sectionTitle}>Context indicators</Text>
             <Text style={s.sectionSubtitle}>
-              {isDemo
+              {demo
                 ? 'Heuristic values reported by the demo.'
                 : 'Factor values reported by the service.'}
             </Text>
@@ -390,31 +292,27 @@ export default function ResultScreen({result, onNew}: Props) {
           <View style={s.factorList}>
             {factors.map((factor, index) => {
               const rawWeight = factor?.weight;
-              const hasValidWeight =
+              const validWeight =
                 typeof rawWeight === 'number' &&
                 Number.isFinite(rawWeight);
 
-              const percentage = hasValidWeight
-                ? clamp(rawWeight) * 100
-                : 0;
-
+              const value = validWeight ? clamp(rawWeight) : 0;
               const label = getFactorLabel(factor?.name);
 
               return (
                 <View key={`${label}-${index}`}>
                   <View style={s.factorHeader}>
                     <Text style={s.factorName}>{label}</Text>
+
                     <Text style={s.factorValue}>
-                      {hasValidWeight
-                        ? rawWeight.toFixed(2)
-                        : '—'}
+                      {validWeight ? rawWeight.toFixed(2) : '—'}
                     </Text>
                   </View>
 
                   <View
                     accessible
                     accessibilityLabel={`${label}: ${
-                      hasValidWeight
+                      validWeight
                         ? rawWeight.toFixed(2)
                         : 'unavailable'
                     }`}
@@ -422,7 +320,7 @@ export default function ResultScreen({result, onNew}: Props) {
                     <View
                       style={[
                         s.factorFill,
-                        {width: `${percentage}%`},
+                        {width: `${value * 100}%`},
                       ]}
                     />
                   </View>
@@ -434,67 +332,60 @@ export default function ResultScreen({result, onNew}: Props) {
 
         <View style={s.factorNotice}>
           <Text style={s.factorNoticeText}>
-            {isDemo
+            {demo
               ? 'Bars show individual heuristic indicators on a 0–1 scale. They are not contribution percentages and do not need to sum to 1.'
-              : 'Bars show factor values returned by the service. Their interpretation depends on the model implementation.'}
+              : 'Bars show the factor values returned by the service. Their interpretation depends on the model implementation.'}
           </Text>
         </View>
       </View>
 
       <View style={s.card}>
-        <Text accessibilityRole="header" style={s.cardTitle}>
-          Inference details
-        </Text>
+        <Text style={s.sectionTitle}>Inference details</Text>
 
-        <View style={s.detailList}>
-          <DetailRow
-            label="Mode"
-            value={isDemo ? 'Demo inference' : 'Model inference'}
-            icon="sparkles-outline"
-          />
+        <View style={s.detailRow}>
+          <Text style={s.detailLabel}>Mode</Text>
+          <Text style={s.detailValue}>
+            {demo ? 'Demo inference' : 'Model inference'}
+          </Text>
+        </View>
 
-          <View style={s.detailDivider} />
+        <View style={s.detailDivider} />
 
-          <DetailRow
-            label="Confidence"
-            value={
-              isDemo
-                ? 'Not estimated'
-                : confidence === null
-                  ? 'Unavailable'
-                  : `${confidence}% reported`
-            }
-            icon="pulse-outline"
-          />
+        <View style={s.detailRow}>
+          <Text style={s.detailLabel}>Confidence</Text>
+          <Text style={s.detailValue}>
+            {demo
+              ? 'Not estimated'
+              : confidence === null
+                ? 'Unavailable'
+                : `${confidence}% reported`}
+          </Text>
+        </View>
 
-          <View style={s.detailDivider} />
+        <View style={s.detailDivider} />
 
-          <DetailRow
-            label="Score meaning"
-            value={
-              isDemo ? 'Illustrative only' : 'Not a safety rating'
-            }
-            icon="information-circle-outline"
-          />
+        <View style={s.detailRow}>
+          <Text style={s.detailLabel}>Score meaning</Text>
+          <Text style={s.detailValue}>
+            {demo ? 'Illustrative only' : 'Not a safety rating'}
+          </Text>
+        </View>
 
-          <View style={s.detailDivider} />
+        <View style={s.detailDivider} />
 
-          <DetailRow
-            label="Model version"
-            value={modelVersion}
-            icon="cube-outline"
-          />
+        <View style={s.detailRow}>
+          <Text style={s.detailLabel}>Model version</Text>
+          <Text style={s.detailValue}>
+            {normalizeString(result.model_version) || 'Unavailable'}
+          </Text>
         </View>
       </View>
 
       <View style={s.notice}>
         <View style={s.noticeHeader}>
-          <IconTile
-            name="shield-checkmark-outline"
-            color="#776D49"
-            background="#EAE3D1"
-            size={17}
-          />
+          <View style={s.noticeIcon}>
+            <Text style={s.noticeIconText}>i</Text>
+          </View>
 
           <Text style={s.noticeTitle}>
             Know what this result means
@@ -502,7 +393,7 @@ export default function ResultScreen({result, onNew}: Props) {
         </View>
 
         <Text style={s.noticeText}>
-          {isDemo
+          {demo
             ? 'This demo validates the uploaded image but does not analyze it with a trained AI model. It does not predict remaining shelf life or provide a measured probability of freshness.'
             : 'This prototype result is decision support, not food-safety certification. A quality score must not be interpreted as proof that food is safe.'}
         </Text>
@@ -510,156 +401,87 @@ export default function ResultScreen({result, onNew}: Props) {
         <View style={s.noticeDivider} />
 
         <Text style={s.noticeFootnote}>
-          Inspect the produce manually. Do not use this result alone
-          to decide whether food is safe to eat.
+          Inspect the produce manually. Do not use this result
+          alone to decide whether food is safe to eat.
         </Text>
       </View>
 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Start a new tomato assessment"
-        accessibilityHint="Returns to the photo and storage details form"
         onPress={onNew}
         style={({pressed}) => [
           s.newButton,
-          pressed ? s.newButtonPressed : null,
+          pressed ? s.pressed : null,
         ]}>
-        <Ionicons
-          name="add"
-          size={22}
-          color={C.greenDark}
-          accessible={false}
-        />
-
         <Text style={s.newButtonText}>New assessment</Text>
-
-        <Ionicons
-          name="arrow-forward"
-          size={18}
-          color={C.greenDark}
-          accessible={false}
-        />
+        <Text style={s.newButtonArrow}>→</Text>
       </Pressable>
 
       <Text style={s.footer}>
         Educational decision support · Not food-safety certification
       </Text>
-    </ScrollView>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: C.page,
+  container: {
+    gap: 18,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
-  content: {
-    width: '100%',
-    maxWidth: 640,
-    alignSelf: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 36,
-    gap: 17,
-  },
-  contentTablet: {
-    paddingHorizontal: 30,
-    paddingTop: 24,
-    gap: 20,
-  },
-  header: {
-    paddingTop: 5,
-  },
-  headerTop: {
+  badge: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  brandIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: C.green,
-  },
-  brandName: {
-    color: C.ink,
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: -0.2,
-  },
-  brandCaption: {
-    color: C.muted,
-    fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 0.9,
-    marginTop: 3,
-  },
-  modePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
+    gap: 7,
+    backgroundColor: '#E8F2EB',
+    paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#EAF1E7',
   },
-  modeDot: {
+  badgeDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#63814E',
+    backgroundColor: '#26744E',
   },
-  modePillText: {
-    color: '#647950',
-    fontSize: 8,
+  badgeText: {
+    fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.7,
+    letterSpacing: 1.2,
+    color: '#26744E',
   },
   heading: {
-    color: C.ink,
-    fontSize: 31,
-    lineHeight: 38,
+    fontSize: 30,
+    lineHeight: 37,
     fontWeight: '800',
-    letterSpacing: -0.9,
+    letterSpacing: -0.8,
+    color: '#173C2A',
     marginTop: 16,
   },
-  headingNarrow: {
-    fontSize: 27,
-    lineHeight: 34,
-  },
-  headingAccent: {
-    color: C.green,
-  },
   subtitle: {
-    color: C.body,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 9,
-    maxWidth: 520,
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#718174',
+    marginTop: 10,
   },
   scoreCard: {
-    padding: 20,
-    borderRadius: 23,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.surface,
+    borderColor: '#E3EBE5',
+    padding: 22,
   },
-  scoreHeader: {
+  scoreCardHeader: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
   },
-  statusPill: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
@@ -672,64 +494,72 @@ const s = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  statusLabel: {
+  statusText: {
     fontSize: 12,
-    fontWeight: '800',
-  },
-  scoreCaption: {
-    color: C.muted,
-    fontSize: 10,
     fontWeight: '700',
+  },
+  modeBadge: {
+    backgroundColor: '#F0F4F1',
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 7,
+  },
+  modeText: {
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    color: '#829487',
+  },
+  scoreLabel: {
+    fontSize: 12,
+    color: '#819386',
+    marginTop: 25,
   },
   scoreValueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 5,
-    marginTop: 18,
+    marginTop: 4,
   },
   scoreValue: {
-    fontSize: 60,
-    lineHeight: 68,
+    fontSize: 64,
     fontWeight: '800',
     letterSpacing: -2,
   },
   scoreMaximum: {
-    color: C.faint,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 19,
+    color: '#A0AEA3',
   },
   scoreTrack: {
-    height: 9,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
-    borderRadius: 5,
     backgroundColor: '#EDF2EE',
     marginTop: 12,
   },
   scoreFill: {
     height: '100%',
-    borderRadius: 5,
+    borderRadius: 4,
   },
-  scoreScale: {
+  scaleLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 7,
   },
-  scoreScaleText: {
-    color: C.faint,
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.7,
+  scaleText: {
+    fontSize: 9,
+    color: '#9AAA9E',
   },
   stateDescription: {
-    color: C.body,
-    fontSize: 11,
-    lineHeight: 18,
-    marginTop: 17,
+    fontSize: 12,
+    lineHeight: 19,
+    color: '#748779',
+    marginTop: 18,
   },
   scoreDivider: {
     height: 1,
     backgroundColor: '#EAF0EB',
-    marginVertical: 17,
+    marginVertical: 18,
   },
   metadataRow: {
     flexDirection: 'row',
@@ -739,149 +569,147 @@ const s = StyleSheet.create({
   metadataItem: {
     flexGrow: 1,
     flexShrink: 1,
-    minWidth: 130,
   },
   metadataLabel: {
-    color: C.faint,
     fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.9,
+    fontWeight: '700',
+    letterSpacing: 1,
+    color: '#96A599',
   },
   metadataValue: {
-    color: '#5F7A66',
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
+    color: '#607D69',
     marginTop: 6,
   },
   recommendationCard: {
-    padding: 17,
+    padding: 18,
     borderRadius: 20,
+    backgroundColor: '#EDF6EF',
     borderWidth: 1,
     borderColor: '#DCEBDD',
-    backgroundColor: '#EDF6EF',
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
-    marginBottom: 16,
-  },
-  iconTile: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
+    marginBottom: 17,
   },
   sectionCopy: {
     flex: 1,
-    minWidth: 0,
   },
   sectionTitle: {
-    color: '#31523D',
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '700',
+    color: '#31523D',
   },
   sectionSubtitle: {
-    color: '#85998B',
     fontSize: 10,
     lineHeight: 16,
+    color: '#85998B',
     marginTop: 4,
   },
+  recommendationIcon: {
+    width: 35,
+    height: 35,
+    borderRadius: 11,
+    backgroundColor: '#DDEDE1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recommendationIconText: {
+    fontSize: 22,
+    color: '#4E835E',
+  },
   recommendationText: {
-    color: '#597761',
     fontSize: 13,
     lineHeight: 22,
+    color: '#597761',
   },
   card: {
-    padding: 17,
+    padding: 18,
     borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.surface,
+    borderColor: '#E3EBE5',
   },
-  cardTitle: {
-    color: '#2B4A36',
-    fontSize: 15,
-    fontWeight: '800',
-    marginBottom: 12,
+  sectionIcon: {
+    width: 35,
+    height: 35,
+    borderRadius: 11,
+    backgroundColor: '#EEF5EF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionIconText: {
+    fontSize: 22,
+    color: '#638A6D',
   },
   factorList: {
-    gap: 18,
+    gap: 19,
   },
   factorHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 10,
     marginBottom: 8,
   },
   factorName: {
     flex: 1,
-    minWidth: 0,
-    color: '#627C6A',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
+    color: '#627C6A',
   },
   factorValue: {
-    color: '#51775D',
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
+    color: '#51775D',
   },
   factorTrack: {
-    height: 7,
+    height: 6,
+    borderRadius: 3,
     overflow: 'hidden',
-    borderRadius: 4,
     backgroundColor: '#EFF4F0',
   },
   factorFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
     backgroundColor: '#76A783',
   },
   factorNotice: {
-    padding: 12,
-    borderRadius: 12,
     backgroundColor: '#F5F8F5',
-    marginTop: 18,
+    padding: 12,
+    borderRadius: 11,
+    marginTop: 19,
   },
   factorNoticeText: {
-    color: '#8A9C8F',
     fontSize: 10,
     lineHeight: 17,
+    color: '#8A9C8F',
   },
   emptyText: {
-    color: C.muted,
     fontSize: 12,
-  },
-  detailList: {
-    gap: 0,
+    color: '#8A9C8F',
   },
   detailRow: {
-    minHeight: 48,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
-    paddingVertical: 13,
-  },
-  detailLabelGroup: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 10,
+    paddingVertical: 14,
   },
   detailLabel: {
-    color: C.muted,
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
+    color: '#85978B',
   },
   detailValue: {
     flexShrink: 1,
-    color: '#5B7864',
-    fontSize: 11,
-    fontWeight: '700',
     textAlign: 'right',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#5B7864',
   },
   detailDivider: {
     height: 1,
@@ -890,9 +718,9 @@ const s = StyleSheet.create({
   notice: {
     padding: 16,
     borderRadius: 17,
+    backgroundColor: '#F5F2E9',
     borderWidth: 1,
     borderColor: '#EAE4D5',
-    backgroundColor: '#F5F2E9',
   },
   noticeHeader: {
     flexDirection: 'row',
@@ -900,16 +728,29 @@ const s = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
+  noticeIcon: {
+    width: 23,
+    height: 23,
+    borderRadius: 7,
+    backgroundColor: '#EAE3D1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noticeIconText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#938253',
+  },
   noticeTitle: {
     flex: 1,
-    color: '#82754F',
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
+    color: '#82754F',
   },
   noticeText: {
-    color: '#9A8E6D',
     fontSize: 11,
     lineHeight: 18,
+    color: '#9A8E6D',
   },
   noticeDivider: {
     height: 1,
@@ -917,34 +758,37 @@ const s = StyleSheet.create({
     marginVertical: 11,
   },
   noticeFootnote: {
-    color: '#958765',
     fontSize: 10,
     lineHeight: 17,
+    color: '#958765',
   },
   newButton: {
-    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 11,
+    gap: 13,
+    minHeight: 56,
     paddingHorizontal: 20,
-    borderRadius: 17,
-    backgroundColor: C.lime,
+    borderRadius: 16,
+    backgroundColor: '#1C6846',
   },
   newButtonText: {
-    color: C.greenDark,
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  newButtonPressed: {
-    opacity: 0.84,
-    transform: [{scale: 0.99}],
+  newButtonArrow: {
+    fontSize: 22,
+    color: '#D5EADB',
   },
   footer: {
-    color: C.faint,
     fontSize: 10,
     lineHeight: 17,
+    color: '#91A095',
     textAlign: 'center',
     paddingHorizontal: 10,
+  },
+  pressed: {
+    opacity: 0.8,
   },
 });
