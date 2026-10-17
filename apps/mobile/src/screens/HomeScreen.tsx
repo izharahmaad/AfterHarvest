@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React from 'react';
 import {
   Pressable,
   ScrollView,
@@ -16,393 +16,73 @@ import {
   shadow,
   typography,
 } from '../theme/tokens';
-import type {Assessment} from '../types/assessment';
 
 type Props = {
-  items: Assessment[];
-  onSelect: (assessment: Assessment) => void;
-};
-
-type Filter = 'all' | 'fresh' | 'aging' | 'spoiled';
-
-type StatusStyle = {
-  label: string;
-  color: string;
-  background: string;
+  onCapture: () => void;
+  onHistory: () => void;
 };
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const FILTERS: Array<{
-  value: Filter;
-  label: string;
-  icon: IconName;
-}> = [
-  {value: 'all', label: 'All', icon: 'apps-outline'},
-  {value: 'fresh', label: 'Fresh', icon: 'leaf-outline'},
-  {value: 'aging', label: 'Aging', icon: 'hourglass-outline'},
-  {value: 'spoiled', label: 'Spoiled', icon: 'warning-outline'},
+const STEPS = [
+  {
+    number: '01',
+    title: 'Photograph',
+    description: 'Capture a tomato or select an existing photo.',
+    icon: 'camera-outline' as IconName,
+  },
+  {
+    number: '02',
+    title: 'Add conditions',
+    description: 'Enter temperature, humidity and storage days.',
+    icon: 'options-outline' as IconName,
+  },
+  {
+    number: '03',
+    title: 'Explore results',
+    description: 'Review the demo assessment and its context.',
+    icon: 'analytics-outline' as IconName,
+  },
 ];
 
-const STATUS_STYLES: Record<string, StatusStyle> = {
-  fresh: {
-    label: 'Fresh',
-    color: colors.success,
-    background: colors.successSoft,
-  },
-  aging: {
-    label: 'Aging',
-    color: colors.warning,
-    background: colors.warningSoft,
-  },
-  spoiled: {
-    label: 'Spoiled',
-    color: colors.danger,
-    background: colors.dangerSoft,
-  },
-};
-
-const UNKNOWN_STATUS: StatusStyle = {
-  label: 'Uncertain',
-  color: colors.neutral,
-  background: colors.neutralSoft,
-};
-
-function normalizeString(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function normalizeState(value: unknown): string {
-  return normalizeString(value).toLowerCase();
-}
-
-function getStatus(value: unknown): StatusStyle {
-  return STATUS_STYLES[normalizeState(value)] ?? UNKNOWN_STATUS;
-}
-
-function getScore(value: unknown): number | null {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return null;
-  }
-
-  return Math.round(Math.max(0, Math.min(1, value)) * 100);
-}
-
-function getTimestamp(value: unknown): number {
-  const createdAt = normalizeString(value);
-
-  if (!createdAt) {
-    return 0;
-  }
-
-  const timestamp = Date.parse(createdAt);
-
-  return Number.isFinite(timestamp) ? timestamp : 0;
-}
-
-function formatDate(value: unknown): string {
-  const createdAt = normalizeString(value);
-
-  if (!createdAt) {
-    return 'Date unavailable';
-  }
-
-  const date = new Date(createdAt);
-
-  if (Number.isNaN(date.getTime())) {
-    return 'Date unavailable';
-  }
-
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function formatTime(value: unknown): string {
-  const createdAt = normalizeString(value);
-
-  if (!createdAt) {
-    return '';
-  }
-
-  const date = new Date(createdAt);
-
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  return date.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function getRecommendation(value: unknown): string {
-  return (
-    normalizeString(value) ||
-    'Open this assessment to review its details.'
-  );
-}
-
-function getAssessmentKey(
-  assessment: Assessment,
-  index: number,
-): string {
-  const assessmentId = normalizeString(assessment.assessment_id);
-
-  if (assessmentId) {
-    return assessmentId;
-  }
-
-  return `assessment-${index}-${getTimestamp(assessment.created_at)}`;
-}
-
-function isDemoAssessment(assessment: Assessment): boolean {
-  return assessment.inference_mode === 'demo';
-}
-
-function SummaryTile({
-  label,
-  value,
-  hint,
-  icon,
-  emphasized = false,
+function IconTile({
+  name,
+  color = colors.primary,
+  background = colors.primarySoft,
+  size = 19,
 }: {
-  label: string;
-  value: number;
-  hint: string;
-  icon: IconName;
-  emphasized?: boolean;
+  name: IconName;
+  color?: string;
+  background?: string;
+  size?: number;
 }) {
   return (
-    <View
-      style={[
-        s.summaryTile,
-        emphasized ? s.summaryTileEmphasized : null,
-      ]}>
-      <View style={s.summaryTop}>
-        <Text
-          style={[
-            s.summaryLabel,
-            emphasized ? s.summaryLabelEmphasized : null,
-          ]}>
-          {label}
-        </Text>
-
-        <View
-          style={[
-            s.summaryIcon,
-            emphasized ? s.summaryIconEmphasized : null,
-          ]}>
-          <Ionicons
-            name={icon}
-            size={15}
-            color={emphasized ? colors.white : colors.primary}
-          />
-        </View>
-      </View>
-
-      <Text
-        style={[
-          s.summaryValue,
-          emphasized ? s.summaryValueEmphasized : null,
-        ]}>
-        {value}
-      </Text>
-
-      <Text
-        style={[
-          s.summaryHint,
-          emphasized ? s.summaryHintEmphasized : null,
-        ]}>
-        {hint}
-      </Text>
+    <View style={[s.iconTile, {backgroundColor: background}]}>
+      <Ionicons name={name} size={size} color={color} />
     </View>
   );
 }
 
-function AssessmentCard({
-  item,
-  onPress,
-}: {
-  item: Assessment;
-  onPress: () => void;
-}) {
-  const status = getStatus(item.quality_state);
-  const score = getScore(item.quality_score);
-  const time = formatTime(item.created_at);
-  const demo = isDemoAssessment(item);
-  const recommendation = getRecommendation(item.recommendation);
-
+function TomatoMark() {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Open ${status.label.toLowerCase()} tomato assessment${
-        score === null
-          ? ''
-          : ` with score ${score} out of 100`
-      }`}
-      onPress={onPress}
-      style={({pressed}) => [
-        s.card,
-        pressed ? s.cardPressed : null,
-      ]}>
-      <View style={s.cardHeader}>
-        <View style={s.produceIcon}>
-          <Ionicons
-            name="nutrition-outline"
-            size={19}
-            color={colors.primary}
-          />
-        </View>
-
-        <View style={s.produceCopy}>
-          <Text style={s.produceTitle}>Tomato assessment</Text>
-          <Text style={s.produceDate}>
-            {formatDate(item.created_at)}
-            {time ? ` · ${time}` : ''}
-          </Text>
-        </View>
-
-        <Ionicons
-          name="chevron-forward"
-          size={17}
-          color={colors.faint}
-          accessible={false}
-        />
-      </View>
-
-      <View style={s.cardDivider} />
-
-      <View style={s.resultRow}>
-        <View
-          style={[
-            s.statusPill,
-            {backgroundColor: status.background},
-          ]}>
-          <View
-            style={[
-              s.statusDot,
-              {backgroundColor: status.color},
-            ]}
-          />
-
-          <Text style={[s.statusLabel, {color: status.color}]}>
-            {status.label}
-          </Text>
-        </View>
-
-        <View style={s.scoreGroup}>
-          <Text style={s.scoreLabel}>
-            {demo ? 'Demo score' : 'Quality score'}
-          </Text>
-
-          <View style={s.scoreRow}>
-            <Text style={s.scoreValue}>
-              {score === null ? '—' : score}
-            </Text>
-            <Text style={s.scoreMax}>/100</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={s.progressTrack}>
-        <View
-          style={[
-            s.progressFill,
-            {
-              width: `${score ?? 0}%`,
-              backgroundColor: status.color,
-            },
-          ]}
-        />
-      </View>
-
-      <View style={s.recommendationRow}>
-        <Ionicons
-          name="sparkles-outline"
-          size={14}
-          color={colors.primary}
-          accessible={false}
-        />
-
-        <Text style={s.recommendation} numberOfLines={2}>
-          {recommendation}
-        </Text>
-      </View>
-
-      <View style={s.cardFooter}>
-        <View style={s.modePill}>
-          <Text style={s.modeText}>
-            {demo ? 'DEMO INFERENCE' : 'MODEL INFERENCE'}
-          </Text>
-        </View>
-
-        <View style={s.detailsLink}>
-          <Text style={s.detailsLinkText}>View details</Text>
-          <Ionicons
-            name="chevron-forward"
-            size={14}
-            color={colors.primary}
-            accessible={false}
-          />
-        </View>
-      </View>
-    </Pressable>
+    <View
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      style={s.tomatoMark}>
+      <View style={s.tomatoHalo} />
+      <View style={s.tomatoBody} />
+      <View style={s.tomatoHighlight} />
+      <View style={s.tomatoStem} />
+      <View style={s.tomatoLeafLeft} />
+      <View style={s.tomatoLeafRight} />
+    </View>
   );
 }
 
-export default function HistoryScreen({
-  items,
-  onSelect,
-}: Props) {
-  const [filter, setFilter] = useState<Filter>('all');
+export default function HomeScreen({onCapture, onHistory}: Props) {
   const {width} = useWindowDimensions();
-  const narrow = width < 360;
-  const tablet = width >= 700;
-
-  const sortedItems = useMemo(() => {
-    return [...items].sort(
-      (first, second) =>
-        getTimestamp(second.created_at) -
-        getTimestamp(first.created_at),
-    );
-  }, [items]);
-
-  const counts = useMemo(() => {
-    return {
-      all: items.length,
-      fresh: items.filter(
-        item => normalizeState(item.quality_state) === 'fresh',
-      ).length,
-      aging: items.filter(
-        item => normalizeState(item.quality_state) === 'aging',
-      ).length,
-      spoiled: items.filter(
-        item => normalizeState(item.quality_state) === 'spoiled',
-      ).length,
-    };
-  }, [items]);
-
-  const visibleItems = useMemo(() => {
-    if (filter === 'all') {
-      return sortedItems;
-    }
-
-    return sortedItems.filter(
-      item => normalizeState(item.quality_state) === filter,
-    );
-  }, [filter, sortedItems]);
-
-  const selectedFilter =
-    FILTERS.find(option => option.value === filter) ?? FILTERS[0];
-
-  const listTitle =
-    filter === 'all'
-      ? 'Recent assessments'
-      : `${selectedFilter.label} assessments`;
+  const narrow = width < layout.narrowBreakpoint;
+  const tablet = width >= layout.tabletBreakpoint;
 
   return (
     <ScrollView
@@ -414,193 +94,267 @@ export default function HistoryScreen({
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled">
       <View style={s.header}>
-        <View style={s.headerTop}>
-          <View style={s.brand}>
-            <View style={s.brandIcon}>
-              <Ionicons
-                name="time"
-                size={18}
-                color={colors.white}
-              />
-            </View>
-
-            <View>
-              <Text style={s.brandName}>Assessment history</Text>
-              <Text style={s.brandCaption}>THIS SESSION</Text>
-            </View>
+        <View style={s.brand}>
+          <View style={s.brandIcon}>
+            <Ionicons name="leaf" size={19} color={colors.white} />
           </View>
 
-          <View style={s.sessionPill}>
-            <View style={s.sessionDot} />
-            <Text style={s.sessionPillText}>SESSION ONLY</Text>
+          <View>
+            <Text style={s.brandName}>AfterHarvest</Text>
+            <Text style={s.brandCaption}>PRODUCE INSIGHTS</Text>
           </View>
         </View>
+
+        <View style={s.demoPill}>
+          <View style={s.demoDot} />
+          <Text style={s.demoText}>PROTOTYPE</Text>
+        </View>
+      </View>
+
+      <View style={s.intro}>
+        <Text style={s.eyebrow}>TOMATO QUALITY WORKSPACE</Text>
 
         <Text
           accessibilityRole="header"
           style={[s.heading, narrow ? s.headingNarrow : null]}>
-          Your produce,{'\n'}
-          <Text style={s.headingAccent}>at a glance.</Text>
+          Understand your{'\n'}
+          <Text style={s.headingAccent}>produce better.</Text>
         </Text>
 
-        <Text style={s.subtitle}>
-          Review recent results and revisit the context behind each
-          assessment.
+        <Text style={s.introText}>
+          Combine a tomato photo with its storage conditions to explore
+          a clear, transparent demo assessment.
         </Text>
       </View>
 
-      <View style={s.metrics}>
-        <SummaryTile
-          label="Assessments"
-          value={counts.all}
-          hint="Saved this session"
-          icon="layers-outline"
-        />
+      <View style={s.hero}>
+        <View style={s.heroOrb} />
 
-        <SummaryTile
-          label="Fresh results"
-          value={counts.fresh}
-          hint="Current session"
-          icon="leaf-outline"
-          emphasized
-        />
-      </View>
+        <View style={s.heroHeader}>
+          <View style={s.heroLabel}>
+            <Ionicons
+              name="sparkles-outline"
+              size={13}
+              color="#D9E8DA"
+            />
+            <Text style={s.heroLabelText}>CURRENT PILOT</Text>
+          </View>
 
-      <View style={s.sessionNotice}>
-        <View style={s.noticeIcon}>
           <Ionicons
-            name="information-circle-outline"
-            size={17}
-            color={colors.primary}
+            name="arrow-up-right"
+            size={19}
+            color="#D7E4D8"
+            accessible={false}
           />
         </View>
 
-        <View style={s.noticeCopy}>
-          <Text style={s.noticeTitle}>Session history</Text>
-          <Text style={s.noticeDescription}>
-            Records reset when the app restarts. Cloud persistence is
-            not connected yet.
-          </Text>
-        </View>
-      </View>
-
-      <View style={s.filterRow}>
-        {FILTERS.map(option => {
-          const selected = filter === option.value;
-
-          return (
-            <Pressable
-              key={option.value}
-              accessibilityRole="button"
-              accessibilityLabel={`Show ${option.label.toLowerCase()} assessments`}
-              accessibilityState={{selected}}
-              onPress={() => setFilter(option.value)}
-              style={({pressed}) => [
-                s.filter,
-                selected ? s.filterSelected : null,
-                pressed ? s.filterPressed : null,
-              ]}>
-              <Ionicons
-                name={option.icon}
-                size={14}
-                color={selected ? colors.white : colors.muted}
-                accessible={false}
-              />
-
-              <Text
-                style={[
-                  s.filterText,
-                  selected ? s.filterTextSelected : null,
-                ]}>
-                {option.label}
-              </Text>
-
-              <View
-                style={[
-                  s.filterCount,
-                  selected ? s.filterCountSelected : null,
-                ]}>
-                <Text
-                  style={[
-                    s.filterCountText,
-                    selected ? s.filterCountTextSelected : null,
-                  ]}>
-                  {counts[option.value]}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <View style={s.listHeader}>
-        <Text accessibilityRole="header" style={s.listTitle}>
-          {listTitle}
-        </Text>
-
-        <Text style={s.listCount}>
-          {visibleItems.length}{' '}
-          {visibleItems.length === 1 ? 'record' : 'records'}
-        </Text>
-      </View>
-
-      {visibleItems.length === 0 ? (
-        <View style={s.emptyCard}>
-          <View style={s.emptyIcon}>
-            <Ionicons
-              name={items.length === 0 ? 'leaf-outline' : 'search-outline'}
-              size={25}
-              color={colors.primary}
-            />
+        <View style={s.heroContent}>
+          <View style={s.heroCopy}>
+            <Text style={s.heroTitle}>
+              Tomato{'\n'}quality check
+            </Text>
+            <Text style={s.heroDescription}>
+              Photo-led. Storage-aware.
+            </Text>
           </View>
 
-          <Text style={s.emptyTitle}>
-            {items.length === 0
-              ? 'Your history starts here'
-              : 'No matching assessments'}
-          </Text>
-
-          <Text style={s.emptyDescription}>
-            {items.length === 0
-              ? 'Complete your first tomato assessment and it will appear here.'
-              : `There are no ${filter} results in this session. Try another filter.`}
-          </Text>
-
-          {filter !== 'all' ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="View all assessments"
-              onPress={() => setFilter('all')}
-              style={({pressed}) => [
-                s.resetButton,
-                pressed ? s.resetPressed : null,
-              ]}>
-              <Ionicons
-                name="apps-outline"
-                size={15}
-                color={colors.primary}
-                accessible={false}
-              />
-              <Text style={s.resetButtonText}>View all results</Text>
-            </Pressable>
-          ) : null}
+          <TomatoMark />
         </View>
-      ) : (
-        <View style={s.list}>
-          {visibleItems.map((item, index) => (
-            <AssessmentCard
-              key={getAssessmentKey(item, index)}
-              item={item}
-              onPress={() => onSelect(item)}
+
+        <View style={s.heroFooter}>
+          <View style={s.heroMetadata}>
+            <Ionicons
+              name="image-outline"
+              size={14}
+              color="#D3E0D4"
             />
-          ))}
-        </View>
-      )}
+            <Text style={s.heroMetadataText}>PHOTO</Text>
+          </View>
 
-      <Text style={s.footer}>
-        Demo scores are not food-safety ratings or measured
-        probabilities.
-      </Text>
+          <View style={s.heroMetadataDivider} />
+
+          <View style={s.heroMetadata}>
+            <Ionicons
+              name="thermometer-outline"
+              size={14}
+              color="#D3E0D4"
+            />
+            <Text style={s.heroMetadataText}>STORAGE DATA</Text>
+          </View>
+
+          <View style={s.heroFooterSpace} />
+
+          <Text style={s.heroDemo}>DEMO</Text>
+        </View>
+      </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Start a new tomato assessment"
+        accessibilityHint="Opens the form to add a photo and storage conditions"
+        onPress={onCapture}
+        style={({pressed}) => [
+          s.primaryAction,
+          pressed ? s.primaryPressed : null,
+        ]}>
+        <View style={s.primaryIcon}>
+          <Ionicons
+            name="add"
+            size={25}
+            color={colors.primaryDark}
+          />
+        </View>
+
+        <View style={s.primaryCopy}>
+          <Text style={s.primaryOverline}>GET STARTED</Text>
+          <Text style={s.primaryTitle}>New assessment</Text>
+          <Text style={s.primaryDescription}>
+            Add a photo and storage conditions
+          </Text>
+        </View>
+
+        <View style={s.primaryArrow}>
+          <Ionicons
+            name="arrow-forward"
+            size={18}
+            color={colors.white}
+          />
+        </View>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open assessment history"
+        accessibilityHint="View assessments saved during this session"
+        onPress={onHistory}
+        style={({pressed}) => [
+          s.historyAction,
+          pressed ? s.historyPressed : null,
+        ]}>
+        <IconTile name="time-outline" />
+
+        <View style={s.historyCopy}>
+          <Text style={s.historyTitle}>Assessment history</Text>
+          <Text style={s.historyDescription}>
+            Revisit results from this session
+          </Text>
+        </View>
+
+        <Ionicons
+          name="chevron-forward"
+          size={17}
+          color={colors.muted}
+          accessible={false}
+        />
+      </Pressable>
+
+      <View style={s.sectionHeader}>
+        <View style={s.sectionHeadingCopy}>
+          <Text
+            accessibilityRole="header"
+            style={s.sectionTitle}>
+            How it works
+          </Text>
+          <Text style={s.sectionSubtitle}>
+            Three steps from photo to result
+          </Text>
+        </View>
+
+        <View style={s.stepCount}>
+          <Text style={s.stepCountText}>03 STEPS</Text>
+        </View>
+      </View>
+
+      <View style={s.stepsCard}>
+        {STEPS.map((step, index) => (
+          <View
+            key={step.number}
+            style={[
+              s.stepRow,
+              index < STEPS.length - 1 ? s.stepRowBorder : null,
+            ]}>
+            <IconTile
+              name={step.icon}
+              size={18}
+              background={colors.primarySoft}
+            />
+
+            <View style={s.stepCopy}>
+              <View style={s.stepTitleRow}>
+                <Text style={s.stepNumber}>{step.number}</Text>
+                <Text style={s.stepTitle}>{step.title}</Text>
+              </View>
+
+              <Text style={s.stepDescription}>
+                {step.description}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      <View style={s.infoRow}>
+        <View style={s.infoCard}>
+          <IconTile
+            name="nutrition-outline"
+            size={18}
+            color="#57764F"
+            background="#E6EEE1"
+          />
+          <Text style={s.infoTitle}>Tomato-first</Text>
+          <Text style={s.infoDescription}>
+            This prototype currently focuses on tomatoes.
+          </Text>
+        </View>
+
+        <View style={s.infoCard}>
+          <IconTile
+            name="phone-portrait-outline"
+            size={18}
+            color="#57764F"
+            background="#E6EEE1"
+          />
+          <Text style={s.infoTitle}>Session history</Text>
+          <Text style={s.infoDescription}>
+            History resets when the app restarts.
+          </Text>
+        </View>
+      </View>
+
+      <View style={s.disclosure}>
+        <View style={s.disclosureHeader}>
+          <Ionicons
+            name="information-circle-outline"
+            size={18}
+            color="#776D49"
+          />
+          <Text style={s.disclosureTitle}>About this demo</Text>
+        </View>
+
+        <Text style={s.disclosureText}>
+          Results use storage-context heuristics. Images are validated
+          but not analyzed by a trained AI model. Packaging is recorded
+          but does not affect demo scoring.
+        </Text>
+
+        <View style={s.disclosureDivider} />
+
+        <Text style={s.disclosureFootnote}>
+          Images are not permanently stored. Results do not certify
+          food safety.
+        </Text>
+      </View>
+
+      <View style={s.footer}>
+        <Ionicons
+          name="leaf-outline"
+          size={14}
+          color={colors.faint}
+        />
+        <Text style={s.footerText}>
+          PRESERVE QUALITY · REDUCE LOSS
+        </Text>
+      </View>
     </ScrollView>
   );
 }
@@ -620,18 +374,15 @@ const s = StyleSheet.create({
     gap: 17,
   },
   contentTablet: {
-    paddingHorizontal: 30,
+    paddingHorizontal: layout.screenPaddingWide,
     paddingTop: 24,
     gap: 20,
   },
   header: {
-    paddingTop: 5,
-  },
-  headerTop: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
   },
   brand: {
     flexDirection: 'row',
@@ -659,7 +410,7 @@ const s = StyleSheet.create({
     letterSpacing: 0.9,
     marginTop: 3,
   },
-  sessionPill: {
+  demoPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -668,22 +419,29 @@ const s = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.primarySoft,
   },
-  sessionDot: {
+  demoDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.primary,
   },
-  sessionPillText: {
+  demoText: {
     color: colors.primary,
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.7,
   },
+  intro: {
+    paddingTop: 5,
+  },
+  eyebrow: {
+    ...typography.overline,
+    color: colors.muted,
+  },
   heading: {
     ...typography.display,
     color: colors.ink,
-    marginTop: 16,
+    marginTop: 9,
   },
   headingNarrow: {
     fontSize: 27,
@@ -692,366 +450,403 @@ const s = StyleSheet.create({
   headingAccent: {
     color: colors.primary,
   },
-  subtitle: {
+  introText: {
+    maxWidth: 520,
     ...typography.body,
     color: colors.text,
     marginTop: 9,
-    maxWidth: 520,
   },
-  metrics: {
-    flexDirection: 'row',
-    gap: 11,
-  },
-  summaryTile: {
-    flex: 1,
-    minWidth: 0,
-    padding: 15,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  summaryTileEmphasized: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  summaryTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  summaryLabel: {
-    ...typography.overline,
-    color: colors.muted,
-  },
-  summaryLabelEmphasized: {
-    color: colors.white,
-  },
-  summaryIcon: {
-    width: 27,
-    height: 27,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  summaryIconEmphasized: {
-    backgroundColor: colors.overlay,
-  },
-  summaryValue: {
-    color: colors.ink,
-    fontSize: 31,
-    fontWeight: '800',
-    marginTop: 10,
-  },
-  summaryValueEmphasized: {
-    color: colors.white,
-  },
-  summaryHint: {
-    ...typography.overline,
-    color: colors.faint,
-    marginTop: 4,
-  },
-  summaryHintEmphasized: {
-    color: colors.primaryDark,
-  },
-  sessionNotice: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    padding: 14,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceMuted,
-  },
-  noticeIcon: {
-    width: 27,
-    height: 27,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  noticeCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  noticeTitle: {
-    ...typography.label,
-    color: colors.ink,
-  },
-  noticeDescription: {
-    ...typography.caption,
-    color: colors.muted,
-    marginTop: 4,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  filter: {
-    minHeight: 42,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 11,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  filterSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  filterPressed: {
-    opacity: 0.8,
-  },
-  filterText: {
-    color: colors.text,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  filterTextSelected: {
-    color: colors.white,
-  },
-  filterCount: {
-    minWidth: 20,
-    paddingHorizontal: 5,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    backgroundColor: colors.surfaceMuted,
-  },
-  filterCountSelected: {
-    backgroundColor: colors.overlay,
-  },
-  filterCountText: {
-    color: colors.muted,
-    fontSize: 9,
-    fontWeight: '800',
-  },
-  filterCountTextSelected: {
-    color: colors.white,
-  },
-  listHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginTop: 2,
-  },
-  listTitle: {
-    flex: 1,
-    minWidth: 0,
-    ...typography.heading,
-    color: colors.ink,
-  },
-  listCount: {
-    ...typography.overline,
-    color: colors.faint,
-  },
-  list: {
-    gap: 12,
-  },
-  card: {
-    padding: 16,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  cardPressed: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primary,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-  },
-  produceIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  produceCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  produceTitle: {
-    ...typography.label,
-    color: colors.ink,
-  },
-  produceDate: {
-    ...typography.caption,
-    color: colors.faint,
-    marginTop: 4,
-  },
-  cardDivider: {
-    height: 1,
-    backgroundColor: colors.divider,
-    marginVertical: 13,
-  },
-  resultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: radius.sm,
-  },
-  statusDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-  },
-  statusLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  scoreGroup: {
-    alignItems: 'flex-end',
-  },
-  scoreLabel: {
-    ...typography.overline,
-    color: colors.faint,
-  },
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 3,
-    marginTop: 2,
-  },
-  scoreValue: {
-    color: colors.ink,
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  scoreMax: {
-    ...typography.overline,
-    color: colors.faint,
-  },
-  progressTrack: {
-    height: 6,
+  hero: {
+    minHeight: 210,
     overflow: 'hidden',
-    borderRadius: 3,
-    backgroundColor: colors.surfaceMuted,
-    marginTop: 12,
+    justifyContent: 'space-between',
+    padding: 18,
+    borderRadius: radius.xxl,
+    backgroundColor: colors.primaryDark,
+    ...shadow.card,
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
+  heroOrb: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    top: -95,
+    right: -55,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255,255,255,0.045)',
   },
-  recommendationRow: {
+  heroHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 7,
-    marginTop: 12,
-  },
-  recommendation: {
-    flex: 1,
-    ...typography.caption,
-    lineHeight: 18,
-    color: colors.text,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
-    marginTop: 13,
   },
-  modePill: {
-    paddingHorizontal: 7,
-    paddingVertical: 5,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceMuted,
+  heroLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.10)',
   },
-  modeText: {
-    color: colors.muted,
+  heroLabelText: {
+    color: '#E0EBDD',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.7,
+  },
+  heroContent: {
+    minHeight: 120,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heroCopy: {
+    flex: 1,
+    zIndex: 1,
+    maxWidth: '72%',
+  },
+  heroTitle: {
+    color: colors.white,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '800',
+    letterSpacing: -0.6,
+  },
+  heroDescription: {
+    color: '#C8D9CA',
+    fontSize: 10,
+    lineHeight: 15,
+    marginTop: 7,
+  },
+  tomatoMark: {
+    position: 'absolute',
+    width: 132,
+    height: 132,
+    right: -6,
+    top: -5,
+  },
+  tomatoHalo: {
+    position: 'absolute',
+    width: 122,
+    height: 122,
+    left: 5,
+    top: 4,
+    borderRadius: 61,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  tomatoBody: {
+    position: 'absolute',
+    width: 76,
+    height: 73,
+    left: 29,
+    top: 39,
+    borderRadius: 40,
+    backgroundColor: colors.tomato,
+    borderBottomWidth: 6,
+    borderBottomColor: colors.tomatoDark,
+    transform: [{rotate: '-8deg'}],
+  },
+  tomatoHighlight: {
+    position: 'absolute',
+    width: 13,
+    height: 24,
+    left: 44,
+    top: 52,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    transform: [{rotate: '24deg'}],
+  },
+  tomatoStem: {
+    position: 'absolute',
+    width: 6,
+    height: 18,
+    left: 64,
+    top: 26,
+    borderRadius: 4,
+    backgroundColor: '#8CA66A',
+    transform: [{rotate: '10deg'}],
+  },
+  tomatoLeafLeft: {
+    position: 'absolute',
+    width: 26,
+    height: 10,
+    left: 43,
+    top: 38,
+    borderRadius: 8,
+    backgroundColor: '#9BB273',
+    transform: [{rotate: '24deg'}],
+  },
+  tomatoLeafRight: {
+    position: 'absolute',
+    width: 26,
+    height: 10,
+    left: 61,
+    top: 38,
+    borderRadius: 8,
+    backgroundColor: '#77945D',
+    transform: [{rotate: '-24deg'}],
+  },
+  heroFooter: {
+    minHeight: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.14)',
+    paddingTop: 9,
+  },
+  heroMetadata: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  heroMetadataText: {
+    color: '#D5E1D5',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  heroMetadataDivider: {
+    width: 1,
+    height: 13,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+  },
+  heroFooterSpace: {
+    flex: 1,
+  },
+  heroDemo: {
+    color: '#C6D8C8',
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  detailsLink: {
+  primaryAction: {
+    minHeight: 78,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primary,
   },
-  detailsLinkText: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  emptyCard: {
+  primaryIcon: {
+    width: 42,
+    height: 42,
     alignItems: 'center',
-    paddingVertical: 34,
-    paddingHorizontal: 24,
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
+  },
+  primaryCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  primaryOverline: {
+    color: colors.primaryDark,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  primaryTitle: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 3,
+  },
+  primaryDescription: {
+    color: colors.primaryDark,
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 3,
+  },
+  primaryArrow: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 17,
+    backgroundColor: colors.overlay,
+  },
+  historyAction: {
+    minHeight: 66,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  iconTile: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+  },
+  historyCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  historyTitle: {
+    ...typography.label,
+    color: colors.ink,
+  },
+  historyDescription: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 3,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 3,
+    marginBottom: -5,
+  },
+  sectionHeadingCopy: {
+    flex: 1,
+  },
+  sectionTitle: {
+    ...typography.heading,
+    color: colors.ink,
+  },
+  sectionSubtitle: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 4,
+  },
+  stepCount: {
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primarySoft,
+  },
+  stepCountText: {
+    color: colors.primary,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  stepsCard: {
+    paddingHorizontal: 13,
     borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
     ...shadow.card,
   },
-  emptyIcon: {
-    width: 61,
-    height: 61,
-    borderRadius: radius.lg,
+  stepRow: {
+    minHeight: 77,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 17,
-    backgroundColor: colors.primarySoft,
+    gap: 11,
   },
-  emptyTitle: {
-    ...typography.heading,
+  stepRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  stepCopy: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 11,
+  },
+  stepTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  stepNumber: {
+    color: colors.faint,
+    fontSize: 8,
+    fontWeight: '800',
+  },
+  stepTitle: {
+    flex: 1,
+    ...typography.label,
     color: colors.ink,
-    textAlign: 'center',
   },
-  emptyDescription: {
-    ...typography.body,
+  stepDescription: {
+    ...typography.caption,
     color: colors.muted,
-    marginTop: 8,
-    textAlign: 'center',
+    marginTop: 4,
   },
-  resetButton: {
-    minHeight: 44,
+  infoRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  infoCard: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 132,
+    padding: 12,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
+  },
+  infoTitle: {
+    ...typography.label,
+    color: colors.ink,
+    marginTop: 9,
+  },
+  infoDescription: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 5,
+  },
+  disclosure: {
+    padding: 14,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: '#E9E4D4',
+    backgroundColor: '#F4F1E7',
+  },
+  disclosureHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginBottom: 7,
+  },
+  disclosureTitle: {
+    ...typography.label,
+    color: '#696147',
+  },
+  disclosureText: {
+    ...typography.caption,
+    lineHeight: 15,
+    color: '#79745F',
+  },
+  disclosureDivider: {
+    height: 1,
+    backgroundColor: '#E4DFD0',
+    marginVertical: 9,
+  },
+  disclosureFootnote: {
+    ...typography.caption,
+    lineHeight: 14,
+    color: '#88836E',
+  },
+  footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
-    paddingHorizontal: 16,
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
-    marginTop: 16,
+    gap: 6,
+    paddingTop: 1,
   },
-  resetPressed: {
-    opacity: 0.8,
-  },
-  resetButtonText: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  footer: {
+  footerText: {
     ...typography.overline,
     color: colors.faint,
-    textAlign: 'center',
-    paddingHorizontal: 12,
+  },
+  primaryPressed: {
+    opacity: 0.86,
+    transform: [{scale: 0.99}],
+  },
+  historyPressed: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
   },
 });
