@@ -84,7 +84,12 @@ export default function App() {
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
-        {screen === 'home' ? <HomeScreen /> : null}
+        {screen === 'home' ? (
+          <HomeScreen
+            onCapture={() => goTo('capture')}
+            onHistory={() => goTo('history')}
+          />
+        ) : null}
 
         {screen === 'capture' ? (
           <CaptureScreen onResult={handleAssessmentResult} />
