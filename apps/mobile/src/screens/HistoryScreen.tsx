@@ -77,10 +77,16 @@ function normalizeState(value: unknown): string {
 }
 
 function getStatus(value: unknown): StatusStyle {
-  return STATUS_STYLES[normalizeState(value)] ?? UNKNOWN_STATUS;
+  const state = normalizeState(value);
+
+  return STATUS_STYLES[state] ?? UNKNOWN_STATUS;
 }
 
 function getScore(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return null;
   }
@@ -548,7 +554,11 @@ export default function HistoryScreen({
         <View style={s.emptyCard}>
           <View style={s.emptyIcon}>
             <Ionicons
-              name={items.length === 0 ? 'leaf-outline' : 'search-outline'}
+              name={
+                items.length === 0
+                  ? 'leaf-outline'
+                  : 'search-outline'
+              }
               size={25}
               color={colors.primary}
             />
@@ -581,7 +591,9 @@ export default function HistoryScreen({
                 color={colors.primary}
                 accessible={false}
               />
-              <Text style={s.resetButtonText}>View all results</Text>
+              <Text style={s.resetButtonText}>
+                View all results
+              </Text>
             </Pressable>
           ) : null}
         </View>
