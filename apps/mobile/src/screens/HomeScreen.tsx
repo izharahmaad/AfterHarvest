@@ -141,7 +141,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
           </View>
 
           <Ionicons
-            name="arrow-up-right"
+            name="arrow-up-right-box"
             size={19}
             color="#D7E4D8"
             accessible={false}
