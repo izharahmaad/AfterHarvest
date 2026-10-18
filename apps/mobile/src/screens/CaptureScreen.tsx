@@ -33,6 +33,8 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 type NumericField = 'temperature' | 'humidity' | 'days';
 
+type FieldStatus = 'empty' | 'invalid' | 'valid';
+
 type PackagingOption = {
   value: Context['packaging'];
   title: string;
@@ -112,6 +114,7 @@ const FIELDS: Array<{
   label: string;
   unit: string;
   hint: string;
+  error: string;
   placeholder: string;
   icon: IconName;
 }> = [
@@ -120,6 +123,7 @@ const FIELDS: Array<{
     label: 'Temperature',
     unit: '°C',
     hint: '−20 to 60°C',
+    error: 'Enter −20 to 60',
     placeholder: '8.5',
     icon: 'thermometer-outline',
   },
@@ -128,6 +132,7 @@ const FIELDS: Array<{
     label: 'Humidity',
     unit: '%',
     hint: '0 to 100%',
+    error: 'Enter 0 to 100',
     placeholder: '72',
     icon: 'water-outline',
   },
@@ -135,7 +140,8 @@ const FIELDS: Array<{
     key: 'days',
     label: 'Storage duration',
     unit: 'days',
-    hint: 'Whole days from 0 to 365',
+    hint: 'Whole days, 0–365',
+    error: 'Enter 0 to 365',
     placeholder: '4',
     icon: 'time-outline',
   },
@@ -223,15 +229,15 @@ function StepHeader({
           s.stepNumber,
           complete ? s.stepNumberComplete : null,
         ]}>
-        <Ionicons
-          name={complete ? 'checkmark' : undefined}
-          size={16}
-          color={colors.white}
-        />
-
-        {!complete ? (
+        {complete ? (
+          <Ionicons
+            name="checkmark"
+            size={16}
+            color={colors.white}
+          />
+        ) : (
           <Text style={s.stepNumberText}>{number}</Text>
-        ) : null}
+        )}
       </View>
 
       <View style={s.stepCopy}>
@@ -271,7 +277,6 @@ export default function CaptureScreen({onResult}: Props) {
 
   const [busy, setBusy] = useState(false);
   const [picking, setPicking] = useState(false);
-
   const [focusedField, setFocusedField] =
     useState<NumericField | null>(null);
 
@@ -286,20 +291,38 @@ export default function CaptureScreen({onResult}: Props) {
   const disabled = busy || picking;
 
   const photoReady = Boolean(asset);
+
   const temperature = parseDecimal(context.temperature);
   const humidity = parseDecimal(context.humidity);
   const days = Number(context.days.trim());
 
+  const temperatureStatus: FieldStatus =
+    temperature === null
+      ? 'empty'
+      : temperature >= -20 && temperature <= 60
+        ? 'valid'
+        : 'invalid';
+
+  const humidityStatus: FieldStatus =
+    humidity === null
+      ? 'empty'
+      : humidity >= 0 && humidity <= 100
+        ? 'valid'
+        : 'invalid';
+
+  const daysStatus: FieldStatus =
+    context.days.trim() === ''
+      ? 'empty'
+      : Number.isSafeInteger(days) &&
+          days >= 0 &&
+          days <= 365
+        ? 'valid'
+        : 'invalid';
+
   const conditionsReady =
-    temperature !== null &&
-    temperature >= -20 &&
-    temperature <= 60 &&
-    humidity !== null &&
-    humidity >= 0 &&
-    humidity <= 100 &&
-    Number.isSafeInteger(days) &&
-    days >= 0 &&
-    days <= 365;
+    temperatureStatus === 'valid' &&
+    humidityStatus === 'valid' &&
+    daysStatus === 'valid';
 
   const packagingReady = PACKAGING_OPTIONS.some(
     option => option.value === context.packaging,
@@ -314,6 +337,9 @@ export default function CaptureScreen({onResult}: Props) {
   const progressPercent = Math.round(
     (completedSteps / 3) * 100,
   );
+
+  const canSubmit =
+    photoReady && conditionsReady && packagingReady && !disabled;
 
   const activePreset = useMemo(() => {
     return STORAGE_PRESETS.find(
@@ -407,7 +433,7 @@ export default function CaptureScreen({onResult}: Props) {
   }
 
   async function submitAssessment() {
-    if (operationLocked.current) return;
+    if (operationLocked.current || !canSubmit) return;
 
     if (!asset) {
       Alert.alert(
@@ -424,14 +450,10 @@ export default function CaptureScreen({onResult}: Props) {
       return;
     }
 
-    const currentTemperature = parseDecimal(context.temperature);
-    const currentHumidity = parseDecimal(context.humidity);
-    const daysText = context.days.trim();
-
     if (
-      currentTemperature === null ||
-      currentTemperature < -20 ||
-      currentTemperature > 60
+      temperature === null ||
+      temperature < -20 ||
+      temperature > 60
     ) {
       Alert.alert(
         'Invalid temperature',
@@ -440,17 +462,15 @@ export default function CaptureScreen({onResult}: Props) {
       return;
     }
 
-    if (
-      currentHumidity === null ||
-      currentHumidity < 0 ||
-      currentHumidity > 100
-    ) {
+    if (humidity === null || humidity < 0 || humidity > 100) {
       Alert.alert(
         'Invalid humidity',
         'Enter humidity from 0 to 100%.',
       );
       return;
     }
+
+    const daysText = context.days.trim();
 
     if (!/^\d+$/.test(daysText)) {
       Alert.alert(
@@ -470,21 +490,9 @@ export default function CaptureScreen({onResult}: Props) {
       return;
     }
 
-    const packagingIsValid = PACKAGING_OPTIONS.some(
-      option => option.value === context.packaging,
-    );
-
-    if (!packagingIsValid) {
-      Alert.alert(
-        'Packaging required',
-        'Select one of the available packaging types.',
-      );
-      return;
-    }
-
     const requestContext: Context = {
-      temperature: String(currentTemperature),
-      humidity: String(currentHumidity),
+      temperature: String(temperature),
+      humidity: String(humidity),
       days: String(currentDays),
       packaging: context.packaging,
     };
@@ -509,18 +517,26 @@ export default function CaptureScreen({onResult}: Props) {
     }
   }
 
+  function getFieldStatus(field: NumericField): FieldStatus {
+    if (field === 'temperature') {
+      return temperatureStatus;
+    }
+
+    if (field === 'humidity') {
+      return humidityStatus;
+    }
+
+    return daysStatus;
+  }
+
   return (
-    <ScrollView
-      style={s.screen}
-      contentContainerStyle={s.content}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled">
-      <View style={s.header}>
+    <View style={s.screen}>
+      <View style={s.topBar}>
         <View style={s.brand}>
           <View style={s.brandIcon}>
             <Ionicons
               name="camera"
-              size={18}
+              size={17}
               color={colors.white}
             />
           </View>
@@ -531,449 +547,477 @@ export default function CaptureScreen({onResult}: Props) {
           </View>
         </View>
 
-        <View style={s.stepChip}>
-          <Text style={s.stepChipText}>
+        <View style={s.progressChip}>
+          <Text style={s.progressChipText}>
             {completedSteps}/3
           </Text>
         </View>
       </View>
 
-      <View style={s.intro}>
-        <Text
-          accessibilityRole="header"
-          style={s.heading}>
-          Assess quality{'\n'}
-          <Text style={s.headingAccent}>with context.</Text>
-        </Text>
-
-        <Text style={s.subtitle}>
-          Add a clear tomato photo and the conditions it was stored in.
-        </Text>
+      <View style={s.progressRail}>
+        <View
+          style={[
+            s.progressRailFill,
+            {width: `${progressPercent}%`},
+          ]}
+        />
       </View>
 
-      <View style={s.progressCard}>
-        <View style={s.progressHeader}>
-          <Text style={s.progressTitle}>
-            Assessment readiness
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <View style={s.intro}>
+          <Text
+            accessibilityRole="header"
+            style={s.heading}>
+            Assess quality{'\n'}
+            <Text style={s.headingAccent}>with context.</Text>
           </Text>
 
-          <Text style={s.progressValue}>
-            {progressPercent}%
+          <Text style={s.subtitle}>
+            Add a clear tomato photo and the conditions it was stored
+            in.
           </Text>
         </View>
 
-        <View style={s.progressTrack}>
-          <View
-            style={[
-              s.progressFill,
-              {width: `${progressPercent}%`},
-            ]}
+        <View style={s.card}>
+          <StepHeader
+            number="01"
+            title="Produce photo"
+            description="Use one clear image of the tomato."
+            required
+            complete={photoReady}
           />
-        </View>
 
-        <Text style={s.progressHint}>
-          {completedSteps === 3
-            ? 'All required details are ready.'
-            : `${3 - completedSteps} more step${
-                3 - completedSteps === 1 ? '' : 's'
-              } to complete.`}
-        </Text>
-      </View>
-
-      <View style={s.card}>
-        <StepHeader
-          number="01"
-          title="Produce photo"
-          description="Use one clear image of the tomato."
-          required
-          complete={photoReady}
-        />
-
-        {asset ? (
-          <View style={s.preview}>
-            <Image
-              source={{uri: asset.uri}}
-              style={s.previewImage}
-              resizeMode="cover"
-              accessibilityLabel="Selected tomato photo"
-            />
-
-            <View style={s.previewBadge}>
-              <View style={s.previewBadgeDot} />
-              <Text style={s.previewBadgeText}>PHOTO READY</Text>
-            </View>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Remove selected photo"
-              accessibilityState={{disabled}}
-              disabled={disabled}
-              onPress={() => setAsset(null)}
-              hitSlop={10}
-              style={({pressed}) => [
-                s.removeButton,
-                pressed ? s.pressed : null,
-                disabled ? s.disabled : null,
-              ]}>
-              <Ionicons
-                name="close"
-                size={21}
-                color={colors.ink}
+          {asset ? (
+            <View style={s.preview}>
+              <Image
+                source={{uri: asset.uri}}
+                style={s.previewImage}
+                resizeMode="cover"
+                accessibilityLabel="Selected tomato photo"
               />
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Choose tomato photo from gallery"
-            accessibilityState={{disabled}}
-            disabled={disabled}
-            onPress={() => chooseImage(false)}
-            style={({pressed}) => [
-              s.uploadArea,
-              pressed ? s.pressed : null,
-              disabled ? s.disabled : null,
-            ]}>
-            <View style={s.uploadIcon}>
-              <Ionicons
-                name="image-outline"
-                size={27}
-                color={colors.primary}
-              />
-            </View>
 
-            <Text style={s.uploadTitle}>Add a tomato photo</Text>
-            <Text style={s.uploadDescription}>
-              Tap here to choose an image from your gallery.
-            </Text>
-            <Text style={s.uploadHint}>
-              JPEG, PNG or WebP · Maximum 5 MB
-            </Text>
-          </Pressable>
-        )}
+              <View style={s.previewBadge}>
+                <View style={s.previewBadgeDot} />
+                <Text style={s.previewBadgeText}>
+                  PHOTO READY
+                </Text>
+              </View>
 
-        {asset ? (
-          <View style={s.photoMetadata}>
-            <View style={s.metadataItem}>
-              <Ionicons
-                name="resize-outline"
-                size={13}
-                color={colors.muted}
-              />
-              <Text style={s.metadataText}>
-                {asset.width} × {asset.height}
-              </Text>
-            </View>
-
-            <View style={s.metadataDivider} />
-
-            <View style={s.metadataItem}>
-              <Ionicons
-                name="document-outline"
-                size={13}
-                color={colors.muted}
-              />
-              <Text style={s.metadataText}>
-                {formatBytes(asset.fileSize)}
-              </Text>
-            </View>
-          </View>
-        ) : null}
-
-        <View style={s.photoActions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Take a tomato photo with the camera"
-            accessibilityState={{disabled}}
-            disabled={disabled}
-            onPress={() => chooseImage(true)}
-            style={({pressed}) => [
-              s.photoButton,
-              s.cameraButton,
-              pressed ? s.pressed : null,
-              disabled ? s.disabled : null,
-            ]}>
-            <Ionicons
-              name="camera-outline"
-              size={16}
-              color={colors.primary}
-            />
-            <Text style={s.cameraButtonText}>Take photo</Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              asset
-                ? 'Replace the selected tomato photo'
-                : 'Choose a tomato image from gallery'
-            }
-            accessibilityState={{disabled}}
-            disabled={disabled}
-            onPress={() => chooseImage(false)}
-            style={({pressed}) => [
-              s.photoButton,
-              s.galleryButton,
-              pressed ? s.pressed : null,
-              disabled ? s.disabled : null,
-            ]}>
-            <Ionicons
-              name="images-outline"
-              size={16}
-              color={colors.text}
-            />
-            <Text style={s.galleryButtonText}>
-              {asset ? 'Replace photo' : 'Choose image'}
-            </Text>
-          </Pressable>
-        </View>
-
-        {picking ? (
-          <View style={s.loadingRow}>
-            <ActivityIndicator
-              color={colors.primary}
-              size="small"
-            />
-            <Text style={s.loadingText}>
-              Opening image picker…
-            </Text>
-          </View>
-        ) : null}
-      </View>
-
-      <View style={s.card}>
-        <StepHeader
-          number="02"
-          title="Storage conditions"
-          description="Enter the known storage environment."
-          complete={conditionsReady}
-        />
-
-        <View style={s.presetRow}>
-          {STORAGE_PRESETS.map(preset => {
-            const selected = activePreset?.id === preset.id;
-
-            return (
               <Pressable
-                key={preset.id}
                 accessibilityRole="button"
-                accessibilityLabel={`Use ${preset.title} storage preset`}
-                accessibilityState={{selected, disabled}}
+                accessibilityLabel="Remove selected photo"
+                accessibilityState={{disabled}}
                 disabled={disabled}
-                onPress={() => applyPreset(preset)}
+                onPress={() => setAsset(null)}
+                hitSlop={10}
                 style={({pressed}) => [
-                  s.preset,
-                  selected ? s.presetSelected : null,
+                  s.removeButton,
                   pressed ? s.pressed : null,
                   disabled ? s.disabled : null,
                 ]}>
                 <Ionicons
-                  name={preset.icon}
-                  size={14}
-                  color={
-                    selected ? colors.primary : colors.muted
-                  }
+                  name="close"
+                  size={20}
+                  color={colors.ink}
                 />
-                <Text
-                  style={[
-                    s.presetText,
-                    selected ? s.presetTextSelected : null,
-                  ]}>
-                  {preset.title}
-                </Text>
               </Pressable>
-            );
-          })}
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Choose tomato photo from gallery"
+              accessibilityState={{disabled}}
+              disabled={disabled}
+              onPress={() => chooseImage(false)}
+              style={({pressed}) => [
+                s.uploadArea,
+                pressed ? s.pressed : null,
+                disabled ? s.disabled : null,
+              ]}>
+              <View style={s.uploadIcon}>
+                <Ionicons
+                  name="image-outline"
+                  size={26}
+                  color={colors.primary}
+                />
+              </View>
+
+              <Text style={s.uploadTitle}>
+                Add a tomato photo
+              </Text>
+              <Text style={s.uploadDescription}>
+                Choose a clear, well-lit image from your gallery.
+              </Text>
+              <Text style={s.uploadHint}>
+                JPEG, PNG or WebP · Maximum 5 MB
+              </Text>
+            </Pressable>
+          )}
+
+          {asset ? (
+            <View style={s.photoMetadata}>
+              <View style={s.metadataItem}>
+                <Ionicons
+                  name="resize-outline"
+                  size={13}
+                  color={colors.muted}
+                />
+                <Text style={s.metadataText}>
+                  {asset.width} × {asset.height}
+                </Text>
+              </View>
+
+              <View style={s.metadataDivider} />
+
+              <View style={s.metadataItem}>
+                <Ionicons
+                  name="document-outline"
+                  size={13}
+                  color={colors.muted}
+                />
+                <Text style={s.metadataText}>
+                  {formatBytes(asset.fileSize)}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          <View style={s.photoActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Take a tomato photo with the camera"
+              accessibilityState={{disabled}}
+              disabled={disabled}
+              onPress={() => chooseImage(true)}
+              style={({pressed}) => [
+                s.photoButton,
+                s.cameraButton,
+                pressed ? s.pressed : null,
+                disabled ? s.disabled : null,
+              ]}>
+              <Ionicons
+                name="camera-outline"
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={s.cameraButtonText}>Camera</Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                asset
+                  ? 'Replace the selected tomato photo'
+                  : 'Choose a tomato image from gallery'
+              }
+              accessibilityState={{disabled}}
+              disabled={disabled}
+              onPress={() => chooseImage(false)}
+              style={({pressed}) => [
+                s.photoButton,
+                s.galleryButton,
+                pressed ? s.pressed : null,
+                disabled ? s.disabled : null,
+              ]}>
+              <Ionicons
+                name="images-outline"
+                size={16}
+                color={colors.text}
+              />
+              <Text style={s.galleryButtonText}>
+                {asset ? 'Replace' : 'Gallery'}
+              </Text>
+            </Pressable>
+          </View>
+
+          {picking ? (
+            <View style={s.loadingRow}>
+              <ActivityIndicator
+                color={colors.primary}
+                size="small"
+              />
+              <Text style={s.loadingText}>
+                Opening image picker…
+              </Text>
+            </View>
+          ) : null}
         </View>
 
-        <View style={s.fields}>
-          {FIELDS.map(field => {
-            const isDays = field.key === 'days';
-            const isFocused = focusedField === field.key;
+        <View style={s.card}>
+          <StepHeader
+            number="02"
+            title="Storage conditions"
+            description="Enter the known storage environment."
+            complete={conditionsReady}
+          />
 
-            return (
-              <View
-                key={field.key}
-                style={isDays ? s.fullField : s.halfField}>
-                <View style={s.fieldLabelRow}>
-                  <Ionicons
-                    name={field.icon}
-                    size={14}
-                    color={colors.primary}
-                  />
-                  <Text style={s.fieldLabel}>
-                    {field.label}
-                  </Text>
-                </View>
+          <View style={s.presetRow}>
+            {STORAGE_PRESETS.map(preset => {
+              const selected = activePreset?.id === preset.id;
 
-                <View
-                  style={[
-                    s.inputWrapper,
-                    isFocused ? s.inputFocused : null,
+              return (
+                <Pressable
+                  key={preset.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Use ${preset.title} storage preset`}
+                  accessibilityState={{selected, disabled}}
+                  disabled={disabled}
+                  onPress={() => applyPreset(preset)}
+                  style={({pressed}) => [
+                    s.preset,
+                    selected ? s.presetSelected : null,
+                    pressed ? s.pressed : null,
                     disabled ? s.disabled : null,
                   ]}>
-                  <TextInput
-                    accessibilityLabel={`${field.label} in ${field.unit}`}
-                    editable={!disabled}
-                    value={context[field.key]}
-                    onChangeText={value =>
-                      updateContext(field.key, value)
-                    }
-                    onFocus={() => setFocusedField(field.key)}
-                    onBlur={() => setFocusedField(null)}
-                    keyboardType={getKeyboardType(field.key)}
-                    returnKeyType={isDays ? 'done' : 'next'}
-                    onSubmitEditing={() => Keyboard.dismiss()}
-                    autoCorrect={false}
-                    autoCapitalize="none"
-                    placeholder={field.placeholder}
-                    placeholderTextColor={colors.faint}
-                    selectionColor={colors.primary}
-                    style={s.input}
-                  />
-
-                  <Text style={s.unit}>{field.unit}</Text>
-                </View>
-
-                <Text style={s.fieldHint}>{field.hint}</Text>
-              </View>
-            );
-          })}
-        </View>
-      </View>
-
-      <View style={s.card}>
-        <StepHeader
-          number="03"
-          title="Packaging type"
-          description="Select how this tomato is currently stored."
-          complete={packagingReady}
-        />
-
-        <View style={s.packagingList}>
-          {PACKAGING_OPTIONS.map(option => {
-            const selected = context.packaging === option.value;
-
-            return (
-              <Pressable
-                key={option.value}
-                accessibilityRole="radio"
-                accessibilityLabel={option.title}
-                accessibilityState={{
-                  checked: selected,
-                  disabled,
-                }}
-                disabled={disabled}
-                onPress={() =>
-                  updateContext('packaging', option.value)
-                }
-                style={({pressed}) => [
-                  s.packagingOption,
-                  selected ? s.packagingSelected : null,
-                  pressed ? s.pressed : null,
-                  disabled ? s.disabled : null,
-                ]}>
-                <View
-                  style={[
-                    s.packagingIcon,
-                    selected ? s.packagingIconSelected : null,
-                  ]}>
                   <Ionicons
-                    name={option.icon}
-                    size={19}
+                    name={preset.icon}
+                    size={14}
                     color={
                       selected ? colors.primary : colors.muted
                     }
                   />
-                </View>
-
-                <View style={s.packagingCopy}>
-                  <Text style={s.packagingTitle}>
-                    {option.title}
+                  <Text
+                    style={[
+                      s.presetText,
+                      selected ? s.presetTextSelected : null,
+                    ]}>
+                    {preset.title}
                   </Text>
-                  <Text style={s.packagingDescription}>
-                    {option.description}
-                  </Text>
-                </View>
-
-                <View
-                  style={[
-                    s.radio,
-                    selected ? s.radioSelected : null,
-                  ]}>
-                  {selected ? (
-                    <View style={s.radioDot} />
-                  ) : null}
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-
-      <View style={s.notice}>
-        <View style={s.noticeHeader}>
-          <View style={s.noticeIcon}>
-            <Ionicons
-              name="information-circle-outline"
-              size={17}
-              color="#776D49"
-            />
+                </Pressable>
+              );
+            })}
           </View>
 
-          <Text style={s.noticeTitle}>Demo assessment</Text>
+          <View style={s.fields}>
+            {FIELDS.map(field => {
+              const isDays = field.key === 'days';
+              const isFocused = focusedField === field.key;
+              const status = getFieldStatus(field.key);
+              const hasError = status === 'invalid';
+
+              return (
+                <View
+                  key={field.key}
+                  style={isDays ? s.fullField : s.halfField}>
+                  <View style={s.fieldLabelRow}>
+                    <Ionicons
+                      name={field.icon}
+                      size={14}
+                      color={colors.primary}
+                    />
+                    <Text style={s.fieldLabel}>
+                      {field.label}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={[
+                      s.inputWrapper,
+                      isFocused ? s.inputFocused : null,
+                      hasError ? s.inputError : null,
+                      status === 'valid'
+                        ? s.inputValid
+                        : null,
+                      disabled ? s.disabled : null,
+                    ]}>
+                    <TextInput
+                      accessibilityLabel={`${field.label} in ${field.unit}`}
+                      editable={!disabled}
+                      value={context[field.key]}
+                      onChangeText={value =>
+                        updateContext(field.key, value)
+                      }
+                      onFocus={() =>
+                        setFocusedField(field.key)
+                      }
+                      onBlur={() => setFocusedField(null)}
+                      keyboardType={getKeyboardType(field.key)}
+                      returnKeyType={isDays ? 'done' : 'next'}
+                      onSubmitEditing={() => Keyboard.dismiss()}
+                      autoCorrect={false}
+                      autoCapitalize="none"
+                      placeholder={field.placeholder}
+                      placeholderTextColor={colors.faint}
+                      selectionColor={colors.primary}
+                      style={s.input}
+                    />
+
+                    <Text style={s.unit}>{field.unit}</Text>
+
+                    {status === 'valid' ? (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={17}
+                        color={colors.success}
+                      />
+                    ) : null}
+
+                    {hasError ? (
+                      <Ionicons
+                        name="alert-circle"
+                        size={17}
+                        color={colors.danger}
+                      />
+                    ) : null}
+                  </View>
+
+                  <Text
+                    style={[
+                      s.fieldHint,
+                      hasError ? s.fieldHintError : null,
+                    ]}>
+                    {hasError ? field.error : field.hint}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
         </View>
 
-        <Text style={s.noticeText}>
-          Results use storage-context heuristics. The selected image is
-          validated for upload but is not yet analyzed by a trained AI
-          model. Results do not certify food safety.
+        <View style={s.card}>
+          <StepHeader
+            number="03"
+            title="Packaging type"
+            description="Select how this tomato is currently stored."
+            complete={packagingReady}
+          />
+
+          <View style={s.packagingList}>
+            {PACKAGING_OPTIONS.map(option => {
+              const selected =
+                context.packaging === option.value;
+
+              return (
+                <Pressable
+                  key={option.value}
+                  accessibilityRole="radio"
+                  accessibilityLabel={option.title}
+                  accessibilityState={{
+                    checked: selected,
+                    disabled,
+                  }}
+                  disabled={disabled}
+                  onPress={() =>
+                    updateContext('packaging', option.value)
+                  }
+                  style={({pressed}) => [
+                    s.packagingOption,
+                    selected ? s.packagingSelected : null,
+                    pressed ? s.pressed : null,
+                    disabled ? s.disabled : null,
+                  ]}>
+                  <View
+                    style={[
+                      s.packagingIcon,
+                      selected
+                        ? s.packagingIconSelected
+                        : null,
+                    ]}>
+                    <Ionicons
+                      name={option.icon}
+                      size={19}
+                      color={
+                        selected
+                          ? colors.primary
+                          : colors.muted
+                      }
+                    />
+                  </View>
+
+                  <View style={s.packagingCopy}>
+                    <Text style={s.packagingTitle}>
+                      {option.title}
+                    </Text>
+                    <Text style={s.packagingDescription}>
+                      {option.description}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={[
+                      s.radio,
+                      selected ? s.radioSelected : null,
+                    ]}>
+                    {selected ? (
+                      <View style={s.radioDot} />
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={s.notice}>
+          <View style={s.noticeHeader}>
+            <View style={s.noticeIcon}>
+              <Ionicons
+                name="information-circle-outline"
+                size={17}
+                color="#776D49"
+              />
+            </View>
+
+            <Text style={s.noticeTitle}>Demo assessment</Text>
+          </View>
+
+          <Text style={s.noticeText}>
+            Results use storage-context heuristics. The selected image
+            is validated for upload but is not yet analyzed by a trained
+            AI model. Results do not certify food safety.
+          </Text>
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            busy
+              ? 'Generating demo assessment'
+              : 'Run demo assessment'
+          }
+          accessibilityState={{disabled, busy}}
+          disabled={!canSubmit}
+          onPress={submitAssessment}
+          style={({pressed}) => [
+            s.submitButton,
+            pressed && canSubmit ? s.pressed : null,
+            !canSubmit ? s.disabled : null,
+          ]}>
+          {busy ? (
+            <ActivityIndicator
+              color={colors.primaryDark}
+              size="small"
+            />
+          ) : (
+            <Ionicons
+              name="analytics-outline"
+              size={20}
+              color={colors.primaryDark}
+            />
+          )}
+
+          <Text style={s.submitText}>
+            {busy ? 'Assessing…' : 'Run demo assessment'}
+          </Text>
+
+          {!busy ? (
+            <Ionicons
+              name="arrow-forward"
+              size={18}
+              color={colors.primaryDark}
+            />
+          ) : null}
+        </Pressable>
+
+        <Text style={s.footer}>
+          Tomato-only prototype · Images are not permanently stored
         </Text>
-      </View>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={
-          busy ? 'Generating demo assessment' : 'Run demo assessment'
-        }
-        accessibilityState={{disabled, busy}}
-        disabled={disabled}
-        onPress={submitAssessment}
-        style={({pressed}) => [
-          s.submitButton,
-          pressed ? s.pressed : null,
-          disabled ? s.disabled : null,
-        ]}>
-        {busy ? (
-          <ActivityIndicator
-            color={colors.white}
-            size="small"
-          />
-        ) : (
-          <Ionicons
-            name="analytics-outline"
-            size={20}
-            color={colors.primaryDark}
-          />
-        )}
-
-        <Text style={s.submitText}>
-          {busy ? 'Assessing…' : 'Run demo assessment'}
-        </Text>
-
-        {!busy ? (
-          <Ionicons
-            name="arrow-forward"
-            size={18}
-            color={colors.primaryDark}
-          />
-        ) : null}
-      </Pressable>
-
-      <Text style={s.footer}>
-        Tomato-only prototype · Images are not permanently stored
-      </Text>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -982,20 +1026,16 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    width: '100%',
-    maxWidth: layout.screenMaxWidth,
-    alignSelf: 'center',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 14,
-    paddingBottom: 36,
-    gap: 17,
-  },
-  header: {
-    minHeight: 44,
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 14,
+    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   brand: {
     flexDirection: 'row',
@@ -1003,8 +1043,8 @@ const s = StyleSheet.create({
     gap: 10,
   },
   brandIcon: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1023,20 +1063,40 @@ const s = StyleSheet.create({
     letterSpacing: 0.9,
     marginTop: 3,
   },
-  stepChip: {
+  progressChip: {
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
   },
-  stepChipText: {
+  progressChipText: {
     color: colors.primary,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
+  progressRail: {
+    height: 3,
+    backgroundColor: colors.surfaceMuted,
+  },
+  progressRailFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    width: '100%',
+    maxWidth: layout.screenMaxWidth,
+    alignSelf: 'center',
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 18,
+    paddingBottom: 36,
+    gap: 17,
+  },
   intro: {
-    paddingTop: 5,
+    paddingTop: 2,
   },
   heading: {
     ...typography.display,
@@ -1050,46 +1110,6 @@ const s = StyleSheet.create({
     color: colors.text,
     marginTop: 9,
     maxWidth: 520,
-  },
-  progressCard: {
-    padding: 15,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  progressTitle: {
-    ...typography.label,
-    color: colors.ink,
-  },
-  progressValue: {
-    color: colors.primary,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  progressTrack: {
-    height: 7,
-    overflow: 'hidden',
-    borderRadius: 4,
-    backgroundColor: colors.surfaceMuted,
-    marginTop: 11,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-  },
-  progressHint: {
-    ...typography.caption,
-    color: colors.muted,
-    marginTop: 8,
   },
   card: {
     backgroundColor: colors.surface,
@@ -1153,14 +1173,14 @@ const s = StyleSheet.create({
     letterSpacing: 0.7,
   },
   uploadArea: {
-    minHeight: 205,
+    minHeight: 210,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
     borderRadius: radius.lg,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     backgroundColor: colors.surfaceMuted,
   },
   uploadIcon: {
@@ -1190,7 +1210,7 @@ const s = StyleSheet.create({
     marginTop: 15,
   },
   preview: {
-    height: 230,
+    height: 235,
     borderRadius: radius.lg,
     overflow: 'hidden',
     backgroundColor: colors.surfaceMuted,
@@ -1227,12 +1247,13 @@ const s = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.white,
+    ...shadow.subtle,
   },
   photoMetadata: {
     flexDirection: 'row',
@@ -1265,7 +1286,7 @@ const s = StyleSheet.create({
   },
   photoButton: {
     flex: 1,
-    minHeight: 48,
+    minHeight: layout.touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1363,10 +1384,18 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 13,
+    gap: 7,
   },
   inputFocused: {
     borderColor: colors.primary,
     backgroundColor: colors.primarySoft,
+  },
+  inputValid: {
+    borderColor: colors.success,
+  },
+  inputError: {
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerSoft,
   },
   input: {
     flex: 1,
@@ -1379,12 +1408,14 @@ const s = StyleSheet.create({
   unit: {
     ...typography.label,
     color: colors.muted,
-    marginLeft: 6,
   },
   fieldHint: {
     ...typography.overline,
     color: colors.faint,
     marginTop: 6,
+  },
+  fieldHintError: {
+    color: colors.danger,
   },
   packagingList: {
     gap: 10,
@@ -1485,6 +1516,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: radius.lg,
     backgroundColor: colors.accent,
+    ...shadow.raised,
   },
   submitText: {
     color: colors.primaryDark,
