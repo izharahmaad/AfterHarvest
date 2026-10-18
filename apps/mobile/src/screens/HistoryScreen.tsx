@@ -366,8 +366,9 @@ export default function HistoryScreen({
 }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
   const {width} = useWindowDimensions();
-  const narrow = width < 360;
-  const tablet = width >= 700;
+
+  const narrow = width < layout.narrowBreakpoint;
+  const tablet = width >= layout.tabletBreakpoint;
 
   const sortedItems = useMemo(() => {
     return [...items].sort(
@@ -410,210 +411,227 @@ export default function HistoryScreen({
       ? 'Recent assessments'
       : `${selectedFilter.label} assessments`;
 
-  return (
-    <ScrollView
-      style={s.screen}
-      contentContainerStyle={[
-        s.content,
-        tablet ? s.contentTablet : null,
-      ]}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled">
-      <View style={s.header}>
-        <View style={s.headerTop}>
-          <View style={s.brand}>
-            <View style={s.brandIcon}>
-              <Ionicons
-                name="time"
-                size={18}
-                color={colors.white}
-              />
-            </View>
+  const historyProgress = items.length
+    ? Math.min(100, Math.round((counts.fresh / items.length) * 100))
+    : 0;
 
-            <View>
-              <Text style={s.brandName}>Assessment history</Text>
-              <Text style={s.brandCaption}>THIS SESSION</Text>
-            </View>
+  return (
+    <View style={s.screen}>
+      <View style={s.topBar}>
+        <View style={s.brand}>
+          <View style={s.brandIcon}>
+            <Ionicons
+              name="time"
+              size={17}
+              color={colors.white}
+            />
           </View>
 
-          <View style={s.sessionPill}>
-            <View style={s.sessionDot} />
-            <Text style={s.sessionPillText}>SESSION ONLY</Text>
+          <View>
+            <Text style={s.brandName}>Assessment history</Text>
+            <Text style={s.brandCaption}>THIS SESSION</Text>
           </View>
         </View>
 
-        <Text
-          accessibilityRole="header"
-          style={[s.heading, narrow ? s.headingNarrow : null]}>
-          Your produce,{'\n'}
-          <Text style={s.headingAccent}>at a glance.</Text>
-        </Text>
-
-        <Text style={s.subtitle}>
-          Review recent results and revisit the context behind each
-          assessment.
-        </Text>
+        <View style={s.sessionPill}>
+          <View style={s.sessionDot} />
+          <Text style={s.sessionPillText}>SESSION ONLY</Text>
+        </View>
       </View>
 
-      <View style={s.metrics}>
-        <SummaryTile
-          label="Assessments"
-          value={counts.all}
-          hint="Saved this session"
-          icon="layers-outline"
-        />
-
-        <SummaryTile
-          label="Fresh results"
-          value={counts.fresh}
-          hint="Current session"
-          icon="leaf-outline"
-          emphasized
+      <View style={s.progressRail}>
+        <View
+          style={[
+            s.progressRailFill,
+            {width: `${historyProgress}%`},
+          ]}
         />
       </View>
 
-      <View style={s.sessionNotice}>
-        <View style={s.noticeIcon}>
-          <Ionicons
-            name="information-circle-outline"
-            size={17}
-            color={colors.primary}
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={[
+          s.content,
+          tablet ? s.contentTablet : null,
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <View style={s.intro}>
+          <Text
+            accessibilityRole="header"
+            style={[s.heading, narrow ? s.headingNarrow : null]}>
+            Your produce,{'\n'}
+            <Text style={s.headingAccent}>at a glance.</Text>
+          </Text>
+
+          <Text style={s.subtitle}>
+            Review recent results and revisit the context behind each
+            assessment.
+          </Text>
+        </View>
+
+        <View style={s.metrics}>
+          <SummaryTile
+            label="Assessments"
+            value={counts.all}
+            hint="Saved this session"
+            icon="layers-outline"
+          />
+
+          <SummaryTile
+            label="Fresh results"
+            value={counts.fresh}
+            hint="Current session"
+            icon="leaf-outline"
+            emphasized
           />
         </View>
 
-        <View style={s.noticeCopy}>
-          <Text style={s.noticeTitle}>Session history</Text>
-          <Text style={s.noticeDescription}>
-            Records reset when the app restarts. Cloud persistence is
-            not connected yet.
-          </Text>
-        </View>
-      </View>
-
-      <View style={s.filterRow}>
-        {FILTERS.map(option => {
-          const selected = filter === option.value;
-
-          return (
-            <Pressable
-              key={option.value}
-              accessibilityRole="button"
-              accessibilityLabel={`Show ${option.label.toLowerCase()} assessments`}
-              accessibilityState={{selected}}
-              onPress={() => setFilter(option.value)}
-              style={({pressed}) => [
-                s.filter,
-                selected ? s.filterSelected : null,
-                pressed ? s.filterPressed : null,
-              ]}>
-              <Ionicons
-                name={option.icon}
-                size={14}
-                color={selected ? colors.white : colors.muted}
-                accessible={false}
-              />
-
-              <Text
-                style={[
-                  s.filterText,
-                  selected ? s.filterTextSelected : null,
-                ]}>
-                {option.label}
-              </Text>
-
-              <View
-                style={[
-                  s.filterCount,
-                  selected ? s.filterCountSelected : null,
-                ]}>
-                <Text
-                  style={[
-                    s.filterCountText,
-                    selected ? s.filterCountTextSelected : null,
-                  ]}>
-                  {counts[option.value]}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <View style={s.listHeader}>
-        <Text accessibilityRole="header" style={s.listTitle}>
-          {listTitle}
-        </Text>
-
-        <Text style={s.listCount}>
-          {visibleItems.length}{' '}
-          {visibleItems.length === 1 ? 'record' : 'records'}
-        </Text>
-      </View>
-
-      {visibleItems.length === 0 ? (
-        <View style={s.emptyCard}>
-          <View style={s.emptyIcon}>
+        <View style={s.sessionNotice}>
+          <View style={s.noticeIcon}>
             <Ionicons
-              name={
-                items.length === 0
-                  ? 'leaf-outline'
-                  : 'search-outline'
-              }
-              size={25}
+              name="information-circle-outline"
+              size={17}
               color={colors.primary}
             />
           </View>
 
-          <Text style={s.emptyTitle}>
-            {items.length === 0
-              ? 'Your history starts here'
-              : 'No matching assessments'}
+          <View style={s.noticeCopy}>
+            <Text style={s.noticeTitle}>Session history</Text>
+            <Text style={s.noticeDescription}>
+              Records reset when the app restarts. Cloud persistence is
+              not connected yet.
+            </Text>
+          </View>
+        </View>
+
+        <View style={s.filterRow}>
+          {FILTERS.map(option => {
+            const selected = filter === option.value;
+
+            return (
+              <Pressable
+                key={option.value}
+                accessibilityRole="button"
+                accessibilityLabel={`Show ${option.label.toLowerCase()} assessments`}
+                accessibilityState={{selected}}
+                onPress={() => setFilter(option.value)}
+                style={({pressed}) => [
+                  s.filter,
+                  selected ? s.filterSelected : null,
+                  pressed ? s.filterPressed : null,
+                ]}>
+                <Ionicons
+                  name={option.icon}
+                  size={14}
+                  color={selected ? colors.white : colors.muted}
+                  accessible={false}
+                />
+
+                <Text
+                  style={[
+                    s.filterText,
+                    selected ? s.filterTextSelected : null,
+                  ]}>
+                  {option.label}
+                </Text>
+
+                <View
+                  style={[
+                    s.filterCount,
+                    selected ? s.filterCountSelected : null,
+                  ]}>
+                  <Text
+                    style={[
+                      s.filterCountText,
+                      selected
+                        ? s.filterCountTextSelected
+                        : null,
+                    ]}>
+                    {counts[option.value]}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={s.listHeader}>
+          <Text accessibilityRole="header" style={s.listTitle}>
+            {listTitle}
           </Text>
 
-          <Text style={s.emptyDescription}>
-            {items.length === 0
-              ? 'Complete your first tomato assessment and it will appear here.'
-              : `There are no ${filter} results in this session. Try another filter.`}
+          <Text style={s.listCount}>
+            {visibleItems.length}{' '}
+            {visibleItems.length === 1 ? 'record' : 'records'}
           </Text>
+        </View>
 
-          {filter !== 'all' ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="View all assessments"
-              onPress={() => setFilter('all')}
-              style={({pressed}) => [
-                s.resetButton,
-                pressed ? s.resetPressed : null,
-              ]}>
+        {visibleItems.length === 0 ? (
+          <View style={s.emptyCard}>
+            <View style={s.emptyIcon}>
               <Ionicons
-                name="apps-outline"
-                size={15}
+                name={
+                  items.length === 0
+                    ? 'leaf-outline'
+                    : 'search-outline'
+                }
+                size={25}
                 color={colors.primary}
-                accessible={false}
               />
-              <Text style={s.resetButtonText}>
-                View all results
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : (
-        <View style={s.list}>
-          {visibleItems.map((item, index) => (
-            <AssessmentCard
-              key={getAssessmentKey(item, index)}
-              item={item}
-              onPress={() => onSelect(item)}
-            />
-          ))}
-        </View>
-      )}
+            </View>
 
-      <Text style={s.footer}>
-        Demo scores are not food-safety ratings or measured
-        probabilities.
-      </Text>
-    </ScrollView>
+            <Text style={s.emptyTitle}>
+              {items.length === 0
+                ? 'Your history starts here'
+                : 'No matching assessments'}
+            </Text>
+
+            <Text style={s.emptyDescription}>
+              {items.length === 0
+                ? 'Complete your first tomato assessment and it will appear here.'
+                : `There are no ${filter} results in this session. Try another filter.`}
+            </Text>
+
+            {filter !== 'all' ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="View all assessments"
+                onPress={() => setFilter('all')}
+                style={({pressed}) => [
+                  s.resetButton,
+                  pressed ? s.resetPressed : null,
+                ]}>
+                <Ionicons
+                  name="apps-outline"
+                  size={15}
+                  color={colors.primary}
+                  accessible={false}
+                />
+                <Text style={s.resetButtonText}>
+                  View all results
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : (
+          <View style={s.list}>
+            {visibleItems.map((item, index) => (
+              <AssessmentCard
+                key={getAssessmentKey(item, index)}
+                item={item}
+                onPress={() => onSelect(item)}
+              />
+            ))}
+          </View>
+        )}
+
+        <Text style={s.footer}>
+          Demo scores are not food-safety ratings or measured
+          probabilities.
+        </Text>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -622,28 +640,16 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    width: '100%',
-    maxWidth: layout.screenMaxWidth,
-    alignSelf: 'center',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 14,
-    paddingBottom: 36,
-    gap: 17,
-  },
-  contentTablet: {
-    paddingHorizontal: 30,
-    paddingTop: 24,
-    gap: 20,
-  },
-  header: {
-    paddingTop: 5,
-  },
-  headerTop: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 14,
+    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   brand: {
     flexDirection: 'row',
@@ -651,8 +657,8 @@ const s = StyleSheet.create({
     gap: 10,
   },
   brandIcon: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -677,7 +683,7 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
   },
   sessionDot: {
@@ -692,10 +698,37 @@ const s = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.7,
   },
+  progressRail: {
+    height: 3,
+    backgroundColor: colors.surfaceMuted,
+  },
+  progressRailFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    width: '100%',
+    maxWidth: layout.screenMaxWidth,
+    alignSelf: 'center',
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 18,
+    paddingBottom: 36,
+    gap: 17,
+  },
+  contentTablet: {
+    paddingHorizontal: layout.screenPaddingWide,
+    paddingTop: 24,
+    gap: 20,
+  },
+  intro: {
+    paddingTop: 2,
+  },
   heading: {
     ...typography.display,
     color: colors.ink,
-    marginTop: 16,
   },
   headingNarrow: {
     fontSize: 27,
@@ -806,7 +839,7 @@ const s = StyleSheet.create({
     gap: 8,
   },
   filter: {
-    minHeight: 42,
+    minHeight: layout.touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -1042,7 +1075,7 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
   resetButton: {
-    minHeight: 44,
+    minHeight: layout.touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
