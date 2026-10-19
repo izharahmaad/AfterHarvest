@@ -247,7 +247,6 @@ function DetailRow({
     </View>
   );
 }
-
 export default function ResultScreen({result, onNew}: Props) {
   const {width} = useWindowDimensions();
   const narrow = width < layout.narrowBreakpoint;
