@@ -1,7 +1,5 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
-  Alert,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,7 +8,6 @@ import {
   View,
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
 
 import {
   colors,
@@ -26,89 +23,6 @@ type Props = {
 };
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
-
-type StoragePreset = {
-  id: string;
-  title: string;
-  temperature: string;
-  humidity: string;
-  days: string;
-  icon: IconName;
-};
-
-type StorageTip = {
-  title: string;
-  description: string;
-  icon: IconName;
-};
-
-const SUPPORT_EMAIL = 'support@afterharvest.app';
-
-const STORAGE_PRESETS: StoragePreset[] = [
-  {
-    id: 'room',
-    title: 'Room',
-    temperature: '22',
-    humidity: '65',
-    days: '2',
-    icon: 'home-outline',
-  },
-  {
-    id: 'cooler',
-    title: 'Cooler',
-    temperature: '8',
-    humidity: '80',
-    days: '4',
-    icon: 'snow-outline',
-  },
-  {
-    id: 'transport',
-    title: 'Transport',
-    temperature: '12',
-    humidity: '75',
-    days: '1',
-    icon: 'car-outline',
-  },
-];
-
-const STORAGE_TIPS: StorageTip[] = [
-  {
-    title: 'Keep tomatoes dry',
-    description:
-      'Avoid washing before storage. Moisture can accelerate spoilage.',
-    icon: 'water-outline',
-  },
-  {
-    title: 'Maintain airflow',
-    description:
-      'Ventilated packaging reduces trapped humidity around produce.',
-    icon: 'leaf-outline',
-  },
-  {
-    title: 'Check daily',
-    description:
-      'Separate soft or damaged tomatoes to slow spread within a batch.',
-    icon: 'eye-outline',
-  },
-];
-
-const READINESS_ITEMS = [
-  {
-    title: 'Clear tomato photo',
-    description: 'JPEG, PNG or WebP up to 5 MB',
-    icon: 'image-outline' as IconName,
-  },
-  {
-    title: 'Storage conditions',
-    description: 'Temperature, humidity and duration',
-    icon: 'options-outline' as IconName,
-  },
-  {
-    title: 'Packaging type',
-    description: 'Open crate, sealed bag or ventilated box',
-    icon: 'cube-outline' as IconName,
-  },
-];
 
 const STEPS = [
   {
@@ -170,62 +84,19 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
   const narrow = width < layout.narrowBreakpoint;
   const tablet = width >= layout.tabletBreakpoint;
 
-  const [copiedEmail, setCopiedEmail] = useState(false);
-
-  async function copySupportEmail() {
-    try {
-      await Clipboard.setStringAsync(SUPPORT_EMAIL);
-
-      setCopiedEmail(true);
-      Alert.alert(
-        'Email copied',
-        `${SUPPORT_EMAIL} has been copied to your clipboard.`,
-      );
-
-      setTimeout(() => setCopiedEmail(false), 2500);
-    } catch {
-      Alert.alert(
-        'Unable to copy',
-        'Please copy the support email manually.',
-      );
-    }
-  }
-
-  async function openFeedbackEmail() {
-    const subject = encodeURIComponent(
-      'AfterHarvest prototype feedback',
-    );
-    const body = encodeURIComponent(
-      'Hi AfterHarvest team,\n\nI would like to share feedback about the mobile prototype:\n\n',
-    );
-    const url = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
-
-    try {
-      await Linking.openURL(url);
-    } catch {
-      Alert.alert(
-        'Email unavailable',
-        'No email app is available. The support email has been copied instead.',
-      );
-
-      try {
-        await Clipboard.setStringAsync(SUPPORT_EMAIL);
-      } catch {
-        // Keep the interaction simple; no additional error prompt.
-      }
-    }
-  }
-
   return (
-    <View style={s.screen}>
-      <View style={s.topBar}>
+    <ScrollView
+      style={s.screen}
+      contentContainerStyle={[
+        s.content,
+        tablet ? s.contentTablet : null,
+      ]}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled">
+      <View style={s.header}>
         <View style={s.brand}>
           <View style={s.brandIcon}>
-            <Ionicons
-              name="leaf"
-              size={17}
-              color={colors.white}
-            />
+            <Ionicons name="leaf" size={19} color={colors.white} />
           </View>
 
           <View>
@@ -240,472 +111,251 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
         </View>
       </View>
 
-      <View style={s.brandRail} />
+      <View style={s.intro}>
+        <Text style={s.eyebrow}>TOMATO QUALITY WORKSPACE</Text>
 
-      <ScrollView
-        style={s.scroll}
-        contentContainerStyle={[
-          s.content,
-          tablet ? s.contentTablet : null,
-        ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        <View style={s.intro}>
-          <Text style={s.eyebrow}>
-            TOMATO QUALITY WORKSPACE
-          </Text>
+        <Text
+          accessibilityRole="header"
+          style={[s.heading, narrow ? s.headingNarrow : null]}>
+          Understand your{'\n'}
+          <Text style={s.headingAccent}>produce better.</Text>
+        </Text>
 
-          <Text
-            accessibilityRole="header"
-            style={[s.heading, narrow ? s.headingNarrow : null]}>
-            Understand your{'\n'}
-            <Text style={s.headingAccent}>produce better.</Text>
-          </Text>
+        <Text style={s.introText}>
+          Combine a tomato photo with its storage conditions to explore
+          a clear, transparent demo assessment.
+        </Text>
+      </View>
 
-          <Text style={s.introText}>
-            Combine a tomato photo with its storage conditions to
-            explore a clear, transparent demo assessment.
-          </Text>
-        </View>
+      <View style={s.hero}>
+        <View style={s.heroOrb} />
 
-        <View style={s.hero}>
-          <View style={s.heroOrb} />
-
-          <View style={s.heroHeader}>
-            <View style={s.heroLabel}>
-              <Ionicons
-                name="sparkles-outline"
-                size={13}
-                color="#D9E8DA"
-              />
-              <Text style={s.heroLabelText}>
-                CURRENT PILOT
-              </Text>
-            </View>
-
+        <View style={s.heroHeader}>
+          <View style={s.heroLabel}>
             <Ionicons
-              name="arrow-up-right-box"
-              size={19}
-              color="#D7E4D8"
-              accessible={false}
+              name="sparkles-outline"
+              size={13}
+              color="#D9E8DA"
             />
-          </View>
-
-          <View style={s.heroContent}>
-            <View style={s.heroCopy}>
-              <Text style={s.heroTitle}>
-                Tomato{'\n'}quality check
-              </Text>
-              <Text style={s.heroDescription}>
-                Photo-led. Storage-aware.
-              </Text>
-            </View>
-
-            <TomatoMark />
-          </View>
-
-          <View style={s.heroFooter}>
-            <View style={s.heroMetadata}>
-              <Ionicons
-                name="image-outline"
-                size={14}
-                color="#D3E0D4"
-              />
-              <Text style={s.heroMetadataText}>PHOTO</Text>
-            </View>
-
-            <View style={s.heroMetadataDivider} />
-
-            <View style={s.heroMetadata}>
-              <Ionicons
-                name="thermometer-outline"
-                size={14}
-                color="#D3E0D4"
-              />
-              <Text style={s.heroMetadataText}>
-                STORAGE DATA
-              </Text>
-            </View>
-
-            <View style={s.heroFooterSpace} />
-
-            <Text style={s.heroDemo}>DEMO</Text>
-          </View>
-        </View>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Start a new tomato assessment"
-          accessibilityHint="Opens the form to add a photo and storage conditions"
-          onPress={onCapture}
-          style={({pressed}) => [
-            s.primaryAction,
-            pressed ? s.primaryPressed : null,
-          ]}>
-          <View style={s.primaryIcon}>
-            <Ionicons
-              name="add"
-              size={25}
-              color={colors.primaryDark}
-            />
-          </View>
-
-          <View style={s.primaryCopy}>
-            <Text style={s.primaryOverline}>GET STARTED</Text>
-            <Text style={s.primaryTitle}>New assessment</Text>
-            <Text style={s.primaryDescription}>
-              Add a photo and storage conditions
-            </Text>
-          </View>
-
-          <View style={s.primaryArrow}>
-            <Ionicons
-              name="arrow-forward"
-              size={18}
-              color={colors.white}
-            />
-          </View>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open assessment history"
-          accessibilityHint="View assessments saved during this session"
-          onPress={onHistory}
-          style={({pressed}) => [
-            s.historyAction,
-            pressed ? s.historyPressed : null,
-          ]}>
-          <IconTile name="time-outline" />
-
-          <View style={s.historyCopy}>
-            <Text style={s.historyTitle}>
-              Assessment history
-            </Text>
-            <Text style={s.historyDescription}>
-              Revisit results from this session
-            </Text>
+            <Text style={s.heroLabelText}>CURRENT PILOT</Text>
           </View>
 
           <Ionicons
-            name="chevron-forward"
-            size={17}
-            color={colors.muted}
+            name="arrow-up-right-box"
+            size={19}
+            color="#D7E4D8"
             accessible={false}
           />
-        </Pressable>
+        </View>
 
-        <View style={s.sectionHeader}>
-          <View style={s.sectionHeadingCopy}>
-            <Text
-              accessibilityRole="header"
-              style={s.sectionTitle}>
-              Quick-start presets
+        <View style={s.heroContent}>
+          <View style={s.heroCopy}>
+            <Text style={s.heroTitle}>
+              Tomato{'\n'}quality check
             </Text>
-            <Text style={s.sectionSubtitle}>
-              Start with common storage conditions
+            <Text style={s.heroDescription}>
+              Photo-led. Storage-aware.
             </Text>
           </View>
 
-          <View style={s.stepCount}>
-            <Text style={s.stepCountText}>3 OPTIONS</Text>
-          </View>
+          <TomatoMark />
         </View>
 
-        <View style={s.presetRow}>
-          {STORAGE_PRESETS.map(preset => (
-            <Pressable
-              key={preset.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Use ${preset.title} storage preset`}
-              accessibilityHint="Opens a new assessment with these storage conditions"
-              onPress={onCapture}
-              style={({pressed}) => [
-                s.presetCard,
-                pressed ? s.pressed : null,
-              ]}>
-              <IconTile
-                name={preset.icon}
-                size={17}
-                color={colors.primary}
-                background={colors.primarySoft}
-              />
-
-              <Text style={s.presetTitle}>{preset.title}</Text>
-              <Text style={s.presetValue}>
-                {preset.temperature}°C · {preset.humidity}% ·{' '}
-                {preset.days}d
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={s.sectionHeader}>
-          <View style={s.sectionHeadingCopy}>
-            <Text
-              accessibilityRole="header"
-              style={s.sectionTitle}>
-              Before you start
-            </Text>
-            <Text style={s.sectionSubtitle}>
-              Have these details ready
-            </Text>
-          </View>
-        </View>
-
-        <View style={s.readinessCard}>
-          {READINESS_ITEMS.map((item, index) => (
-            <View
-              key={item.title}
-              style={[
-                s.readinessRow,
-                index < READINESS_ITEMS.length - 1
-                  ? s.readinessRowBorder
-                  : null,
-              ]}>
-              <IconTile
-                name={item.icon}
-                size={16}
-                color={colors.primary}
-                background={colors.primarySoft}
-              />
-
-              <View style={s.readinessCopy}>
-                <Text style={s.readinessTitle}>
-                  {item.title}
-                </Text>
-                <Text style={s.readinessDescription}>
-                  {item.description}
-                </Text>
-              </View>
-
-              <Ionicons
-                name="checkmark-circle"
-                size={19}
-                color={colors.success}
-                accessible={false}
-              />
-            </View>
-          ))}
-        </View>
-
-        <View style={s.sectionHeader}>
-          <View style={s.sectionHeadingCopy}>
-            <Text
-              accessibilityRole="header"
-              style={s.sectionTitle}>
-              Storage tips
-            </Text>
-            <Text style={s.sectionSubtitle}>
-              Practical guidance for tomato batches
-            </Text>
-          </View>
-        </View>
-
-        <View style={s.tipsCard}>
-          {STORAGE_TIPS.map((tip, index) => (
-            <View
-              key={tip.title}
-              style={[
-                s.tipRow,
-                index < STORAGE_TIPS.length - 1
-                  ? s.tipRowBorder
-                  : null,
-              ]}>
-              <IconTile
-                name={tip.icon}
-                size={17}
-                color={colors.primary}
-                background={colors.primarySoft}
-              />
-
-              <View style={s.tipCopy}>
-                <Text style={s.tipTitle}>{tip.title}</Text>
-                <Text style={s.tipDescription}>
-                  {tip.description}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        <View style={s.sectionHeader}>
-          <View style={s.sectionHeadingCopy}>
-            <Text
-              accessibilityRole="header"
-              style={s.sectionTitle}>
-              How it works
-            </Text>
-            <Text style={s.sectionSubtitle}>
-              Three steps from photo to result
-            </Text>
-          </View>
-
-          <View style={s.stepCount}>
-            <Text style={s.stepCountText}>03 STEPS</Text>
-          </View>
-        </View>
-
-        <View style={s.stepsCard}>
-          {STEPS.map((step, index) => (
-            <View
-              key={step.number}
-              style={[
-                s.stepRow,
-                index < STEPS.length - 1
-                  ? s.stepRowBorder
-                  : null,
-              ]}>
-              <IconTile
-                name={step.icon}
-                size={18}
-                background={colors.primarySoft}
-              />
-
-              <View style={s.stepCopy}>
-                <View style={s.stepTitleRow}>
-                  <Text style={s.stepNumber}>
-                    {step.number}
-                  </Text>
-                  <Text style={s.stepTitle}>
-                    {step.title}
-                  </Text>
-                </View>
-
-                <Text style={s.stepDescription}>
-                  {step.description}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        <View style={s.infoRow}>
-          <View style={s.infoCard}>
-            <IconTile
-              name="nutrition-outline"
-              size={18}
-              color="#57764F"
-              background="#E6EEE1"
-            />
-            <Text style={s.infoTitle}>Tomato-first</Text>
-            <Text style={s.infoDescription}>
-              This prototype currently focuses on tomatoes.
-            </Text>
-          </View>
-
-          <View style={s.infoCard}>
-            <IconTile
-              name="phone-portrait-outline"
-              size={18}
-              color="#57764F"
-              background="#E6EEE1"
-            />
-            <Text style={s.infoTitle}>Session history</Text>
-            <Text style={s.infoDescription}>
-              History resets when the app restarts.
-            </Text>
-          </View>
-        </View>
-
-        <View style={s.supportCard}>
-          <View style={s.supportHeader}>
-            <View style={s.supportIcon}>
-              <Ionicons
-                name="chatbubble-ellipses-outline"
-                size={18}
-                color={colors.primary}
-              />
-            </View>
-
-            <View style={s.supportCopy}>
-              <Text style={s.supportTitle}>Need help?</Text>
-              <Text style={s.supportDescription}>
-                Share feedback or report an issue with the
-                prototype.
-              </Text>
-            </View>
-          </View>
-
-          <View style={s.supportActions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Send feedback by email"
-              onPress={openFeedbackEmail}
-              style={({pressed}) => [
-                s.supportPrimary,
-                pressed ? s.pressed : null,
-              ]}>
-              <Ionicons
-                name="mail-outline"
-                size={16}
-                color={colors.primary}
-              />
-              <Text style={s.supportPrimaryText}>
-                Send feedback
-              </Text>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Copy support email address"
-              onPress={copySupportEmail}
-              style={({pressed}) => [
-                s.supportSecondary,
-                pressed ? s.pressed : null,
-              ]}>
-              <Ionicons
-                name={
-                  copiedEmail ? 'checkmark' : 'copy-outline'
-                }
-                size={16}
-                color={colors.text}
-              />
-              <Text style={s.supportSecondaryText}>
-                {copiedEmail ? 'Copied' : 'Copy email'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={s.disclosure}>
-          <View style={s.disclosureHeader}>
+        <View style={s.heroFooter}>
+          <View style={s.heroMetadata}>
             <Ionicons
-              name="information-circle-outline"
-              size={18}
-              color="#776D49"
+              name="image-outline"
+              size={14}
+              color="#D3E0D4"
             />
-            <Text style={s.disclosureTitle}>
-              About this demo
-            </Text>
+            <Text style={s.heroMetadataText}>PHOTO</Text>
           </View>
 
-          <Text style={s.disclosureText}>
-            Results use storage-context heuristics. Images are
-            validated but not analyzed by a trained AI model.
-            Packaging is recorded but does not affect demo scoring.
-          </Text>
+          <View style={s.heroMetadataDivider} />
 
-          <View style={s.disclosureDivider} />
+          <View style={s.heroMetadata}>
+            <Ionicons
+              name="thermometer-outline"
+              size={14}
+              color="#D3E0D4"
+            />
+            <Text style={s.heroMetadataText}>STORAGE DATA</Text>
+          </View>
 
-          <Text style={s.disclosureFootnote}>
-            Images are not permanently stored. Results do not certify
-            food safety.
-          </Text>
+          <View style={s.heroFooterSpace} />
+
+          <Text style={s.heroDemo}>DEMO</Text>
         </View>
+      </View>
 
-        <View style={s.footer}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Start a new tomato assessment"
+        accessibilityHint="Opens the form to add a photo and storage conditions"
+        onPress={onCapture}
+        style={({pressed}) => [
+          s.primaryAction,
+          pressed ? s.primaryPressed : null,
+        ]}>
+        <View style={s.primaryIcon}>
           <Ionicons
-            name="leaf-outline"
-            size={14}
-            color={colors.faint}
+            name="add"
+            size={25}
+            color={colors.primaryDark}
           />
-          <Text style={s.footerText}>
-            PRESERVE QUALITY · REDUCE LOSS
+        </View>
+
+        <View style={s.primaryCopy}>
+          <Text style={s.primaryOverline}>GET STARTED</Text>
+          <Text style={s.primaryTitle}>New assessment</Text>
+          <Text style={s.primaryDescription}>
+            Add a photo and storage conditions
           </Text>
         </View>
-      </ScrollView>
-    </View>
+
+        <View style={s.primaryArrow}>
+          <Ionicons
+            name="arrow-forward"
+            size={18}
+            color={colors.white}
+          />
+        </View>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open assessment history"
+        accessibilityHint="View assessments saved during this session"
+        onPress={onHistory}
+        style={({pressed}) => [
+          s.historyAction,
+          pressed ? s.historyPressed : null,
+        ]}>
+        <IconTile name="time-outline" />
+
+        <View style={s.historyCopy}>
+          <Text style={s.historyTitle}>Assessment history</Text>
+          <Text style={s.historyDescription}>
+            Revisit results from this session
+          </Text>
+        </View>
+
+        <Ionicons
+          name="chevron-forward"
+          size={17}
+          color={colors.muted}
+          accessible={false}
+        />
+      </Pressable>
+
+      <View style={s.sectionHeader}>
+        <View style={s.sectionHeadingCopy}>
+          <Text
+            accessibilityRole="header"
+            style={s.sectionTitle}>
+            How it works
+          </Text>
+          <Text style={s.sectionSubtitle}>
+            Three steps from photo to result
+          </Text>
+        </View>
+
+        <View style={s.stepCount}>
+          <Text style={s.stepCountText}>03 STEPS</Text>
+        </View>
+      </View>
+
+      <View style={s.stepsCard}>
+        {STEPS.map((step, index) => (
+          <View
+            key={step.number}
+            style={[
+              s.stepRow,
+              index < STEPS.length - 1 ? s.stepRowBorder : null,
+            ]}>
+            <IconTile
+              name={step.icon}
+              size={18}
+              background={colors.primarySoft}
+            />
+
+            <View style={s.stepCopy}>
+              <View style={s.stepTitleRow}>
+                <Text style={s.stepNumber}>{step.number}</Text>
+                <Text style={s.stepTitle}>{step.title}</Text>
+              </View>
+
+              <Text style={s.stepDescription}>
+                {step.description}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      <View style={s.infoRow}>
+        <View style={s.infoCard}>
+          <IconTile
+            name="nutrition-outline"
+            size={18}
+            color="#57764F"
+            background="#E6EEE1"
+          />
+          <Text style={s.infoTitle}>Tomato-first</Text>
+          <Text style={s.infoDescription}>
+            This prototype currently focuses on tomatoes.
+          </Text>
+        </View>
+
+        <View style={s.infoCard}>
+          <IconTile
+            name="phone-portrait-outline"
+            size={18}
+            color="#57764F"
+            background="#E6EEE1"
+          />
+          <Text style={s.infoTitle}>Session history</Text>
+          <Text style={s.infoDescription}>
+            History resets when the app restarts.
+          </Text>
+        </View>
+      </View>
+
+      <View style={s.disclosure}>
+        <View style={s.disclosureHeader}>
+          <Ionicons
+            name="information-circle-outline"
+            size={18}
+            color="#776D49"
+          />
+          <Text style={s.disclosureTitle}>About this demo</Text>
+        </View>
+
+        <Text style={s.disclosureText}>
+          Results use storage-context heuristics. Images are validated
+          but not analyzed by a trained AI model. Packaging is recorded
+          but does not affect demo scoring.
+        </Text>
+
+        <View style={s.disclosureDivider} />
+
+        <Text style={s.disclosureFootnote}>
+          Images are not permanently stored. Results do not certify
+          food safety.
+        </Text>
+      </View>
+
+      <View style={s.footer}>
+        <Ionicons
+          name="leaf-outline"
+          size={14}
+          color={colors.faint}
+        />
+        <Text style={s.footerText}>
+          PRESERVE QUALITY · REDUCE LOSS
+        </Text>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -714,16 +364,25 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  topBar: {
+  content: {
+    width: '100%',
+    maxWidth: layout.screenMaxWidth,
+    alignSelf: 'center',
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 14,
+    paddingBottom: 36,
+    gap: 17,
+  },
+  contentTablet: {
+    paddingHorizontal: layout.screenPaddingWide,
+    paddingTop: 24,
+    gap: 20,
+  },
+  header: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 14,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   brand: {
     flexDirection: 'row',
@@ -731,8 +390,8 @@ const s = StyleSheet.create({
     gap: 10,
   },
   brandIcon: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -757,7 +416,7 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     backgroundColor: colors.primarySoft,
   },
   demoDot: {
@@ -772,29 +431,8 @@ const s = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.7,
   },
-  brandRail: {
-    height: 3,
-    backgroundColor: colors.primary,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    width: '100%',
-    maxWidth: layout.screenMaxWidth,
-    alignSelf: 'center',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 18,
-    paddingBottom: 36,
-    gap: 17,
-  },
-  contentTablet: {
-    paddingHorizontal: layout.screenPaddingWide,
-    paddingTop: 24,
-    gap: 20,
-  },
   intro: {
-    paddingTop: 2,
+    paddingTop: 5,
   },
   eyebrow: {
     ...typography.overline,
@@ -990,7 +628,6 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: radius.lg,
     backgroundColor: colors.primary,
-    ...shadow.raised,
   },
   primaryIcon: {
     width: 42,
@@ -1094,95 +731,6 @@ const s = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.6,
   },
-  presetRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  presetCard: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 112,
-    padding: 12,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  presetTitle: {
-    ...typography.label,
-    color: colors.ink,
-    marginTop: 10,
-  },
-  presetValue: {
-    ...typography.caption,
-    color: colors.muted,
-    marginTop: 4,
-  },
-  readinessCard: {
-    paddingHorizontal: 13,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  readinessRow: {
-    minHeight: 72,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-  },
-  readinessRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  readinessCopy: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: 11,
-  },
-  readinessTitle: {
-    ...typography.label,
-    color: colors.ink,
-  },
-  readinessDescription: {
-    ...typography.caption,
-    color: colors.muted,
-    marginTop: 3,
-  },
-  tipsCard: {
-    paddingHorizontal: 13,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  tipRow: {
-    minHeight: 76,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-  },
-  tipRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  tipCopy: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: 11,
-  },
-  tipTitle: {
-    ...typography.label,
-    color: colors.ink,
-  },
-  tipDescription: {
-    ...typography.caption,
-    color: colors.muted,
-    marginTop: 4,
-  },
   stepsCard: {
     paddingHorizontal: 13,
     borderRadius: radius.xl,
@@ -1250,77 +798,6 @@ const s = StyleSheet.create({
     color: colors.muted,
     marginTop: 5,
   },
-  supportCard: {
-    padding: 14,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  supportHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-  },
-  supportIcon: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
-  },
-  supportCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  supportTitle: {
-    ...typography.label,
-    color: colors.ink,
-  },
-  supportDescription: {
-    ...typography.caption,
-    color: colors.muted,
-    marginTop: 3,
-  },
-  supportActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 13,
-  },
-  supportPrimary: {
-    flex: 1,
-    minHeight: layout.touchTarget,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
-  },
-  supportPrimaryText: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  supportSecondary: {
-    flex: 1,
-    minHeight: layout.touchTarget,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  supportSecondaryText: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: '700',
-  },
   disclosure: {
     padding: 14,
     borderRadius: radius.lg,
@@ -1364,7 +841,7 @@ const s = StyleSheet.create({
     ...typography.overline,
     color: colors.faint,
   },
-  pressed: {
+  primaryPressed: {
     opacity: 0.86,
     transform: [{scale: 0.99}],
   },
