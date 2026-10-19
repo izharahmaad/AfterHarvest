@@ -1,15 +1,16 @@
-import React, {useMemo, useState} from 'react';
+import React, {useState} from 'react';
 import {
   Alert,
+  Linking,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 
 import {
   colors,
@@ -18,189 +19,117 @@ import {
   shadow,
   typography,
 } from '../theme/tokens';
-import type {Assessment} from '../types/assessment';
 
 type Props = {
-  result: Assessment;
-  onNew: () => void;
+  onCapture: () => void;
+  onHistory: () => void;
 };
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-type StatusStyle = {
-  label: string;
-  color: string;
-  background: string;
-  description: string;
-  action: string;
+type StoragePreset = {
+  id: string;
+  title: string;
+  temperature: string;
+  humidity: string;
+  days: string;
+  icon: IconName;
 };
 
-const STATUS_STYLES: Record<string, StatusStyle> = {
-  fresh: {
-    label: 'Fresh',
-    color: colors.success,
-    background: colors.successSoft,
-    description: 'Fresh is the assigned quality-state label.',
-    action:
-      'Continue normal storage and inspect the batch again before distribution.',
-  },
-  aging: {
-    label: 'Aging',
-    color: colors.warning,
-    background: colors.warningSoft,
-    description: 'Aging is the assigned quality-state label.',
-    action:
-      'Prioritize this batch for earlier use and review storage conditions.',
-  },
-  spoiled: {
-    label: 'Spoiled',
-    color: colors.danger,
-    background: colors.dangerSoft,
-    description: 'Spoiled is the assigned quality-state label.',
-    action:
-      'Isolate affected produce and inspect it manually before making any handling decision.',
-  },
-};
-
-const UNKNOWN_STATUS: StatusStyle = {
-  label: 'Uncertain',
-  color: colors.neutral,
-  background: colors.neutralSoft,
-  description: 'Review this result with caution.',
-  action:
-    'Review the available context and inspect the produce manually.',
-};
-
-const FACTOR_LABELS: Record<string, string> = {
-  temperature: 'Temperature',
-  storage_duration: 'Storage duration',
-  humidity: 'Humidity',
-  packaging: 'Packaging',
-  visual_color_change: 'Visual color change',
-};
-
-function normalizeString(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function normalizeState(value: unknown): string {
-  return normalizeString(value).toLowerCase();
-}
-
-function clamp(value: number): number {
-  return Math.max(0, Math.min(1, value));
-}
-
-function displayScore(value: unknown): number | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return null;
-  }
-
-  return Math.round(clamp(value) * 100);
-}
-
-function getStatus(value: unknown): StatusStyle {
-  const state = normalizeState(value);
-
-  return STATUS_STYLES[state] ?? UNKNOWN_STATUS;
-}
-
-function getInterpretation(score: number | null): {
+type StorageTip = {
   title: string;
   description: string;
-} {
-  if (score === null) {
-    return {
-      title: 'Score unavailable',
-      description:
-        'The service did not return a usable quality score for this assessment.',
-    };
-  }
+  icon: IconName;
+};
 
-  if (score >= 75) {
-    return {
-      title: 'Strong result',
-      description:
-        'The reported context suggests relatively favorable quality indicators.',
-    };
-  }
+const SUPPORT_EMAIL = 'support@afterharvest.app';
 
-  if (score >= 50) {
-    return {
-      title: 'Moderate result',
-      description:
-        'Some indicators may need attention. Review storage and handling conditions.',
-    };
-  }
+const STORAGE_PRESETS: StoragePreset[] = [
+  {
+    id: 'room',
+    title: 'Room',
+    temperature: '22',
+    humidity: '65',
+    days: '2',
+    icon: 'home-outline',
+  },
+  {
+    id: 'cooler',
+    title: 'Cooler',
+    temperature: '8',
+    humidity: '80',
+    days: '4',
+    icon: 'snow-outline',
+  },
+  {
+    id: 'transport',
+    title: 'Transport',
+    temperature: '12',
+    humidity: '75',
+    days: '1',
+    icon: 'car-outline',
+  },
+];
 
-  return {
-    title: 'Needs attention',
+const STORAGE_TIPS: StorageTip[] = [
+  {
+    title: 'Keep tomatoes dry',
     description:
-      'The reported context suggests a higher-priority review of this batch.',
-  };
-}
+      'Avoid washing before storage. Moisture can accelerate spoilage.',
+    icon: 'water-outline',
+  },
+  {
+    title: 'Maintain airflow',
+    description:
+      'Ventilated packaging reduces trapped humidity around produce.',
+    icon: 'leaf-outline',
+  },
+  {
+    title: 'Check daily',
+    description:
+      'Separate soft or damaged tomatoes to slow spread within a batch.',
+    icon: 'eye-outline',
+  },
+];
 
-function formatDate(value: unknown): string {
-  const rawDate = normalizeString(value);
+const READINESS_ITEMS = [
+  {
+    title: 'Clear tomato photo',
+    description: 'JPEG, PNG or WebP up to 5 MB',
+    icon: 'image-outline' as IconName,
+  },
+  {
+    title: 'Storage conditions',
+    description: 'Temperature, humidity and duration',
+    icon: 'options-outline' as IconName,
+  },
+  {
+    title: 'Packaging type',
+    description: 'Open crate, sealed bag or ventilated box',
+    icon: 'cube-outline' as IconName,
+  },
+];
 
-  if (!rawDate) {
-    return 'Date unavailable';
-  }
-
-  const date = new Date(rawDate);
-
-  if (Number.isNaN(date.getTime())) {
-    return 'Date unavailable';
-  }
-
-  return date.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function getFactorLabel(value: unknown): string {
-  const normalized = normalizeString(value);
-
-  if (!normalized) {
-    return 'Unknown factor';
-  }
-
-  if (FACTOR_LABELS[normalized]) {
-    return FACTOR_LABELS[normalized];
-  }
-
-  return normalized
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, character => character.toUpperCase());
-}
-
-function getRecommendation(value: unknown): string {
-  return (
-    normalizeString(value) ||
-    'No recommendation was returned for this assessment.'
-  );
-}
-
-function getProduceName(value: unknown): string {
-  const produce = normalizeString(value);
-
-  if (!produce) {
-    return 'Tomato';
-  }
-
-  return (
-    produce.charAt(0).toUpperCase() +
-    produce.slice(1).toLowerCase()
-  );
-}
+const STEPS = [
+  {
+    number: '01',
+    title: 'Photograph',
+    description: 'Capture a tomato or select an existing photo.',
+    icon: 'camera-outline' as IconName,
+  },
+  {
+    number: '02',
+    title: 'Add conditions',
+    description: 'Enter temperature, humidity and storage days.',
+    icon: 'options-outline' as IconName,
+  },
+  {
+    number: '03',
+    title: 'Explore results',
+    description: 'Review the demo assessment and its context.',
+    icon: 'analytics-outline' as IconName,
+  },
+];
 
 function IconTile({
   name,
@@ -220,105 +149,70 @@ function IconTile({
   );
 }
 
-function DetailRow({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon: IconName;
-}) {
+function TomatoMark() {
   return (
-    <View style={s.detailRow}>
-      <View style={s.detailLabelGroup}>
-        <Ionicons
-          name={icon}
-          size={15}
-          color={colors.muted}
-          accessible={false}
-        />
-        <Text style={s.detailLabel}>{label}</Text>
-      </View>
-
-      <Text style={s.detailValue} numberOfLines={2}>
-        {value}
-      </Text>
+    <View
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      style={s.tomatoMark}>
+      <View style={s.tomatoHalo} />
+      <View style={s.tomatoBody} />
+      <View style={s.tomatoHighlight} />
+      <View style={s.tomatoStem} />
+      <View style={s.tomatoLeafLeft} />
+      <View style={s.tomatoLeafRight} />
     </View>
   );
 }
 
-export default function ResultScreen({result, onNew}: Props) {
+export default function HomeScreen({onCapture, onHistory}: Props) {
   const {width} = useWindowDimensions();
   const narrow = width < layout.narrowBreakpoint;
   const tablet = width >= layout.tabletBreakpoint;
 
-  const [sharing, setSharing] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
 
-  const isDemo = result.inference_mode === 'demo';
-  const score = displayScore(result.quality_score);
-  const confidence = displayScore(result.confidence);
-  const status = getStatus(result.quality_state);
-  const interpretation = getInterpretation(score);
-
-  const factors = useMemo(() => {
-    if (!Array.isArray(result.contributing_factors)) {
-      return [];
-    }
-
-    return [...result.contributing_factors]
-      .filter(factor => {
-        return (
-          factor &&
-          typeof factor.weight === 'number' &&
-          Number.isFinite(factor.weight)
-        );
-      })
-      .sort(
-        (first, second) =>
-          clamp(Number(second.weight)) -
-          clamp(Number(first.weight)),
-      );
-  }, [result.contributing_factors]);
-
-  const topFactors = factors.slice(0, 3);
-
-  const recommendation = getRecommendation(result.recommendation);
-  const produceName = getProduceName(result.produce_type);
-  const modelVersion =
-    normalizeString(result.model_version) || 'Unavailable';
-
-  const resultSummary = [
-    `AfterHarvest ${produceName.toLowerCase()} assessment`,
-    `Quality state: ${status.label}`,
-    `Quality score: ${
-      score === null ? 'Unavailable' : `${score}/100`
-    }`,
-    `Mode: ${isDemo ? 'Demo inference' : 'Model inference'}`,
-    `Assessed: ${formatDate(result.created_at)}`,
-    '',
-    `Recommendation: ${recommendation}`,
-    '',
-    'This is educational decision support, not food-safety certification.',
-  ].join('\n');
-
-  async function shareResult() {
-    if (sharing) return;
-
-    setSharing(true);
-
+  async function copySupportEmail() {
     try {
-      await Share.share({
-        message: resultSummary,
-        title: 'AfterHarvest assessment result',
-      });
+      await Clipboard.setStringAsync(SUPPORT_EMAIL);
+
+      setCopiedEmail(true);
+      Alert.alert(
+        'Email copied',
+        `${SUPPORT_EMAIL} has been copied to your clipboard.`,
+      );
+
+      setTimeout(() => setCopiedEmail(false), 2500);
     } catch {
       Alert.alert(
-        'Unable to share',
-        'Please try sharing this result again.',
+        'Unable to copy',
+        'Please copy the support email manually.',
       );
-    } finally {
-      setSharing(false);
+    }
+  }
+
+  async function openFeedbackEmail() {
+    const subject = encodeURIComponent(
+      'AfterHarvest prototype feedback',
+    );
+    const body = encodeURIComponent(
+      'Hi AfterHarvest team,\n\nI would like to share feedback about the mobile prototype:\n\n',
+    );
+    const url = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert(
+        'Email unavailable',
+        'No email app is available. The support email has been copied instead.',
+      );
+
+      try {
+        await Clipboard.setStringAsync(SUPPORT_EMAIL);
+      } catch {
+        // Keep the interaction simple; no additional error prompt.
+      }
     }
   }
 
@@ -328,35 +222,25 @@ export default function ResultScreen({result, onNew}: Props) {
         <View style={s.brand}>
           <View style={s.brandIcon}>
             <Ionicons
-              name="analytics"
+              name="leaf"
               size={17}
               color={colors.white}
             />
           </View>
 
           <View>
-            <Text style={s.brandName}>Assessment result</Text>
-            <Text style={s.brandCaption}>TOMATO QUALITY</Text>
+            <Text style={s.brandName}>AfterHarvest</Text>
+            <Text style={s.brandCaption}>PRODUCE INSIGHTS</Text>
           </View>
         </View>
 
-        <View style={s.modePill}>
-          <View style={s.modeDot} />
-          <Text style={s.modePillText}>
-            {isDemo ? 'DEMO MODE' : 'MODEL MODE'}
-          </Text>
+        <View style={s.demoPill}>
+          <View style={s.demoDot} />
+          <Text style={s.demoText}>PROTOTYPE</Text>
         </View>
       </View>
 
-      <View style={s.progressRail}>
-        <View
-          style={[
-            s.progressRailFill,
-            {width: `${score ?? 0}%`},
-            {backgroundColor: status.color},
-          ]}
-        />
-      </View>
+      <View style={s.brandRail} />
 
       <ScrollView
         style={s.scroll}
@@ -367,381 +251,459 @@ export default function ResultScreen({result, onNew}: Props) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
         <View style={s.intro}>
+          <Text style={s.eyebrow}>
+            TOMATO QUALITY WORKSPACE
+          </Text>
+
           <Text
             accessibilityRole="header"
             style={[s.heading, narrow ? s.headingNarrow : null]}>
-            Your assessment,{'\n'}
-            <Text style={s.headingAccent}>explained.</Text>
+            Understand your{'\n'}
+            <Text style={s.headingAccent}>produce better.</Text>
           </Text>
 
-          <Text style={s.subtitle}>
-            Review the score, context indicators and recommendation
-            together.
+          <Text style={s.introText}>
+            Combine a tomato photo with its storage conditions to
+            explore a clear, transparent demo assessment.
           </Text>
         </View>
 
-        <View style={s.scoreCard}>
-          <View style={s.scoreHeader}>
-            <View
-              style={[
-                s.statusPill,
-                {backgroundColor: status.background},
+        <View style={s.hero}>
+          <View style={s.heroOrb} />
+
+          <View style={s.heroHeader}>
+            <View style={s.heroLabel}>
+              <Ionicons
+                name="sparkles-outline"
+                size={13}
+                color="#D9E8DA"
+              />
+              <Text style={s.heroLabelText}>
+                CURRENT PILOT
+              </Text>
+            </View>
+
+            <Ionicons
+              name="arrow-up-right-box"
+              size={19}
+              color="#D7E4D8"
+              accessible={false}
+            />
+          </View>
+
+          <View style={s.heroContent}>
+            <View style={s.heroCopy}>
+              <Text style={s.heroTitle}>
+                Tomato{'\n'}quality check
+              </Text>
+              <Text style={s.heroDescription}>
+                Photo-led. Storage-aware.
+              </Text>
+            </View>
+
+            <TomatoMark />
+          </View>
+
+          <View style={s.heroFooter}>
+            <View style={s.heroMetadata}>
+              <Ionicons
+                name="image-outline"
+                size={14}
+                color="#D3E0D4"
+              />
+              <Text style={s.heroMetadataText}>PHOTO</Text>
+            </View>
+
+            <View style={s.heroMetadataDivider} />
+
+            <View style={s.heroMetadata}>
+              <Ionicons
+                name="thermometer-outline"
+                size={14}
+                color="#D3E0D4"
+              />
+              <Text style={s.heroMetadataText}>
+                STORAGE DATA
+              </Text>
+            </View>
+
+            <View style={s.heroFooterSpace} />
+
+            <Text style={s.heroDemo}>DEMO</Text>
+          </View>
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Start a new tomato assessment"
+          accessibilityHint="Opens the form to add a photo and storage conditions"
+          onPress={onCapture}
+          style={({pressed}) => [
+            s.primaryAction,
+            pressed ? s.primaryPressed : null,
+          ]}>
+          <View style={s.primaryIcon}>
+            <Ionicons
+              name="add"
+              size={25}
+              color={colors.primaryDark}
+            />
+          </View>
+
+          <View style={s.primaryCopy}>
+            <Text style={s.primaryOverline}>GET STARTED</Text>
+            <Text style={s.primaryTitle}>New assessment</Text>
+            <Text style={s.primaryDescription}>
+              Add a photo and storage conditions
+            </Text>
+          </View>
+
+          <View style={s.primaryArrow}>
+            <Ionicons
+              name="arrow-forward"
+              size={18}
+              color={colors.white}
+            />
+          </View>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open assessment history"
+          accessibilityHint="View assessments saved during this session"
+          onPress={onHistory}
+          style={({pressed}) => [
+            s.historyAction,
+            pressed ? s.historyPressed : null,
+          ]}>
+          <IconTile name="time-outline" />
+
+          <View style={s.historyCopy}>
+            <Text style={s.historyTitle}>
+              Assessment history
+            </Text>
+            <Text style={s.historyDescription}>
+              Revisit results from this session
+            </Text>
+          </View>
+
+          <Ionicons
+            name="chevron-forward"
+            size={17}
+            color={colors.muted}
+            accessible={false}
+          />
+        </Pressable>
+
+        <View style={s.sectionHeader}>
+          <View style={s.sectionHeadingCopy}>
+            <Text
+              accessibilityRole="header"
+              style={s.sectionTitle}>
+              Quick-start presets
+            </Text>
+            <Text style={s.sectionSubtitle}>
+              Start with common storage conditions
+            </Text>
+          </View>
+
+          <View style={s.stepCount}>
+            <Text style={s.stepCountText}>3 OPTIONS</Text>
+          </View>
+        </View>
+
+        <View style={s.presetRow}>
+          {STORAGE_PRESETS.map(preset => (
+            <Pressable
+              key={preset.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Use ${preset.title} storage preset`}
+              accessibilityHint="Opens a new assessment with these storage conditions"
+              onPress={onCapture}
+              style={({pressed}) => [
+                s.presetCard,
+                pressed ? s.pressed : null,
               ]}>
-              <View
-                style={[
-                  s.statusDot,
-                  {backgroundColor: status.color},
-                ]}
+              <IconTile
+                name={preset.icon}
+                size={17}
+                color={colors.primary}
+                background={colors.primarySoft}
               />
 
-              <Text
-                style={[s.statusLabel, {color: status.color}]}>
-                {status.label}
+              <Text style={s.presetTitle}>{preset.title}</Text>
+              <Text style={s.presetValue}>
+                {preset.temperature}°C · {preset.humidity}% ·{' '}
+                {preset.days}d
               </Text>
-            </View>
+            </Pressable>
+          ))}
+        </View>
 
-            <Text style={s.scoreCaption}>
-              {isDemo
-                ? 'Illustrative quality score'
-                : 'Quality score'}
+        <View style={s.sectionHeader}>
+          <View style={s.sectionHeadingCopy}>
+            <Text
+              accessibilityRole="header"
+              style={s.sectionTitle}>
+              Before you start
+            </Text>
+            <Text style={s.sectionSubtitle}>
+              Have these details ready
             </Text>
           </View>
+        </View>
 
-          <View style={s.scoreValueRow}>
-            <Text style={[s.scoreValue, {color: status.color}]}>
-              {score === null ? '—' : score}
-            </Text>
-            <Text style={s.scoreMaximum}>/100</Text>
-          </View>
-
-          <View
-            accessible
-            accessibilityLabel={
-              score === null
-                ? 'Quality score unavailable'
-                : `Quality score ${score} out of 100`
-            }
-            style={s.scoreTrack}>
+        <View style={s.readinessCard}>
+          {READINESS_ITEMS.map((item, index) => (
             <View
+              key={item.title}
               style={[
-                s.scoreFill,
-                {
-                  width: `${score ?? 0}%`,
-                  backgroundColor: status.color,
-                },
-              ]}
-            />
-          </View>
+                s.readinessRow,
+                index < READINESS_ITEMS.length - 1
+                  ? s.readinessRowBorder
+                  : null,
+              ]}>
+              <IconTile
+                name={item.icon}
+                size={16}
+                color={colors.primary}
+                background={colors.primarySoft}
+              />
 
-          <View style={s.scoreScale}>
-            <Text style={s.scoreScaleText}>LOWER</Text>
-            <Text style={s.scoreScaleText}>HIGHER</Text>
-          </View>
-
-          <View style={s.interpretation}>
-            <Ionicons
-              name="sparkles-outline"
-              size={15}
-              color={colors.primary}
-            />
-
-            <View style={s.interpretationCopy}>
-              <Text style={s.interpretationTitle}>
-                {interpretation.title}
-              </Text>
-              <Text style={s.interpretationText}>
-                {interpretation.description}
-              </Text>
-            </View>
-          </View>
-
-          <View style={s.scoreDivider} />
-
-          <View style={s.metadataRow}>
-            <View style={s.metadataItem}>
-              <Text style={s.metadataLabel}>PRODUCE</Text>
-              <Text style={s.metadataValue}>
-                {produceName}
-              </Text>
-            </View>
-
-            <View style={s.metadataItem}>
-              <Text style={s.metadataLabel}>ASSESSED</Text>
-              <Text style={s.metadataValue}>
-                {formatDate(result.created_at)}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={s.actionCard}>
-          <View style={s.sectionHeader}>
-            <IconTile name="arrow-forward" />
-
-            <View style={s.sectionCopy}>
-              <Text
-                accessibilityRole="header"
-                style={s.sectionTitle}>
-                Recommended next step
-              </Text>
-              <Text style={s.sectionSubtitle}>
-                Practical guidance based on the assigned state.
-              </Text>
-            </View>
-          </View>
-
-          <Text style={s.actionText}>{status.action}</Text>
-
-          <Text style={s.recommendationText}>
-            {recommendation}
-          </Text>
-        </View>
-
-        <View style={s.card}>
-          <View style={s.sectionHeader}>
-            <IconTile name="options-outline" />
-
-            <View style={s.sectionCopy}>
-              <Text
-                accessibilityRole="header"
-                style={s.sectionTitle}>
-                Context indicators
-              </Text>
-              <Text style={s.sectionSubtitle}>
-                {isDemo
-                  ? 'Heuristic values reported by the demo.'
-                  : 'Factor values reported by the service.'}
-              </Text>
-            </View>
-          </View>
-
-          {factors.length === 0 ? (
-            <Text style={s.emptyText}>
-              No context indicators were returned.
-            </Text>
-          ) : (
-            <View style={s.factorList}>
-              {factors.map((factor, index) => {
-                const rawWeight = factor?.weight;
-                const hasValidWeight =
-                  typeof rawWeight === 'number' &&
-                  Number.isFinite(rawWeight);
-
-                const percentage = hasValidWeight
-                  ? clamp(rawWeight) * 100
-                  : 0;
-
-                const label = getFactorLabel(factor?.name);
-
-                return (
-                  <View key={`${label}-${index}`}>
-                    <View style={s.factorHeader}>
-                      <Text style={s.factorName}>
-                        {label}
-                      </Text>
-                      <Text style={s.factorValue}>
-                        {hasValidWeight
-                          ? rawWeight.toFixed(2)
-                          : '—'}
-                      </Text>
-                    </View>
-
-                    <View
-                      accessible
-                      accessibilityLabel={`${label}: ${
-                        hasValidWeight
-                          ? rawWeight.toFixed(2)
-                          : 'unavailable'
-                      }`}
-                      style={s.factorTrack}>
-                      <View
-                        style={[
-                          s.factorFill,
-                          {width: `${percentage}%`},
-                        ]}
-                      />
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          <View style={s.factorNotice}>
-            <Text style={s.factorNoticeText}>
-              {isDemo
-                ? 'Bars show individual heuristic indicators on a 0–1 scale. They are not contribution percentages and do not need to sum to 1.'
-                : 'Bars show factor values returned by the service. Their interpretation depends on the model implementation.'}
-            </Text>
-          </View>
-        </View>
-
-        {topFactors.length > 0 ? (
-          <View style={s.card}>
-            <View style={s.sectionHeader}>
-              <IconTile name="star-outline" />
-
-              <View style={s.sectionCopy}>
-                <Text
-                  accessibilityRole="header"
-                  style={s.sectionTitle}>
-                  Top indicators
+              <View style={s.readinessCopy}>
+                <Text style={s.readinessTitle}>
+                  {item.title}
                 </Text>
-                <Text style={s.sectionSubtitle}>
-                  Highest reported values in this assessment.
+                <Text style={s.readinessDescription}>
+                  {item.description}
+                </Text>
+              </View>
+
+              <Ionicons
+                name="checkmark-circle"
+                size={19}
+                color={colors.success}
+                accessible={false}
+              />
+            </View>
+          ))}
+        </View>
+
+        <View style={s.sectionHeader}>
+          <View style={s.sectionHeadingCopy}>
+            <Text
+              accessibilityRole="header"
+              style={s.sectionTitle}>
+              Storage tips
+            </Text>
+            <Text style={s.sectionSubtitle}>
+              Practical guidance for tomato batches
+            </Text>
+          </View>
+        </View>
+
+        <View style={s.tipsCard}>
+          {STORAGE_TIPS.map((tip, index) => (
+            <View
+              key={tip.title}
+              style={[
+                s.tipRow,
+                index < STORAGE_TIPS.length - 1
+                  ? s.tipRowBorder
+                  : null,
+              ]}>
+              <IconTile
+                name={tip.icon}
+                size={17}
+                color={colors.primary}
+                background={colors.primarySoft}
+              />
+
+              <View style={s.tipCopy}>
+                <Text style={s.tipTitle}>{tip.title}</Text>
+                <Text style={s.tipDescription}>
+                  {tip.description}
                 </Text>
               </View>
             </View>
+          ))}
+        </View>
 
-            <View style={s.topFactorList}>
-              {topFactors.map((factor, index) => (
-                <View
-                  key={`${getFactorLabel(factor?.name)}-${index}`}
-                  style={s.topFactor}>
-                  <View style={s.topFactorRank}>
-                    <Text style={s.topFactorRankText}>
-                      {index + 1}
-                    </Text>
-                  </View>
+        <View style={s.sectionHeader}>
+          <View style={s.sectionHeadingCopy}>
+            <Text
+              accessibilityRole="header"
+              style={s.sectionTitle}>
+              How it works
+            </Text>
+            <Text style={s.sectionSubtitle}>
+              Three steps from photo to result
+            </Text>
+          </View>
 
-                  <Text style={s.topFactorName}>
-                    {getFactorLabel(factor?.name)}
+          <View style={s.stepCount}>
+            <Text style={s.stepCountText}>03 STEPS</Text>
+          </View>
+        </View>
+
+        <View style={s.stepsCard}>
+          {STEPS.map((step, index) => (
+            <View
+              key={step.number}
+              style={[
+                s.stepRow,
+                index < STEPS.length - 1
+                  ? s.stepRowBorder
+                  : null,
+              ]}>
+              <IconTile
+                name={step.icon}
+                size={18}
+                background={colors.primarySoft}
+              />
+
+              <View style={s.stepCopy}>
+                <View style={s.stepTitleRow}>
+                  <Text style={s.stepNumber}>
+                    {step.number}
                   </Text>
-
-                  <Text style={s.topFactorValue}>
-                    {Number(factor.weight).toFixed(2)}
+                  <Text style={s.stepTitle}>
+                    {step.title}
                   </Text>
                 </View>
-              ))}
+
+                <Text style={s.stepDescription}>
+                  {step.description}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={s.infoRow}>
+          <View style={s.infoCard}>
+            <IconTile
+              name="nutrition-outline"
+              size={18}
+              color="#57764F"
+              background="#E6EEE1"
+            />
+            <Text style={s.infoTitle}>Tomato-first</Text>
+            <Text style={s.infoDescription}>
+              This prototype currently focuses on tomatoes.
+            </Text>
+          </View>
+
+          <View style={s.infoCard}>
+            <IconTile
+              name="phone-portrait-outline"
+              size={18}
+              color="#57764F"
+              background="#E6EEE1"
+            />
+            <Text style={s.infoTitle}>Session history</Text>
+            <Text style={s.infoDescription}>
+              History resets when the app restarts.
+            </Text>
+          </View>
+        </View>
+
+        <View style={s.supportCard}>
+          <View style={s.supportHeader}>
+            <View style={s.supportIcon}>
+              <Ionicons
+                name="chatbubble-ellipses-outline"
+                size={18}
+                color={colors.primary}
+              />
+            </View>
+
+            <View style={s.supportCopy}>
+              <Text style={s.supportTitle}>Need help?</Text>
+              <Text style={s.supportDescription}>
+                Share feedback or report an issue with the
+                prototype.
+              </Text>
             </View>
           </View>
-        ) : null}
 
-        <View style={s.card}>
-          <Text
-            accessibilityRole="header"
-            style={s.cardTitle}>
-            Inference details
-          </Text>
+          <View style={s.supportActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Send feedback by email"
+              onPress={openFeedbackEmail}
+              style={({pressed}) => [
+                s.supportPrimary,
+                pressed ? s.pressed : null,
+              ]}>
+              <Ionicons
+                name="mail-outline"
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={s.supportPrimaryText}>
+                Send feedback
+              </Text>
+            </Pressable>
 
-          <View style={s.detailList}>
-            <DetailRow
-              label="Mode"
-              value={
-                isDemo ? 'Demo inference' : 'Model inference'
-              }
-              icon="sparkles-outline"
-            />
-
-            <View style={s.detailDivider} />
-
-            <DetailRow
-              label="Confidence"
-              value={
-                isDemo
-                  ? 'Not estimated'
-                  : confidence === null
-                    ? 'Unavailable'
-                    : `${confidence}% reported`
-              }
-              icon="pulse-outline"
-            />
-
-            <View style={s.detailDivider} />
-
-            <DetailRow
-              label="Score meaning"
-              value={
-                isDemo
-                  ? 'Illustrative only'
-                  : 'Not a safety rating'
-              }
-              icon="information-circle-outline"
-            />
-
-            <View style={s.detailDivider} />
-
-            <DetailRow
-              label="Model version"
-              value={modelVersion}
-              icon="cube-outline"
-            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Copy support email address"
+              onPress={copySupportEmail}
+              style={({pressed}) => [
+                s.supportSecondary,
+                pressed ? s.pressed : null,
+              ]}>
+              <Ionicons
+                name={
+                  copiedEmail ? 'checkmark' : 'copy-outline'
+                }
+                size={16}
+                color={colors.text}
+              />
+              <Text style={s.supportSecondaryText}>
+                {copiedEmail ? 'Copied' : 'Copy email'}
+              </Text>
+            </Pressable>
           </View>
         </View>
 
-        <View style={s.notice}>
-          <View style={s.noticeHeader}>
-            <IconTile
-              name="shield-checkmark-outline"
-              color="#776D49"
-              background="#EAE3D1"
-              size={17}
-            />
-
-            <Text style={s.noticeTitle}>
-              Know what this result means
-            </Text>
-          </View>
-
-          <Text style={s.noticeText}>
-            {isDemo
-              ? 'This demo validates the uploaded image but does not analyze it with a trained AI model. It does not predict remaining shelf life or provide a measured probability of freshness.'
-              : 'This prototype result is decision support, not food-safety certification. A quality score must not be interpreted as proof that food is safe.'}
-          </Text>
-
-          <View style={s.noticeDivider} />
-
-          <Text style={s.noticeFootnote}>
-            Inspect the produce manually. Do not use this result alone
-            to decide whether food is safe to eat.
-          </Text>
-        </View>
-
-        <View style={s.exportRow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Share assessment result summary"
-            accessibilityState={{disabled: sharing}}
-            disabled={sharing}
-            onPress={shareResult}
-            style={({pressed}) => [
-              s.exportButton,
-              s.shareButton,
-              pressed ? s.pressed : null,
-              sharing ? s.disabled : null,
-            ]}>
+        <View style={s.disclosure}>
+          <View style={s.disclosureHeader}>
             <Ionicons
-              name="share-social-outline"
-              size={17}
-              color={colors.primary}
-            />
-            <Text style={s.shareButtonText}>
-              {sharing ? 'Sharing…' : 'Share'}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Start a new tomato assessment"
-            accessibilityHint="Returns to the photo and storage details form"
-            onPress={onNew}
-            style={({pressed}) => [
-              s.exportButton,
-              s.newButton,
-              pressed ? s.pressed : null,
-            ]}>
-            <Ionicons
-              name="add"
+              name="information-circle-outline"
               size={18}
-              color={colors.primary}
+              color="#776D49"
             />
-            <Text style={s.newButtonText}>New assessment</Text>
-          </Pressable>
+            <Text style={s.disclosureTitle}>
+              About this demo
+            </Text>
+          </View>
+
+          <Text style={s.disclosureText}>
+            Results use storage-context heuristics. Images are
+            validated but not analyzed by a trained AI model.
+            Packaging is recorded but does not affect demo scoring.
+          </Text>
+
+          <View style={s.disclosureDivider} />
+
+          <Text style={s.disclosureFootnote}>
+            Images are not permanently stored. Results do not certify
+            food safety.
+          </Text>
         </View>
 
-        <Text style={s.footer}>
-          Educational decision support · Not food-safety certification
-        </Text>
+        <View style={s.footer}>
+          <Ionicons
+            name="leaf-outline"
+            size={14}
+            color={colors.faint}
+          />
+          <Text style={s.footerText}>
+            PRESERVE QUALITY · REDUCE LOSS
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -789,7 +751,7 @@ const s = StyleSheet.create({
     letterSpacing: 0.9,
     marginTop: 3,
   },
-  modePill: {
+  demoPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -798,24 +760,21 @@ const s = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
   },
-  modeDot: {
+  demoDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.primary,
   },
-  modePillText: {
+  demoText: {
     color: colors.primary,
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.7,
   },
-  progressRail: {
+  brandRail: {
     height: 3,
-    backgroundColor: colors.surfaceMuted,
-  },
-  progressRailFill: {
-    height: '100%',
+    backgroundColor: colors.primary,
   },
   scroll: {
     flex: 1,
@@ -837,9 +796,14 @@ const s = StyleSheet.create({
   intro: {
     paddingTop: 2,
   },
+  eyebrow: {
+    ...typography.overline,
+    color: colors.muted,
+  },
   heading: {
     ...typography.display,
     color: colors.ink,
+    marginTop: 9,
   },
   headingNarrow: {
     fontSize: 27,
@@ -848,156 +812,266 @@ const s = StyleSheet.create({
   headingAccent: {
     color: colors.primary,
   },
-  subtitle: {
+  introText: {
+    maxWidth: 520,
     ...typography.body,
     color: colors.text,
     marginTop: 9,
-    maxWidth: 520,
   },
-  scoreCard: {
-    padding: 20,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+  hero: {
+    minHeight: 210,
+    overflow: 'hidden',
+    justifyContent: 'space-between',
+    padding: 18,
+    borderRadius: radius.xxl,
+    backgroundColor: colors.primaryDark,
     ...shadow.card,
   },
-  scoreHeader: {
+  heroOrb: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    top: -95,
+    right: -55,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255,255,255,0.045)',
+  },
+  heroHeader: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
   },
-  statusPill: {
+  heroLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
-    borderRadius: radius.sm,
+    gap: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.10)',
   },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  statusLabel: {
-    fontSize: 12,
+  heroLabelText: {
+    color: '#E0EBDD',
+    fontSize: 8,
     fontWeight: '800',
+    letterSpacing: 0.7,
   },
-  scoreCaption: {
-    ...typography.overline,
-    color: colors.muted,
-  },
-  scoreValueRow: {
+  heroContent: {
+    minHeight: 120,
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 5,
-    marginTop: 18,
+    alignItems: 'center',
   },
-  scoreValue: {
-    fontSize: 60,
-    lineHeight: 68,
+  heroCopy: {
+    flex: 1,
+    zIndex: 1,
+    maxWidth: '72%',
+  },
+  heroTitle: {
+    color: colors.white,
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: '800',
-    letterSpacing: -2,
+    letterSpacing: -0.6,
   },
-  scoreMaximum: {
-    color: colors.faint,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  scoreTrack: {
-    height: 9,
-    overflow: 'hidden',
-    borderRadius: 5,
-    backgroundColor: colors.surfaceMuted,
-    marginTop: 12,
-  },
-  scoreFill: {
-    height: '100%',
-    borderRadius: 5,
-  },
-  scoreScale: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  heroDescription: {
+    color: '#C8D9CA',
+    fontSize: 10,
+    lineHeight: 15,
     marginTop: 7,
   },
-  scoreScaleText: {
-    ...typography.overline,
-    color: colors.faint,
+  tomatoMark: {
+    position: 'absolute',
+    width: 132,
+    height: 132,
+    right: -6,
+    top: -5,
   },
-  interpretation: {
+  tomatoHalo: {
+    position: 'absolute',
+    width: 122,
+    height: 122,
+    left: 5,
+    top: 4,
+    borderRadius: 61,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  tomatoBody: {
+    position: 'absolute',
+    width: 76,
+    height: 73,
+    left: 29,
+    top: 39,
+    borderRadius: 40,
+    backgroundColor: colors.tomato,
+    borderBottomWidth: 6,
+    borderBottomColor: colors.tomatoDark,
+    transform: [{rotate: '-8deg'}],
+  },
+  tomatoHighlight: {
+    position: 'absolute',
+    width: 13,
+    height: 24,
+    left: 44,
+    top: 52,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    transform: [{rotate: '24deg'}],
+  },
+  tomatoStem: {
+    position: 'absolute',
+    width: 6,
+    height: 18,
+    left: 64,
+    top: 26,
+    borderRadius: 4,
+    backgroundColor: '#8CA66A',
+    transform: [{rotate: '10deg'}],
+  },
+  tomatoLeafLeft: {
+    position: 'absolute',
+    width: 26,
+    height: 10,
+    left: 43,
+    top: 38,
+    borderRadius: 8,
+    backgroundColor: '#9BB273',
+    transform: [{rotate: '24deg'}],
+  },
+  tomatoLeafRight: {
+    position: 'absolute',
+    width: 26,
+    height: 10,
+    left: 61,
+    top: 38,
+    borderRadius: 8,
+    backgroundColor: '#77945D',
+    transform: [{rotate: '-24deg'}],
+  },
+  heroFooter: {
+    minHeight: 32,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 9,
-    marginTop: 17,
-    padding: 12,
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.14)',
+    paddingTop: 9,
   },
-  interpretationCopy: {
+  heroMetadata: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  heroMetadataText: {
+    color: '#D5E1D5',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  heroMetadataDivider: {
+    width: 1,
+    height: 13,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+  },
+  heroFooterSpace: {
+    flex: 1,
+  },
+  heroDemo: {
+    color: '#C6D8C8',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  primaryAction: {
+    minHeight: 78,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primary,
+    ...shadow.raised,
+  },
+  primaryIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
+  },
+  primaryCopy: {
     flex: 1,
     minWidth: 0,
   },
-  interpretationTitle: {
-    ...typography.label,
-    color: colors.ink,
+  primaryOverline: {
+    color: colors.primaryDark,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
-  interpretationText: {
-    ...typography.caption,
-    color: colors.muted,
+  primaryTitle: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '800',
     marginTop: 3,
   },
-  scoreDivider: {
-    height: 1,
-    backgroundColor: colors.divider,
-    marginVertical: 17,
+  primaryDescription: {
+    color: colors.primaryDark,
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 3,
   },
-  metadataRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 18,
+  primaryArrow: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 17,
+    backgroundColor: colors.overlay,
   },
-  metadataItem: {
-    flexGrow: 1,
-    flexShrink: 1,
-    minWidth: 130,
-  },
-  metadataLabel: {
-    ...typography.overline,
-    color: colors.faint,
-  },
-  metadataValue: {
-    color: colors.text,
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 6,
-  },
-  actionCard: {
-    padding: 17,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.primarySoft,
-    backgroundColor: colors.primarySoft,
-    ...shadow.card,
-  },
-  sectionHeader: {
+  historyAction: {
+    minHeight: 66,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
-    marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   iconTile: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.md,
   },
-  sectionCopy: {
+  historyCopy: {
     flex: 1,
     minWidth: 0,
+  },
+  historyTitle: {
+    ...typography.label,
+    color: colors.ink,
+  },
+  historyDescription: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 3,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 3,
+    marginBottom: -5,
+  },
+  sectionHeadingCopy: {
+    flex: 1,
   },
   sectionTitle: {
     ...typography.heading,
@@ -1008,216 +1082,294 @@ const s = StyleSheet.create({
     color: colors.muted,
     marginTop: 4,
   },
-  actionText: {
-    ...typography.body,
-    color: colors.ink,
+  stepCount: {
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primarySoft,
   },
-  recommendationText: {
-    ...typography.caption,
-    color: colors.muted,
+  stepCountText: {
+    color: colors.primary,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  presetRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  presetCard: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 112,
+    padding: 12,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  presetTitle: {
+    ...typography.label,
+    color: colors.ink,
     marginTop: 10,
   },
-  card: {
-    padding: 17,
+  presetValue: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 4,
+  },
+  readinessCard: {
+    paddingHorizontal: 13,
     borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
     ...shadow.card,
   },
-  cardTitle: {
-    ...typography.heading,
-    color: colors.ink,
-    marginBottom: 12,
-  },
-  factorList: {
-    gap: 18,
-  },
-  factorHeader: {
+  readinessRow: {
+    minHeight: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginBottom: 8,
+    gap: 11,
   },
-  factorName: {
+  readinessRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  readinessCopy: {
     flex: 1,
     minWidth: 0,
+    paddingVertical: 11,
+  },
+  readinessTitle: {
     ...typography.label,
-    color: colors.text,
+    color: colors.ink,
   },
-  factorValue: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  factorTrack: {
-    height: 7,
-    overflow: 'hidden',
-    borderRadius: 4,
-    backgroundColor: colors.surfaceMuted,
-  },
-  factorFill: {
-    height: '100%',
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-  },
-  factorNotice: {
-    padding: 12,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceMuted,
-    marginTop: 18,
-  },
-  factorNoticeText: {
+  readinessDescription: {
     ...typography.caption,
     color: colors.muted,
+    marginTop: 3,
   },
-  emptyText: {
-    ...typography.body,
-    color: colors.muted,
-  },
-  topFactorList: {
-    gap: 10,
-  },
-  topFactor: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    minHeight: 48,
-    paddingHorizontal: 11,
-    borderRadius: radius.md,
+  tipsCard: {
+    paddingHorizontal: 13,
+    borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.surface,
+    ...shadow.card,
   },
-  topFactorRank: {
-    width: 25,
-    height: 25,
+  tipRow: {
+    minHeight: 76,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.sm,
-    backgroundColor: colors.primarySoft,
+    gap: 11,
   },
-  topFactorRankText: {
-    color: colors.primary,
-    fontSize: 10,
-    fontWeight: '800',
+  tipRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
-  topFactorName: {
+  tipCopy: {
     flex: 1,
     minWidth: 0,
+    paddingVertical: 11,
+  },
+  tipTitle: {
     ...typography.label,
     color: colors.ink,
   },
-  topFactorValue: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '800',
+  tipDescription: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 4,
   },
-  detailList: {
-    gap: 0,
+  stepsCard: {
+    paddingHorizontal: 13,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.card,
   },
-  detailRow: {
-    minHeight: 48,
+  stepRow: {
+    minHeight: 77,
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingVertical: 13,
+    gap: 11,
   },
-  detailLabelGroup: {
+  stepRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  stepCopy: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 11,
+  },
+  stepTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
   },
-  detailLabel: {
-    ...typography.label,
-    color: colors.muted,
+  stepNumber: {
+    color: colors.faint,
+    fontSize: 8,
+    fontWeight: '800',
   },
-  detailValue: {
-    flexShrink: 1,
-    color: colors.text,
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'right',
-  },
-  detailDivider: {
-    height: 1,
-    backgroundColor: colors.divider,
-  },
-  notice: {
-    padding: 16,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: '#EAE4D5',
-    backgroundColor: '#F5F2E9',
-  },
-  noticeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  noticeTitle: {
+  stepTitle: {
     flex: 1,
     ...typography.label,
-    color: '#82754F',
+    color: colors.ink,
   },
-  noticeText: {
+  stepDescription: {
     ...typography.caption,
-    lineHeight: 18,
-    color: '#9A8E6D',
+    color: colors.muted,
+    marginTop: 4,
   },
-  noticeDivider: {
-    height: 1,
-    backgroundColor: '#E7E0CF',
-    marginVertical: 11,
-  },
-  noticeFootnote: {
-    ...typography.caption,
-    lineHeight: 17,
-    color: '#958765',
-  },
-  exportRow: {
+  infoRow: {
     flexDirection: 'row',
     gap: 10,
   },
-  exportButton: {
+  infoCard: {
     flex: 1,
-    minHeight: layout.touchTarget + 8,
+    minWidth: 0,
+    minHeight: 132,
+    padding: 12,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
+  },
+  infoTitle: {
+    ...typography.label,
+    color: colors.ink,
+    marginTop: 9,
+  },
+  infoDescription: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 5,
+  },
+  supportCard: {
+    padding: 14,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  supportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  supportIcon: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySoft,
+  },
+  supportCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  supportTitle: {
+    ...typography.label,
+    color: colors.ink,
+  },
+  supportDescription: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 3,
+  },
+  supportActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 13,
+  },
+  supportPrimary: {
+    flex: 1,
+    minHeight: layout.touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 7,
     borderRadius: radius.md,
-  },
-  shareButton: {
     backgroundColor: colors.primarySoft,
   },
-  newButton: {
-    backgroundColor: colors.accent,
-  },
-  shareButtonText: {
+  supportPrimaryText: {
     color: colors.primary,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
   },
-  newButtonText: {
-    color: colors.primaryDark,
-    fontSize: 13,
-    fontWeight: '800',
+  supportSecondary: {
+    flex: 1,
+    minHeight: layout.touchTarget,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  pressed: {
-    opacity: 0.84,
+  supportSecondaryText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '700',
   },
-  disabled: {
-    opacity: 0.52,
+  disclosure: {
+    padding: 14,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: '#E9E4D4',
+    backgroundColor: '#F4F1E7',
+  },
+  disclosureHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginBottom: 7,
+  },
+  disclosureTitle: {
+    ...typography.label,
+    color: '#696147',
+  },
+  disclosureText: {
+    ...typography.caption,
+    lineHeight: 15,
+    color: '#79745F',
+  },
+  disclosureDivider: {
+    height: 1,
+    backgroundColor: '#E4DFD0',
+    marginVertical: 9,
+  },
+  disclosureFootnote: {
+    ...typography.caption,
+    lineHeight: 14,
+    color: '#88836E',
   },
   footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingTop: 1,
+  },
+  footerText: {
     ...typography.overline,
     color: colors.faint,
-    textAlign: 'center',
-    paddingHorizontal: 10,
+  },
+  pressed: {
+    opacity: 0.86,
+    transform: [{scale: 0.99}],
+  },
+  historyPressed: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
   },
 });
