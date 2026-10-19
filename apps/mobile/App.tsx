@@ -1,226 +1,93 @@
 import React, {useCallback, useState} from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
+import {StatusBar} from 'expo-status-bar';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 
 import HomeScreen from './src/screens/HomeScreen';
 import CaptureScreen from './src/screens/CaptureScreen';
 import ResultScreen from './src/screens/ResultScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
-import {
-  colors,
-  layout,
-  radius,
-  shadow,
-  typography,
-} from './src/theme/tokens';
+import {colors} from './src/theme/tokens';
 import type {Assessment} from './src/types/assessment';
 
-type ScreenName = 'home' | 'capture' | 'result' | 'history';
-
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
-
-type NavigationItem = {
-  name: ScreenName;
-  label: string;
-  icon: IconName;
-};
-
-const NAVIGATION_ITEMS: NavigationItem[] = [
-  {
-    name: 'home',
-    label: 'Home',
-    icon: 'home-outline',
-  },
-  {
-    name: 'capture',
-    label: 'Assess',
-    icon: 'camera-outline',
-  },
-  {
-    name: 'history',
-    label: 'History',
-    icon: 'time-outline',
-  },
-];
+type Route = 'home' | 'capture' | 'result' | 'history';
 
 export default function App() {
-  const [screen, setScreen] = useState<ScreenName>('home');
-  const [result, setResult] = useState<Assessment | null>(null);
-  const [items, setItems] = useState<Assessment[]>([]);
+  const [route, setRoute] = useState<Route>('home');
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [selectedAssessment, setSelectedAssessment] =
+    useState<Assessment | null>(null);
 
-  const goTo = useCallback((nextScreen: ScreenName) => {
-    setScreen(nextScreen);
+  const goToCapture = useCallback(() => {
+    setRoute('capture');
   }, []);
 
-  const handleAssessmentResult = useCallback(
+  const goToHistory = useCallback(() => {
+    setRoute('history');
+  }, []);
+
+  const goToHome = useCallback(() => {
+    setRoute('home');
+  }, []);
+
+  const handleAssessmentCreated = useCallback(
     (assessment: Assessment) => {
-      setResult(assessment);
-      setItems(previous => [assessment, ...previous]);
-      setScreen('result');
+      setAssessments(previous => [assessment, ...previous]);
+      setSelectedAssessment(assessment);
+      setRoute('result');
     },
     [],
   );
 
-  const handleSelectHistoryItem = useCallback(
-    (assessment: Assessment) => {
-      setResult(assessment);
-      setScreen('result');
-    },
-    [],
-  );
+  const handleSelectAssessment = useCallback((assessment: Assessment) => {
+    setSelectedAssessment(assessment);
+    setRoute('result');
+  }, []);
 
-  const canShowResult = screen === 'result' && result !== null;
+  const handleNewAssessment = useCallback(() => {
+    setSelectedAssessment(null);
+    setRoute('capture');
+  }, []);
 
   return (
-    <View style={s.app}>
-      <ScrollView
-        style={s.scroll}
-        contentContainerStyle={s.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        {screen === 'home' ? (
+    <SafeAreaProvider>
+      <SafeAreaView style={s.safeArea} edges={['top', 'bottom']}>
+        <StatusBar style="dark" backgroundColor={colors.surface} />
+
+        {route === 'home' ? (
           <HomeScreen
-            onCapture={() => goTo('capture')}
-            onHistory={() => goTo('history')}
+            onCapture={goToCapture}
+            onHistory={goToHistory}
           />
         ) : null}
 
-        {screen === 'capture' ? (
-          <CaptureScreen onResult={handleAssessmentResult} />
+        {route === 'capture' ? (
+          <CaptureScreen
+            onSubmit={handleAssessmentCreated}
+            onBack={goToHome}
+          />
         ) : null}
 
-        {canShowResult && result ? (
+        {route === 'result' && selectedAssessment ? (
           <ResultScreen
-            result={result}
-            onNew={() => goTo('capture')}
+            result={selectedAssessment}
+            onNew={handleNewAssessment}
           />
         ) : null}
 
-        {screen === 'history' ? (
+        {route === 'history' ? (
           <HistoryScreen
-            items={items}
-            onSelect={handleSelectHistoryItem}
+            items={assessments}
+            onSelect={handleSelectAssessment}
           />
         ) : null}
-
-        {screen === 'result' && !result ? (
-          <View style={s.emptyResult}>
-            <Text style={s.emptyResultTitle}>
-              No assessment selected
-            </Text>
-            <Text style={s.emptyResultText}>
-              Run a new assessment or choose one from history.
-            </Text>
-          </View>
-        ) : null}
-      </ScrollView>
-
-      <View style={s.tabBar}>
-        {NAVIGATION_ITEMS.map(item => {
-          const active = screen === item.name;
-
-          return (
-            <Pressable
-              key={item.name}
-              accessibilityRole="tab"
-              accessibilityLabel={item.label}
-              accessibilityState={{selected: active}}
-              onPress={() => goTo(item.name)}
-              style={({pressed}) => [
-                s.tabItem,
-                pressed ? s.tabPressed : null,
-              ]}>
-              <Ionicons
-                name={item.icon}
-                size={20}
-                color={active ? colors.primary : colors.muted}
-              />
-
-              <Text
-                style={[
-                  s.tabLabel,
-                  active ? s.tabLabelActive : null,
-                ]}>
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
-const s = StyleSheet.create({
-  app: {
+const s = {
+  safeArea: {
     flex: 1,
     backgroundColor: colors.background,
   },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    width: '100%',
-    maxWidth: layout.screenMaxWidth,
-    alignSelf: 'center',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 14,
-    paddingBottom: 24,
-  },
-  emptyResult: {
-    alignItems: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 20,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  emptyResultTitle: {
-    ...typography.heading,
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  emptyResultText: {
-    ...typography.body,
-    color: colors.muted,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
-    paddingHorizontal: layout.screenPadding,
-    paddingVertical: 8,
-    gap: 6,
-  },
-  tabItem: {
-    flex: 1,
-    minHeight: layout.touchTarget,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    borderRadius: radius.md,
-  },
-  tabPressed: {
-    opacity: 0.72,
-  },
-  tabLabel: {
-    color: colors.muted,
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  tabLabelActive: {
-    color: colors.primary,
-    fontWeight: '800',
-  },
-});
+};
