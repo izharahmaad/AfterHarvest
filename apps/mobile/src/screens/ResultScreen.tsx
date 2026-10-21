@@ -41,24 +41,21 @@ const STATUS_STYLES: Record<string, StatusStyle> = {
     color: colors.success,
     background: colors.successSoft,
     description: 'Fresh is the assigned quality-state label.',
-    action:
-      'Continue normal storage and inspect the batch again before distribution.',
+    action: 'Continue normal storage and inspect the batch again before distribution.',
   },
   aging: {
     label: 'Aging',
     color: colors.warning,
     background: colors.warningSoft,
     description: 'Aging is the assigned quality-state label.',
-    action:
-      'Prioritize this batch for earlier use and review storage conditions.',
+    action: 'Prioritize this batch for earlier use and review storage conditions.',
   },
   spoiled: {
     label: 'Spoiled',
     color: colors.danger,
     background: colors.dangerSoft,
     description: 'Spoiled is the assigned quality-state label.',
-    action:
-      'Isolate affected produce and inspect it manually before making any handling decision.',
+    action: 'Isolate affected produce and inspect it manually before making any handling decision.',
   },
 };
 
@@ -67,8 +64,7 @@ const UNKNOWN_STATUS: StatusStyle = {
   color: colors.neutral,
   background: colors.neutralSoft,
   description: 'Review this result with caution.',
-  action:
-    'Review the available context and inspect the produce manually.',
+  action: 'Review the available context and inspect the produce manually.',
 };
 
 const FACTOR_LABELS: Record<string, string> = {
@@ -104,15 +100,10 @@ function displayScore(value: unknown): number | null {
 }
 
 function getStatus(value: unknown): StatusStyle {
-  const state = normalizeState(value);
-
-  return STATUS_STYLES[state] ?? UNKNOWN_STATUS;
+  return STATUS_STYLES[normalizeState(value)] ?? UNKNOWN_STATUS;
 }
 
-function getInterpretation(score: number | null): {
-  title: string;
-  description: string;
-} {
+function getInterpretation(score: number | null) {
   if (score === null) {
     return {
       title: 'Score unavailable',
@@ -232,12 +223,7 @@ function DetailRow({
   return (
     <View style={s.detailRow}>
       <View style={s.detailLabelGroup}>
-        <Ionicons
-          name={icon}
-          size={15}
-          color={colors.muted}
-          accessible={false}
-        />
+        <Ionicons name={icon} size={15} color={colors.muted} accessible={false} />
         <Text style={s.detailLabel}>{label}</Text>
       </View>
 
@@ -247,6 +233,7 @@ function DetailRow({
     </View>
   );
 }
+
 export default function ResultScreen({result, onNew}: Props) {
   const {width} = useWindowDimensions();
   const narrow = width < layout.narrowBreakpoint;
@@ -266,33 +253,27 @@ export default function ResultScreen({result, onNew}: Props) {
     }
 
     return [...result.contributing_factors]
-      .filter(factor => {
-        return (
+      .filter(
+        factor =>
           factor &&
           typeof factor.weight === 'number' &&
-          Number.isFinite(factor.weight)
-        );
-      })
+          Number.isFinite(factor.weight),
+      )
       .sort(
         (first, second) =>
-          clamp(Number(second.weight)) -
-          clamp(Number(first.weight)),
+          clamp(Number(second.weight)) - clamp(Number(first.weight)),
       );
   }, [result.contributing_factors]);
 
   const topFactors = factors.slice(0, 3);
-
   const recommendation = getRecommendation(result.recommendation);
   const produceName = getProduceName(result.produce_type);
-  const modelVersion =
-    normalizeString(result.model_version) || 'Unavailable';
+  const modelVersion = normalizeString(result.model_version) || 'Unavailable';
 
   const resultSummary = [
     `AfterHarvest ${produceName.toLowerCase()} assessment`,
     `Quality state: ${status.label}`,
-    `Quality score: ${
-      score === null ? 'Unavailable' : `${score}/100`
-    }`,
+    `Quality score: ${score === null ? 'Unavailable' : `${score}/100`}`,
     `Mode: ${isDemo ? 'Demo inference' : 'Model inference'}`,
     `Assessed: ${formatDate(result.created_at)}`,
     '',
@@ -312,10 +293,7 @@ export default function ResultScreen({result, onNew}: Props) {
         title: 'AfterHarvest assessment result',
       });
     } catch {
-      Alert.alert(
-        'Unable to share',
-        'Please try sharing this result again.',
-      );
+      Alert.alert('Unable to share', 'Please try sharing this result again.');
     } finally {
       setSharing(false);
     }
@@ -326,11 +304,7 @@ export default function ResultScreen({result, onNew}: Props) {
       <View style={s.topBar}>
         <View style={s.brand}>
           <View style={s.brandIcon}>
-            <Ionicons
-              name="analytics"
-              size={17}
-              color={colors.white}
-            />
+            <Ionicons name="analytics" size={17} color={colors.white} />
           </View>
 
           <View>
@@ -351,18 +325,14 @@ export default function ResultScreen({result, onNew}: Props) {
         <View
           style={[
             s.progressRailFill,
-            {width: `${score ?? 0}%`},
-            {backgroundColor: status.color},
+            {width: `${score ?? 0}%`, backgroundColor: status.color},
           ]}
         />
       </View>
 
       <ScrollView
         style={s.scroll}
-        contentContainerStyle={[
-          s.content,
-          tablet ? s.contentTablet : null,
-        ]}
+        contentContainerStyle={[s.content, tablet ? s.contentTablet : null]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
         <View style={s.intro}>
@@ -374,35 +344,80 @@ export default function ResultScreen({result, onNew}: Props) {
           </Text>
 
           <Text style={s.subtitle}>
-            Review the score, context indicators and recommendation
-            together.
+            Review the score, context indicators and recommendation together.
           </Text>
+        </View>
+
+        <View style={s.hero}>
+          <View style={s.heroOrb} />
+
+          <View style={s.heroHeader}>
+            <View
+              style={[
+                s.heroStatus,
+                {backgroundColor: 'rgba(255,255,255,0.12)'},
+              ]}>
+              <View
+                style={[s.heroStatusDot, {backgroundColor: status.color}]}
+              />
+
+              <Text style={s.heroStatusText}>
+                {status.label.toUpperCase()}
+              </Text>
+            </View>
+
+            <Text style={s.heroMode}>
+              {isDemo ? 'DEMO RESULT' : 'MODEL RESULT'}
+            </Text>
+          </View>
+
+          <View style={s.heroBody}>
+            <View style={s.heroScoreGroup}>
+              <Text style={s.heroScore}>{score === null ? '—' : score}</Text>
+              <Text style={s.heroScoreMax}>/100</Text>
+            </View>
+
+            <View style={s.heroCopy}>
+              <Text style={s.heroTitle}>{interpretation.title}</Text>
+              <Text style={s.heroDescription}>
+                {produceName} · {formatDate(result.created_at)}
+              </Text>
+            </View>
+          </View>
+
+          <View style={s.heroProgress}>
+            <View
+              style={[
+                s.heroProgressFill,
+                {width: `${score ?? 0}%`, backgroundColor: status.color},
+              ]}
+            />
+          </View>
+
+          <View style={s.heroFooter}>
+            <Text style={s.heroFooterText}>QUALITY SCORE</Text>
+            <View style={s.heroFooterSpace} />
+            <Text style={s.heroFooterText}>
+              {isDemo ? 'ILLUSTRATIVE' : 'DECISION SUPPORT'}
+            </Text>
+          </View>
         </View>
 
         <View style={s.scoreCard}>
           <View style={s.scoreHeader}>
             <View
-              style={[
-                s.statusPill,
-                {backgroundColor: status.background},
-              ]}>
+              style={[s.statusPill, {backgroundColor: status.background}]}>
               <View
-                style={[
-                  s.statusDot,
-                  {backgroundColor: status.color},
-                ]}
+                style={[s.statusDot, {backgroundColor: status.color}]}
               />
 
-              <Text
-                style={[s.statusLabel, {color: status.color}]}>
+              <Text style={[s.statusLabel, {color: status.color}]}>
                 {status.label}
               </Text>
             </View>
 
             <Text style={s.scoreCaption}>
-              {isDemo
-                ? 'Illustrative quality score'
-                : 'Quality score'}
+              {isDemo ? 'Illustrative quality score' : 'Quality score'}
             </Text>
           </View>
 
@@ -413,14 +428,7 @@ export default function ResultScreen({result, onNew}: Props) {
             <Text style={s.scoreMaximum}>/100</Text>
           </View>
 
-          <View
-            accessible
-            accessibilityLabel={
-              score === null
-                ? 'Quality score unavailable'
-                : `Quality score ${score} out of 100`
-            }
-            style={s.scoreTrack}>
+          <View style={s.scoreTrack}>
             <View
               style={[
                 s.scoreFill,
@@ -453,24 +461,6 @@ export default function ResultScreen({result, onNew}: Props) {
               </Text>
             </View>
           </View>
-
-          <View style={s.scoreDivider} />
-
-          <View style={s.metadataRow}>
-            <View style={s.metadataItem}>
-              <Text style={s.metadataLabel}>PRODUCE</Text>
-              <Text style={s.metadataValue}>
-                {produceName}
-              </Text>
-            </View>
-
-            <View style={s.metadataItem}>
-              <Text style={s.metadataLabel}>ASSESSED</Text>
-              <Text style={s.metadataValue}>
-                {formatDate(result.created_at)}
-              </Text>
-            </View>
-          </View>
         </View>
 
         <View style={s.actionCard}>
@@ -478,9 +468,7 @@ export default function ResultScreen({result, onNew}: Props) {
             <IconTile name="arrow-forward" />
 
             <View style={s.sectionCopy}>
-              <Text
-                accessibilityRole="header"
-                style={s.sectionTitle}>
+              <Text accessibilityRole="header" style={s.sectionTitle}>
                 Recommended next step
               </Text>
               <Text style={s.sectionSubtitle}>
@@ -491,9 +479,15 @@ export default function ResultScreen({result, onNew}: Props) {
 
           <Text style={s.actionText}>{status.action}</Text>
 
-          <Text style={s.recommendationText}>
-            {recommendation}
-          </Text>
+          <View style={s.recommendationBox}>
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={15}
+              color={colors.primary}
+            />
+
+            <Text style={s.recommendationText}>{recommendation}</Text>
+          </View>
         </View>
 
         <View style={s.card}>
@@ -501,9 +495,7 @@ export default function ResultScreen({result, onNew}: Props) {
             <IconTile name="options-outline" />
 
             <View style={s.sectionCopy}>
-              <Text
-                accessibilityRole="header"
-                style={s.sectionTitle}>
+              <Text accessibilityRole="header" style={s.sectionTitle}>
                 Context indicators
               </Text>
               <Text style={s.sectionSubtitle}>
@@ -525,34 +517,21 @@ export default function ResultScreen({result, onNew}: Props) {
                 const hasValidWeight =
                   typeof rawWeight === 'number' &&
                   Number.isFinite(rawWeight);
-
                 const percentage = hasValidWeight
                   ? clamp(rawWeight) * 100
                   : 0;
-
                 const label = getFactorLabel(factor?.name);
 
                 return (
                   <View key={`${label}-${index}`}>
                     <View style={s.factorHeader}>
-                      <Text style={s.factorName}>
-                        {label}
-                      </Text>
+                      <Text style={s.factorName}>{label}</Text>
                       <Text style={s.factorValue}>
-                        {hasValidWeight
-                          ? rawWeight.toFixed(2)
-                          : '—'}
+                        {hasValidWeight ? rawWeight.toFixed(2) : '—'}
                       </Text>
                     </View>
 
-                    <View
-                      accessible
-                      accessibilityLabel={`${label}: ${
-                        hasValidWeight
-                          ? rawWeight.toFixed(2)
-                          : 'unavailable'
-                      }`}
-                      style={s.factorTrack}>
+                    <View style={s.factorTrack}>
                       <View
                         style={[
                           s.factorFill,
@@ -581,9 +560,7 @@ export default function ResultScreen({result, onNew}: Props) {
               <IconTile name="star-outline" />
 
               <View style={s.sectionCopy}>
-                <Text
-                  accessibilityRole="header"
-                  style={s.sectionTitle}>
+                <Text accessibilityRole="header" style={s.sectionTitle}>
                   Top indicators
                 </Text>
                 <Text style={s.sectionSubtitle}>
@@ -598,9 +575,7 @@ export default function ResultScreen({result, onNew}: Props) {
                   key={`${getFactorLabel(factor?.name)}-${index}`}
                   style={s.topFactor}>
                   <View style={s.topFactorRank}>
-                    <Text style={s.topFactorRankText}>
-                      {index + 1}
-                    </Text>
+                    <Text style={s.topFactorRankText}>{index + 1}</Text>
                   </View>
 
                   <Text style={s.topFactorName}>
@@ -617,18 +592,14 @@ export default function ResultScreen({result, onNew}: Props) {
         ) : null}
 
         <View style={s.card}>
-          <Text
-            accessibilityRole="header"
-            style={s.cardTitle}>
+          <Text accessibilityRole="header" style={s.cardTitle}>
             Inference details
           </Text>
 
           <View style={s.detailList}>
             <DetailRow
               label="Mode"
-              value={
-                isDemo ? 'Demo inference' : 'Model inference'
-              }
+              value={isDemo ? 'Demo inference' : 'Model inference'}
               icon="sparkles-outline"
             />
 
@@ -650,11 +621,7 @@ export default function ResultScreen({result, onNew}: Props) {
 
             <DetailRow
               label="Score meaning"
-              value={
-                isDemo
-                  ? 'Illustrative only'
-                  : 'Not a safety rating'
-              }
+              value={isDemo ? 'Illustrative only' : 'Not a safety rating'}
               icon="information-circle-outline"
             />
 
@@ -691,8 +658,8 @@ export default function ResultScreen({result, onNew}: Props) {
           <View style={s.noticeDivider} />
 
           <Text style={s.noticeFootnote}>
-            Inspect the produce manually. Do not use this result alone
-            to decide whether food is safe to eat.
+            Inspect the produce manually. Do not use this result alone to decide
+            whether food is safe to eat.
           </Text>
         </View>
 
@@ -729,11 +696,7 @@ export default function ResultScreen({result, onNew}: Props) {
               s.newButton,
               pressed ? s.pressed : null,
             ]}>
-            <Ionicons
-              name="add"
-              size={18}
-              color={colors.primary}
-            />
+            <Ionicons name="add" size={18} color={colors.primaryDark} />
             <Text style={s.newButtonText}>New assessment</Text>
           </Pressable>
         </View>
@@ -853,6 +816,120 @@ const s = StyleSheet.create({
     marginTop: 9,
     maxWidth: 520,
   },
+  hero: {
+    overflow: 'hidden',
+    padding: 18,
+    borderRadius: radius.xxl,
+    backgroundColor: colors.primaryDark,
+    ...shadow.card,
+  },
+  heroOrb: {
+    position: 'absolute',
+    width: 190,
+    height: 190,
+    top: -105,
+    right: -60,
+    borderRadius: 95,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: radius.pill,
+  },
+  heroStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  heroStatusText: {
+    color: colors.white,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  heroMode: {
+    color: '#C6D8C8',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  heroBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginTop: 20,
+  },
+  heroScoreGroup: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  heroScore: {
+    color: colors.white,
+    fontSize: 52,
+    lineHeight: 58,
+    fontWeight: '800',
+    letterSpacing: -2,
+  },
+  heroScoreMax: {
+    color: '#C6D8C8',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  heroCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  heroTitle: {
+    color: colors.white,
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  heroDescription: {
+    color: '#C8D9CA',
+    fontSize: 10,
+    lineHeight: 15,
+    marginTop: 6,
+  },
+  heroProgress: {
+    height: 8,
+    overflow: 'hidden',
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    marginTop: 20,
+  },
+  heroProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  heroFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 11,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.14)',
+  },
+  heroFooterSpace: {
+    flex: 1,
+  },
+  heroFooterText: {
+    color: '#D5E1D5',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   scoreCard: {
     padding: 20,
     borderRadius: radius.xl,
@@ -896,8 +973,8 @@ const s = StyleSheet.create({
     marginTop: 18,
   },
   scoreValue: {
-    fontSize: 60,
-    lineHeight: 68,
+    fontSize: 54,
+    lineHeight: 62,
     fontWeight: '800',
     letterSpacing: -2,
   },
@@ -948,31 +1025,6 @@ const s = StyleSheet.create({
     color: colors.muted,
     marginTop: 3,
   },
-  scoreDivider: {
-    height: 1,
-    backgroundColor: colors.divider,
-    marginVertical: 17,
-  },
-  metadataRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 18,
-  },
-  metadataItem: {
-    flexGrow: 1,
-    flexShrink: 1,
-    minWidth: 130,
-  },
-  metadataLabel: {
-    ...typography.overline,
-    color: colors.faint,
-  },
-  metadataValue: {
-    color: colors.text,
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 6,
-  },
   actionCard: {
     padding: 17,
     borderRadius: radius.xl,
@@ -1011,10 +1063,21 @@ const s = StyleSheet.create({
     ...typography.body,
     color: colors.ink,
   },
+  recommendationBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   recommendationText: {
+    flex: 1,
     ...typography.caption,
-    color: colors.muted,
-    marginTop: 10,
+    color: colors.text,
   },
   card: {
     padding: 17,
