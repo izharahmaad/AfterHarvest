@@ -1,5 +1,10 @@
 import {Platform, TextStyle, ViewStyle} from 'react-native';
 
+/**
+ * AfterHarvest design tokens
+ * Single source of truth for colors, spacing, typography and shadows.
+ */
+
 export const colors = {
   // Surfaces
   background: '#F4F6F2',
@@ -44,8 +49,10 @@ export const colors = {
 
   // Utility
   white: '#FFFFFF',
+  black: '#0E1712',
   overlay: 'rgba(21, 60, 40, 0.90)',
   overlayLight: 'rgba(21, 60, 40, 0.55)',
+  scrim: 'rgba(12, 23, 18, 0.45)',
 } as const;
 
 export const spacing = {
@@ -97,6 +104,11 @@ export const typography = {
     lineHeight: 20,
     fontWeight: '400' as TextStyle['fontWeight'],
   },
+  bodyStrong: {
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '700' as TextStyle['fontWeight'],
+  },
   label: {
     fontSize: 12,
     lineHeight: 17,
@@ -116,7 +128,7 @@ export const typography = {
   },
 } as const;
 
-export type CardShadow = Pick<
+export type ShadowToken = Pick<
   ViewStyle,
   | 'shadowColor'
   | 'shadowOffset'
@@ -126,22 +138,22 @@ export type CardShadow = Pick<
 >;
 
 export const shadow = {
-  none: {} as CardShadow,
+  none: {} as ShadowToken,
 
-  subtle: Platform.select<CardShadow>({
+  subtle: Platform.select<ShadowToken>({
     ios: {
       shadowColor: colors.primaryDark,
-      shadowOffset: {width: 0, height: 2},
+      shadowOffset: {width: 0, height: 1},
       shadowOpacity: 0.04,
-      shadowRadius: 8,
+      shadowRadius: 6,
     },
     android: {
       elevation: 1,
     },
     default: {},
-  }) as CardShadow,
+  }) as ShadowToken,
 
-  card: Platform.select<CardShadow>({
+  card: Platform.select<ShadowToken>({
     ios: {
       shadowColor: colors.primaryDark,
       shadowOffset: {width: 0, height: 4},
@@ -152,9 +164,9 @@ export const shadow = {
       elevation: 2,
     },
     default: {},
-  }) as CardShadow,
+  }) as ShadowToken,
 
-  raised: Platform.select<CardShadow>({
+  raised: Platform.select<ShadowToken>({
     ios: {
       shadowColor: colors.primaryDark,
       shadowOffset: {width: 0, height: 8},
@@ -165,7 +177,20 @@ export const shadow = {
       elevation: 5,
     },
     default: {},
-  }) as CardShadow,
+  }) as ShadowToken,
+
+  floating: Platform.select<ShadowToken>({
+    ios: {
+      shadowColor: colors.primaryDark,
+      shadowOffset: {width: 0, height: 12},
+      shadowOpacity: 0.14,
+      shadowRadius: 24,
+    },
+    android: {
+      elevation: 8,
+    },
+    default: {},
+  }) as ShadowToken,
 } as const;
 
 export const layout = {
@@ -175,6 +200,8 @@ export const layout = {
   tabletBreakpoint: 700,
   narrowBreakpoint: 360,
   touchTarget: 44,
+  topBarHeight: 64,
+  tabBarHeight: 68,
 } as const;
 
 export const motion = {
@@ -187,4 +214,33 @@ export const opacity = {
   pressed: 0.82,
   disabled: 0.52,
   subtle: 0.72,
+} as const;
+
+/**
+ * Semantic aliases
+ * Use these in new screens when the meaning is more important
+ * than the raw color value.
+ */
+export const semantic = {
+  background: colors.background,
+  surface: colors.surface,
+  surfaceMuted: colors.surfaceMuted,
+
+  textPrimary: colors.ink,
+  textSecondary: colors.text,
+  textTertiary: colors.muted,
+  textDisabled: colors.faint,
+
+  borderDefault: colors.border,
+  borderStrong: colors.borderStrong,
+  divider: colors.divider,
+
+  actionPrimary: colors.primary,
+  actionPrimaryPressed: colors.primaryDark,
+  actionSecondary: colors.primarySoft,
+
+  positive: colors.success,
+  caution: colors.warning,
+  negative: colors.danger,
+  informational: colors.neutral,
 } as const;
