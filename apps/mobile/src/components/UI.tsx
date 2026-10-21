@@ -13,9 +13,9 @@ import {Ionicons} from '@expo/vector-icons';
 
 import {
   colors,
-  layout,
   radius,
   shadow,
+  spacing,
   typography,
 } from '../theme/tokens';
 
@@ -78,86 +78,63 @@ type ListRowProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-type TopBarProps = {
-  title: string;
-  caption?: string;
-  icon?: IconName;
-  trailing?: React.ReactNode;
-};
-
-type ProgressRailProps = {
-  progress: number;
-  color?: string;
-};
-
-type IconTileProps = {
-  icon: IconName;
-  color?: string;
-  background?: string;
-  size?: number;
-};
-
-type BadgeProps = {
-  label: string;
-  tone?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
-  style?: StyleProp<ViewStyle>;
-};
-
-type MetricTileProps = {
-  label: string;
-  value: string | number;
-  hint?: string;
-  icon?: IconName;
-  emphasized?: boolean;
-  onPress?: () => void;
-};
-
-type ButtonVariantStyle = {
-  container: ViewStyle;
-  textColor: string;
-  spinnerColor: string;
-};
-
-const BUTTON_VARIANTS: Record<ButtonVariant, ButtonVariantStyle> = {
+const BUTTON_VARIANTS: Record<
+  ButtonVariant,
+  {
+    container: ViewStyle;
+    text: TextStyle;
+    spinner: string;
+  }
+> = {
   primary: {
     container: {
       backgroundColor: colors.primary,
       borderColor: colors.primary,
     },
-    textColor: colors.white,
-    spinnerColor: colors.white,
+    text: {
+      color: colors.white,
+    },
+    spinner: colors.white,
   },
   secondary: {
     container: {
       backgroundColor: colors.primarySoft,
       borderColor: colors.primarySoft,
     },
-    textColor: colors.primary,
-    spinnerColor: colors.primary,
+    text: {
+      color: colors.primary,
+    },
+    spinner: colors.primary,
   },
   outline: {
     container: {
       backgroundColor: colors.surface,
       borderColor: colors.border,
     },
-    textColor: colors.primary,
-    spinnerColor: colors.primary,
+    text: {
+      color: colors.primary,
+    },
+    spinner: colors.primary,
   },
   danger: {
     container: {
       backgroundColor: colors.danger,
       borderColor: colors.danger,
     },
-    textColor: colors.white,
-    spinnerColor: colors.white,
+    text: {
+      color: colors.white,
+    },
+    spinner: colors.white,
   },
   ghost: {
     container: {
       backgroundColor: 'transparent',
       borderColor: 'transparent',
     },
-    textColor: colors.primary,
-    spinnerColor: colors.primary,
+    text: {
+      color: colors.primary,
+    },
+    spinner: colors.primary,
   },
 };
 
@@ -177,29 +154,6 @@ const PILL_TONES = {
   neutral: {
     background: colors.neutralSoft,
     color: colors.neutral,
-  },
-} as const;
-
-const BADGE_TONES = {
-  primary: {
-    background: colors.primarySoft,
-    color: colors.primary,
-  },
-  success: {
-    background: colors.successSoft,
-    color: colors.success,
-  },
-  warning: {
-    background: colors.warningSoft,
-    color: colors.warning,
-  },
-  danger: {
-    background: colors.dangerSoft,
-    color: colors.danger,
-  },
-  neutral: {
-    background: colors.surfaceMuted,
-    color: colors.muted,
   },
 } as const;
 
@@ -235,15 +189,12 @@ export function Button({
         style,
       ]}>
       {loading ? (
-        <ActivityIndicator
-          color={variantStyle.spinnerColor}
-          size="small"
-        />
+        <ActivityIndicator color={variantStyle.spinner} size="small" />
       ) : icon ? (
         <Ionicons
           name={icon}
           size={18}
-          color={variantStyle.textColor}
+          color={variantStyle.text.color}
         />
       ) : null}
 
@@ -251,7 +202,7 @@ export function Button({
         numberOfLines={1}
         style={[
           styles.buttonText,
-          {color: variantStyle.textColor},
+          variantStyle.text,
           textStyle,
         ]}>
         {loading ? 'Please wait…' : label}
@@ -285,12 +236,16 @@ export function SectionHeader({
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionCopy}>
-        {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+        {eyebrow ? (
+          <Text style={styles.eyebrow}>{eyebrow}</Text>
+        ) : null}
 
         <Text style={styles.sectionTitle}>{title}</Text>
 
         {description ? (
-          <Text style={styles.sectionDescription}>{description}</Text>
+          <Text style={styles.sectionDescription}>
+            {description}
+          </Text>
         ) : null}
       </View>
 
@@ -304,7 +259,9 @@ export function SectionHeader({
             styles.sectionAction,
             pressed ? styles.sectionActionPressed : null,
           ]}>
-          <Text style={styles.sectionActionText}>{actionLabel}</Text>
+          <Text style={styles.sectionActionText}>
+            {actionLabel}
+          </Text>
         </Pressable>
       ) : null}
     </View>
@@ -327,7 +284,10 @@ export function StatusPill({
         style,
       ]}>
       <View
-        style={[styles.statusDot, {backgroundColor: toneStyle.color}]}
+        style={[
+          styles.statusDot,
+          {backgroundColor: toneStyle.color},
+        ]}
       />
 
       <Text style={[styles.statusPillText, {color: toneStyle.color}]}>
@@ -424,182 +384,6 @@ export function ListRow({
   );
 }
 
-export function TopBar({
-  title,
-  caption,
-  icon = 'leaf',
-  trailing,
-}: TopBarProps) {
-  return (
-    <View style={styles.topBar}>
-      <View style={styles.brand}>
-        <View style={styles.brandIcon}>
-          <Ionicons name={icon} size={17} color={colors.white} />
-        </View>
-
-        <View style={styles.brandCopy}>
-          <Text style={styles.brandTitle}>{title}</Text>
-
-          {caption ? (
-            <Text style={styles.brandCaption}>{caption}</Text>
-          ) : null}
-        </View>
-      </View>
-
-      {trailing}
-    </View>
-  );
-}
-
-export function ProgressRail({
-  progress,
-  color = colors.primary,
-}: ProgressRailProps) {
-  const normalized = Math.max(0, Math.min(100, progress));
-
-  return (
-    <View
-      accessibilityRole="progressbar"
-      accessibilityValue={{
-        min: 0,
-        max: 100,
-        now: normalized,
-      }}
-      style={styles.progressRail}>
-      <View
-        style={[
-          styles.progressRailFill,
-          {width: `${normalized}%`, backgroundColor: color},
-        ]}
-      />
-    </View>
-  );
-}
-
-export function IconTile({
-  icon,
-  color = colors.primary,
-  background = colors.primarySoft,
-  size = 19,
-}: IconTileProps) {
-  return (
-    <View style={[styles.iconTile, {backgroundColor: background}]}>
-      <Ionicons name={icon} size={size} color={color} />
-    </View>
-  );
-}
-
-export function Badge({
-  label,
-  tone = 'primary',
-  style,
-}: BadgeProps) {
-  const toneStyle = BADGE_TONES[tone];
-
-  return (
-    <View
-      accessibilityRole="text"
-      style={[
-        styles.badge,
-        {backgroundColor: toneStyle.background},
-        style,
-      ]}>
-      <Text style={[styles.badgeText, {color: toneStyle.color}]}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
-export function MetricTile({
-  label,
-  value,
-  hint,
-  icon,
-  emphasized = false,
-  onPress,
-}: MetricTileProps) {
-  const content = (
-    <>
-      <View style={styles.metricTop}>
-        <Text
-          style={[
-            styles.metricLabel,
-            emphasized ? styles.metricLabelEmphasized : null,
-          ]}>
-          {label}
-        </Text>
-
-        {icon ? (
-          <View
-            style={[
-              styles.metricIcon,
-              emphasized ? styles.metricIconEmphasized : null,
-            ]}>
-            <Ionicons
-              name={icon}
-              size={15}
-              color={emphasized ? colors.white : colors.primary}
-            />
-          </View>
-        ) : null}
-      </View>
-
-      <Text
-        style={[
-          styles.metricValue,
-          emphasized ? styles.metricValueEmphasized : null,
-        ]}>
-        {value}
-      </Text>
-
-      {hint ? (
-        <Text
-          style={[
-            styles.metricHint,
-            emphasized ? styles.metricHintEmphasized : null,
-          ]}>
-          {hint}
-        </Text>
-      ) : null}
-    </>
-  );
-
-  if (!onPress) {
-    return (
-      <View
-        style={[
-          styles.metricTile,
-          emphasized ? styles.metricTileEmphasized : null,
-        ]}>
-        {content}
-      </View>
-    );
-  }
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${label}: ${value}`}
-      onPress={onPress}
-      style={({pressed}) => [
-        styles.metricTile,
-        emphasized ? styles.metricTileEmphasized : null,
-        pressed ? styles.pressed : null,
-      ]}>
-      {content}
-    </Pressable>
-  );
-}
-
-export function Divider({
-  style,
-}: {
-  style?: StyleProp<ViewStyle>;
-}) {
-  return <View style={[styles.divider, style]} />;
-}
-
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -607,15 +391,15 @@ export const styles = StyleSheet.create({
   },
   content: {
     width: '100%',
-    maxWidth: layout.screenMaxWidth,
+    maxWidth: 640,
     alignSelf: 'center',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingTop: 14,
     paddingBottom: 36,
     gap: 17,
   },
   button: {
-    minHeight: layout.touchTarget + 8,
+    minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -696,7 +480,7 @@ export const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
   },
   statusDot: {
     width: 6,
@@ -718,7 +502,7 @@ export const styles = StyleSheet.create({
     height: 62,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.lg,
+    borderRadius: 20,
     backgroundColor: colors.primarySoft,
     marginBottom: 16,
   },
@@ -774,128 +558,6 @@ export const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: 3,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 14,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  brandIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  brandCopy: {
-    minWidth: 0,
-  },
-  brandTitle: {
-    color: colors.ink,
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: -0.2,
-  },
-  brandCaption: {
-    color: colors.muted,
-    fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 0.9,
-    marginTop: 3,
-  },
-  progressRail: {
-    height: 3,
-    backgroundColor: colors.surfaceMuted,
-    overflow: 'hidden',
-  },
-  progressRailFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  iconTile: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
-  },
-  badgeText: {
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.7,
-  },
-  metricTile: {
-    flex: 1,
-    minWidth: 0,
-    padding: 15,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  metricTileEmphasized: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  metricTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  metricLabel: {
-    ...typography.overline,
-    color: colors.muted,
-  },
-  metricLabelEmphasized: {
-    color: colors.white,
-  },
-  metricIcon: {
-    width: 27,
-    height: 27,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.sm,
-    backgroundColor: colors.primarySoft,
-  },
-  metricIconEmphasized: {
-    backgroundColor: colors.overlay,
-  },
-  metricValue: {
-    color: colors.ink,
-    fontSize: 30,
-    fontWeight: '800',
-    marginTop: 10,
-  },
-  metricValueEmphasized: {
-    color: colors.white,
-  },
-  metricHint: {
-    ...typography.overline,
-    color: colors.faint,
-    marginTop: 4,
-  },
-  metricHintEmphasized: {
-    color: colors.primaryDark,
-  },
   title: {
     ...typography.display,
     color: colors.ink,
@@ -938,9 +600,5 @@ export const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.52,
-  },
-  pressed: {
-    opacity: 0.86,
-    transform: [{scale: 0.99}],
   },
 });
