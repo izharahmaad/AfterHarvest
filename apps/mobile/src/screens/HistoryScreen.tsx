@@ -4,6 +4,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -77,9 +78,7 @@ function normalizeState(value: unknown): string {
 }
 
 function getStatus(value: unknown): StatusStyle {
-  const state = normalizeState(value);
-
-  return STATUS_STYLES[state] ?? UNKNOWN_STATUS;
+  return STATUS_STYLES[normalizeState(value)] ?? UNKNOWN_STATUS;
 }
 
 function getScore(value: unknown): number | null {
@@ -167,6 +166,28 @@ function getAssessmentKey(
 
 function isDemoAssessment(assessment: Assessment): boolean {
   return assessment.inference_mode === 'demo';
+}
+
+function matchesSearch(item: Assessment, query: string): boolean {
+  const search = query.trim().toLowerCase();
+
+  if (!search) {
+    return true;
+  }
+
+  const score = getScore(item.quality_score);
+  const fields = [
+    item.quality_state,
+    item.recommendation,
+    item.inference_mode,
+    item.produce_type,
+    item.created_at,
+    score === null ? '' : String(score),
+  ];
+
+  return fields.some(field =>
+    normalizeString(field).toLowerCase().includes(search),
+  );
 }
 
 function SummaryTile({
@@ -365,9 +386,11 @@ export default function HistoryScreen({
   onSelect,
 }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
+  const [search, setSearch] = useState('');
   const {width} = useWindowDimensions();
-  const narrow = width < 360;
-  const tablet = width >= 700;
+
+  const narrow = width < layout.narrowBreakpoint;
+  const tablet = width >= layout.tabletBreakpoint;
 
   const sortedItems = useMemo(() => {
     return [...items].sort(
@@ -393,14 +416,14 @@ export default function HistoryScreen({
   }, [items]);
 
   const visibleItems = useMemo(() => {
-    if (filter === 'all') {
-      return sortedItems;
-    }
+    return sortedItems.filter(item => {
+      const matchesFilter =
+        filter === 'all' ||
+        normalizeState(item.quality_state) === filter;
 
-    return sortedItems.filter(
-      item => normalizeState(item.quality_state) === filter,
-    );
-  }, [filter, sortedItems]);
+      return matchesFilter && matchesSearch(item, search);
+    });
+  }, [filter, search, sortedItems]);
 
   const selectedFilter =
     FILTERS.find(option => option.value === filter) ?? FILTERS[0];
@@ -410,210 +433,281 @@ export default function HistoryScreen({
       ? 'Recent assessments'
       : `${selectedFilter.label} assessments`;
 
-  return (
-    <ScrollView
-      style={s.screen}
-      contentContainerStyle={[
-        s.content,
-        tablet ? s.contentTablet : null,
-      ]}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled">
-      <View style={s.header}>
-        <View style={s.headerTop}>
-          <View style={s.brand}>
-            <View style={s.brandIcon}>
-              <Ionicons
-                name="time"
-                size={18}
-                color={colors.white}
-              />
-            </View>
+  const historyProgress = items.length
+    ? Math.min(
+        100,
+        Math.round((counts.fresh / items.length) * 100),
+      )
+    : 0;
 
-            <View>
-              <Text style={s.brandName}>Assessment history</Text>
-              <Text style={s.brandCaption}>THIS SESSION</Text>
-            </View>
+  const hasActiveSearch = search.trim().length > 0;
+
+  return (
+    <View style={s.screen}>
+      <View style={s.topBar}>
+        <View style={s.brand}>
+          <View style={s.brandIcon}>
+            <Ionicons
+              name="time"
+              size={17}
+              color={colors.white}
+            />
           </View>
 
-          <View style={s.sessionPill}>
-            <View style={s.sessionDot} />
-            <Text style={s.sessionPillText}>SESSION ONLY</Text>
+          <View style={s.brandCopy}>
+            <Text style={s.brandName}>Assessment history</Text>
+            <Text style={s.brandCaption}>THIS SESSION</Text>
           </View>
         </View>
 
-        <Text
-          accessibilityRole="header"
-          style={[s.heading, narrow ? s.headingNarrow : null]}>
-          Your produce,{'\n'}
-          <Text style={s.headingAccent}>at a glance.</Text>
-        </Text>
-
-        <Text style={s.subtitle}>
-          Review recent results and revisit the context behind each
-          assessment.
-        </Text>
+        <View style={s.sessionPill}>
+          <View style={s.sessionDot} />
+          <Text style={s.sessionPillText}>SESSION ONLY</Text>
+        </View>
       </View>
 
-      <View style={s.metrics}>
-        <SummaryTile
-          label="Assessments"
-          value={counts.all}
-          hint="Saved this session"
-          icon="layers-outline"
-        />
-
-        <SummaryTile
-          label="Fresh results"
-          value={counts.fresh}
-          hint="Current session"
-          icon="leaf-outline"
-          emphasized
+      <View style={s.progressRail}>
+        <View
+          style={[
+            s.progressRailFill,
+            {width: `${historyProgress}%`},
+          ]}
         />
       </View>
 
-      <View style={s.sessionNotice}>
-        <View style={s.noticeIcon}>
-          <Ionicons
-            name="information-circle-outline"
-            size={17}
-            color={colors.primary}
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={[
+          s.content,
+          tablet ? s.contentTablet : null,
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <View style={s.intro}>
+          <Text
+            accessibilityRole="header"
+            style={[s.heading, narrow ? s.headingNarrow : null]}>
+            Your produce,{'\n'}
+            <Text style={s.headingAccent}>at a glance.</Text>
+          </Text>
+
+          <Text style={s.subtitle}>
+            Review recent results and revisit the context behind each
+            assessment.
+          </Text>
+        </View>
+
+        <View style={s.metrics}>
+          <SummaryTile
+            label="Assessments"
+            value={counts.all}
+            hint="Saved this session"
+            icon="layers-outline"
+          />
+
+          <SummaryTile
+            label="Fresh results"
+            value={counts.fresh}
+            hint="Current session"
+            icon="leaf-outline"
+            emphasized
           />
         </View>
 
-        <View style={s.noticeCopy}>
-          <Text style={s.noticeTitle}>Session history</Text>
-          <Text style={s.noticeDescription}>
-            Records reset when the app restarts. Cloud persistence is
-            not connected yet.
-          </Text>
-        </View>
-      </View>
-
-      <View style={s.filterRow}>
-        {FILTERS.map(option => {
-          const selected = filter === option.value;
-
-          return (
-            <Pressable
-              key={option.value}
-              accessibilityRole="button"
-              accessibilityLabel={`Show ${option.label.toLowerCase()} assessments`}
-              accessibilityState={{selected}}
-              onPress={() => setFilter(option.value)}
-              style={({pressed}) => [
-                s.filter,
-                selected ? s.filterSelected : null,
-                pressed ? s.filterPressed : null,
-              ]}>
-              <Ionicons
-                name={option.icon}
-                size={14}
-                color={selected ? colors.white : colors.muted}
-                accessible={false}
-              />
-
-              <Text
-                style={[
-                  s.filterText,
-                  selected ? s.filterTextSelected : null,
-                ]}>
-                {option.label}
-              </Text>
-
-              <View
-                style={[
-                  s.filterCount,
-                  selected ? s.filterCountSelected : null,
-                ]}>
-                <Text
-                  style={[
-                    s.filterCountText,
-                    selected ? s.filterCountTextSelected : null,
-                  ]}>
-                  {counts[option.value]}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <View style={s.listHeader}>
-        <Text accessibilityRole="header" style={s.listTitle}>
-          {listTitle}
-        </Text>
-
-        <Text style={s.listCount}>
-          {visibleItems.length}{' '}
-          {visibleItems.length === 1 ? 'record' : 'records'}
-        </Text>
-      </View>
-
-      {visibleItems.length === 0 ? (
-        <View style={s.emptyCard}>
-          <View style={s.emptyIcon}>
+        <View style={s.searchCard}>
+          <View style={s.searchIcon}>
             <Ionicons
-              name={
-                items.length === 0
-                  ? 'leaf-outline'
-                  : 'search-outline'
-              }
-              size={25}
+              name="search-outline"
+              size={17}
               color={colors.primary}
             />
           </View>
 
-          <Text style={s.emptyTitle}>
-            {items.length === 0
-              ? 'Your history starts here'
-              : 'No matching assessments'}
-          </Text>
+          <TextInput
+            accessibilityLabel="Search assessments"
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search state, score, date or recommendation"
+            placeholderTextColor={colors.faint}
+            selectionColor={colors.primary}
+            autoCorrect={false}
+            autoCapitalize="none"
+            style={s.searchInput}
+          />
 
-          <Text style={s.emptyDescription}>
-            {items.length === 0
-              ? 'Complete your first tomato assessment and it will appear here.'
-              : `There are no ${filter} results in this session. Try another filter.`}
-          </Text>
-
-          {filter !== 'all' ? (
+          {hasActiveSearch ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="View all assessments"
-              onPress={() => setFilter('all')}
+              accessibilityLabel="Clear search"
+              onPress={() => setSearch('')}
+              hitSlop={10}
               style={({pressed}) => [
-                s.resetButton,
-                pressed ? s.resetPressed : null,
+                s.clearButton,
+                pressed ? s.pressed : null,
               ]}>
               <Ionicons
-                name="apps-outline"
-                size={15}
-                color={colors.primary}
-                accessible={false}
+                name="close-circle"
+                size={20}
+                color={colors.muted}
               />
-              <Text style={s.resetButtonText}>
-                View all results
-              </Text>
             </Pressable>
           ) : null}
         </View>
-      ) : (
-        <View style={s.list}>
-          {visibleItems.map((item, index) => (
-            <AssessmentCard
-              key={getAssessmentKey(item, index)}
-              item={item}
-              onPress={() => onSelect(item)}
-            />
-          ))}
-        </View>
-      )}
 
-      <Text style={s.footer}>
-        Demo scores are not food-safety ratings or measured
-        probabilities.
-      </Text>
-    </ScrollView>
+        <View style={s.sessionNotice}>
+          <View style={s.noticeIcon}>
+            <Ionicons
+              name="information-circle-outline"
+              size={17}
+              color={colors.primary}
+            />
+          </View>
+
+          <View style={s.noticeCopy}>
+            <Text style={s.noticeTitle}>Session history</Text>
+            <Text style={s.noticeDescription}>
+              Records reset when the app restarts. Cloud persistence is
+              not connected yet.
+            </Text>
+          </View>
+        </View>
+
+        <View style={s.filterRow}>
+          {FILTERS.map(option => {
+            const selected = filter === option.value;
+
+            return (
+              <Pressable
+                key={option.value}
+                accessibilityRole="button"
+                accessibilityLabel={`Show ${option.label.toLowerCase()} assessments`}
+                accessibilityState={{selected}}
+                onPress={() => setFilter(option.value)}
+                style={({pressed}) => [
+                  s.filter,
+                  selected ? s.filterSelected : null,
+                  pressed ? s.filterPressed : null,
+                ]}>
+                <Ionicons
+                  name={option.icon}
+                  size={14}
+                  color={
+                    selected ? colors.white : colors.muted
+                  }
+                  accessible={false}
+                />
+
+                <Text
+                  style={[
+                    s.filterText,
+                    selected ? s.filterTextSelected : null,
+                  ]}>
+                  {option.label}
+                </Text>
+
+                <View
+                  style={[
+                    s.filterCount,
+                    selected ? s.filterCountSelected : null,
+                  ]}>
+                  <Text
+                    style={[
+                      s.filterCountText,
+                      selected
+                        ? s.filterCountTextSelected
+                        : null,
+                    ]}>
+                    {counts[option.value]}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={s.listHeader}>
+          <Text accessibilityRole="header" style={s.listTitle}>
+            {listTitle}
+          </Text>
+
+          <Text style={s.listCount}>
+            {visibleItems.length}{' '}
+            {visibleItems.length === 1 ? 'record' : 'records'}
+          </Text>
+        </View>
+
+        {visibleItems.length === 0 ? (
+          <View style={s.emptyCard}>
+            <View style={s.emptyIcon}>
+              <Ionicons
+                name={
+                  items.length === 0
+                    ? 'leaf-outline'
+                    : 'search-outline'
+                }
+                size={25}
+                color={colors.primary}
+              />
+            </View>
+
+            <Text style={s.emptyTitle}>
+              {items.length === 0
+                ? 'Your history starts here'
+                : hasActiveSearch
+                  ? 'No search results'
+                  : 'No matching assessments'}
+            </Text>
+
+            <Text style={s.emptyDescription}>
+              {items.length === 0
+                ? 'Complete your first tomato assessment and it will appear here.'
+                : hasActiveSearch
+                  ? 'Try a different search term or clear the search.'
+                  : `There are no ${filter} results in this session. Try another filter.`}
+            </Text>
+
+            {filter !== 'all' || hasActiveSearch ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="View all assessments"
+                onPress={() => {
+                  setFilter('all');
+                  setSearch('');
+                }}
+                style={({pressed}) => [
+                  s.resetButton,
+                  pressed ? s.resetPressed : null,
+                ]}>
+                <Ionicons
+                  name="apps-outline"
+                  size={15}
+                  color={colors.primary}
+                  accessible={false}
+                />
+                <Text style={s.resetButtonText}>
+                  View all results
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : (
+          <View style={s.list}>
+            {visibleItems.map((item, index) => (
+              <AssessmentCard
+                key={getAssessmentKey(item, index)}
+                item={item}
+                onPress={() => onSelect(item)}
+              />
+            ))}
+          </View>
+        )}
+
+        <Text style={s.footer}>
+          Demo scores are not food-safety ratings or measured
+          probabilities.
+        </Text>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -622,28 +716,16 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    width: '100%',
-    maxWidth: layout.screenMaxWidth,
-    alignSelf: 'center',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 14,
-    paddingBottom: 36,
-    gap: 17,
-  },
-  contentTablet: {
-    paddingHorizontal: 30,
-    paddingTop: 24,
-    gap: 20,
-  },
-  header: {
-    paddingTop: 5,
-  },
-  headerTop: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 14,
+    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   brand: {
     flexDirection: 'row',
@@ -651,12 +733,15 @@ const s = StyleSheet.create({
     gap: 10,
   },
   brandIcon: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
+  },
+  brandCopy: {
+    minWidth: 0,
   },
   brandName: {
     color: colors.ink,
@@ -677,7 +762,7 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
   },
   sessionDot: {
@@ -692,10 +777,37 @@ const s = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.7,
   },
+  progressRail: {
+    height: 3,
+    backgroundColor: colors.surfaceMuted,
+  },
+  progressRailFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    width: '100%',
+    maxWidth: layout.screenMaxWidth,
+    alignSelf: 'center',
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 18,
+    paddingBottom: 36,
+    gap: 17,
+  },
+  contentTablet: {
+    paddingHorizontal: layout.screenPaddingWide,
+    paddingTop: 24,
+    gap: 20,
+  },
+  intro: {
+    paddingTop: 2,
+  },
   heading: {
     ...typography.display,
     color: colors.ink,
-    marginTop: 16,
   },
   headingNarrow: {
     fontSize: 27,
@@ -769,6 +881,40 @@ const s = StyleSheet.create({
   summaryHintEmphasized: {
     color: colors.primaryDark,
   },
+  searchCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: layout.touchTarget + 6,
+    paddingHorizontal: 13,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  searchIcon: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.primarySoft,
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.ink,
+    fontSize: 13,
+    fontWeight: '600',
+    paddingVertical: 12,
+  },
+  clearButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sessionNotice: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -806,7 +952,7 @@ const s = StyleSheet.create({
     gap: 8,
   },
   filter: {
-    minHeight: 42,
+    minHeight: layout.touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -1042,7 +1188,7 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
   resetButton: {
-    minHeight: 44,
+    minHeight: layout.touchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1059,6 +1205,9 @@ const s = StyleSheet.create({
     color: colors.primary,
     fontSize: 12,
     fontWeight: '800',
+  },
+  pressed: {
+    opacity: 0.8,
   },
   footer: {
     ...typography.overline,
