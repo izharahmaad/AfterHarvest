@@ -45,90 +45,39 @@ type StorageTip = {
 const SUPPORT_EMAIL = 'support@afterharvest.app';
 
 const STORAGE_PRESETS: StoragePreset[] = [
-  {
-    id: 'room',
-    title: 'Room',
-    temperature: '22',
-    humidity: '65',
-    days: '2',
-    icon: 'home-outline',
-  },
-  {
-    id: 'cooler',
-    title: 'Cooler',
-    temperature: '8',
-    humidity: '80',
-    days: '4',
-    icon: 'snow-outline',
-  },
-  {
-    id: 'transport',
-    title: 'Transport',
-    temperature: '12',
-    humidity: '75',
-    days: '1',
-    icon: 'car-outline',
-  },
+  {id: 'room', title: 'Room', temperature: '22', humidity: '65', days: '2', icon: 'home-outline'},
+  {id: 'cooler', title: 'Cooler', temperature: '8', humidity: '80', days: '4', icon: 'snow-outline'},
+  {id: 'transport', title: 'Transport', temperature: '12', humidity: '75', days: '1', icon: 'car-outline'},
 ];
 
 const STORAGE_TIPS: StorageTip[] = [
   {
     title: 'Keep tomatoes dry',
-    description:
-      'Avoid washing before storage. Moisture can accelerate spoilage.',
+    description: 'Avoid washing before storage. Moisture can accelerate spoilage.',
     icon: 'water-outline',
   },
   {
     title: 'Maintain airflow',
-    description:
-      'Ventilated packaging reduces trapped humidity around produce.',
+    description: 'Ventilated packaging reduces trapped humidity around produce.',
     icon: 'leaf-outline',
   },
   {
     title: 'Check daily',
-    description:
-      'Separate soft or damaged tomatoes to slow spread within a batch.',
+    description: 'Separate soft or damaged tomatoes to slow spread within a batch.',
     icon: 'eye-outline',
   },
 ];
 
 const READINESS_ITEMS = [
-  {
-    title: 'Clear tomato photo',
-    description: 'JPEG, PNG or WebP up to 5 MB',
-    icon: 'image-outline' as IconName,
-  },
-  {
-    title: 'Storage conditions',
-    description: 'Temperature, humidity and duration',
-    icon: 'options-outline' as IconName,
-  },
-  {
-    title: 'Packaging type',
-    description: 'Open crate, sealed bag or ventilated box',
-    icon: 'cube-outline' as IconName,
-  },
+  {title: 'Clear tomato photo', description: 'JPEG, PNG or WebP up to 5 MB', icon: 'image-outline' as IconName},
+  {title: 'Storage conditions', description: 'Temperature, humidity and duration', icon: 'options-outline' as IconName},
+  {title: 'Packaging type', description: 'Open crate, sealed bag or ventilated box', icon: 'cube-outline' as IconName},
 ];
 
 const STEPS = [
-  {
-    number: '01',
-    title: 'Photograph',
-    description: 'Capture a tomato or select an existing photo.',
-    icon: 'camera-outline' as IconName,
-  },
-  {
-    number: '02',
-    title: 'Add conditions',
-    description: 'Enter temperature, humidity and storage days.',
-    icon: 'options-outline' as IconName,
-  },
-  {
-    number: '03',
-    title: 'Explore results',
-    description: 'Review the demo assessment and its context.',
-    icon: 'analytics-outline' as IconName,
-  },
+  {number: '01', title: 'Photograph', description: 'Capture a tomato or select an existing photo.', icon: 'camera-outline' as IconName},
+  {number: '02', title: 'Add conditions', description: 'Enter temperature, humidity and storage days.', icon: 'options-outline' as IconName},
+  {number: '03', title: 'Explore results', description: 'Review the demo assessment and its context.', icon: 'analytics-outline' as IconName},
 ];
 
 function IconTile({
@@ -169,37 +118,24 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
   const {width} = useWindowDimensions();
   const narrow = width < layout.narrowBreakpoint;
   const tablet = width >= layout.tabletBreakpoint;
-
   const [copiedEmail, setCopiedEmail] = useState(false);
 
   async function copySupportEmail() {
     try {
       await Clipboard.setStringAsync(SUPPORT_EMAIL);
-
       setCopiedEmail(true);
-      Alert.alert(
-        'Email copied',
-        `${SUPPORT_EMAIL} has been copied to your clipboard.`,
-      );
-
+      Alert.alert('Email copied', `${SUPPORT_EMAIL} has been copied to your clipboard.`);
       setTimeout(() => setCopiedEmail(false), 2500);
     } catch {
-      Alert.alert(
-        'Unable to copy',
-        'Please copy the support email manually.',
-      );
+      Alert.alert('Unable to copy', 'Please copy the support email manually.');
     }
   }
 
   async function openFeedbackEmail() {
-    const subject = encodeURIComponent(
-      'AfterHarvest prototype feedback',
-    );
-
+    const subject = encodeURIComponent('AfterHarvest prototype feedback');
     const body = encodeURIComponent(
       'Hi AfterHarvest team,\n\nI would like to share feedback about the mobile prototype:\n\n',
     );
-
     const url = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
 
     try {
@@ -209,11 +145,10 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
         'Email unavailable',
         'No email app is available. The support email has been copied instead.',
       );
-
       try {
         await Clipboard.setStringAsync(SUPPORT_EMAIL);
       } catch {
-        // Keep the fallback quiet.
+        // Ignore secondary clipboard failure.
       }
     }
   }
@@ -226,7 +161,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             <Ionicons name="leaf" size={17} color={colors.white} />
           </View>
 
-          <View style={s.brandCopy}>
+          <View>
             <Text style={s.brandName}>AfterHarvest</Text>
             <Text style={s.brandCaption}>PRODUCE INSIGHTS</Text>
           </View>
@@ -242,10 +177,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
 
       <ScrollView
         style={s.scroll}
-        contentContainerStyle={[
-          s.content,
-          tablet ? s.contentTablet : null,
-        ]}
+        contentContainerStyle={[s.content, tablet ? s.contentTablet : null]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
         <View style={s.intro}>
@@ -259,8 +191,8 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
           </Text>
 
           <Text style={s.introText}>
-            Combine a tomato photo with its storage conditions to explore
-            a clear, transparent demo assessment.
+            Combine a tomato photo with its storage conditions to explore a clear,
+            transparent demo assessment.
           </Text>
         </View>
 
@@ -269,11 +201,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
 
           <View style={s.heroHeader}>
             <View style={s.heroLabel}>
-              <Ionicons
-                name="sparkles-outline"
-                size={13}
-                color="#D9E8DA"
-              />
+              <Ionicons name="sparkles-outline" size={13} color="#D9E8DA" />
               <Text style={s.heroLabelText}>CURRENT PILOT</Text>
             </View>
 
@@ -287,13 +215,8 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
 
           <View style={s.heroContent}>
             <View style={s.heroCopy}>
-              <Text style={s.heroTitle}>
-                Tomato{'\n'}quality check
-              </Text>
-
-              <Text style={s.heroDescription}>
-                Photo-led. Storage-aware.
-              </Text>
+              <Text style={s.heroTitle}>Tomato{'\n'}quality check</Text>
+              <Text style={s.heroDescription}>Photo-led. Storage-aware.</Text>
             </View>
 
             <TomatoMark />
@@ -301,22 +224,14 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
 
           <View style={s.heroFooter}>
             <View style={s.heroMetadata}>
-              <Ionicons
-                name="image-outline"
-                size={14}
-                color="#D3E0D4"
-              />
+              <Ionicons name="image-outline" size={14} color="#D3E0D4" />
               <Text style={s.heroMetadataText}>PHOTO</Text>
             </View>
 
             <View style={s.heroMetadataDivider} />
 
             <View style={s.heroMetadata}>
-              <Ionicons
-                name="thermometer-outline"
-                size={14}
-                color="#D3E0D4"
-              />
+              <Ionicons name="thermometer-outline" size={14} color="#D3E0D4" />
               <Text style={s.heroMetadataText}>STORAGE DATA</Text>
             </View>
 
@@ -331,16 +246,9 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
           accessibilityLabel="Start a new tomato assessment"
           accessibilityHint="Opens the form to add a photo and storage conditions"
           onPress={onCapture}
-          style={({pressed}) => [
-            s.primaryAction,
-            pressed ? s.primaryPressed : null,
-          ]}>
+          style={({pressed}) => [s.primaryAction, pressed ? s.primaryPressed : null]}>
           <View style={s.primaryIcon}>
-            <Ionicons
-              name="add"
-              size={25}
-              color={colors.primaryDark}
-            />
+            <Ionicons name="add" size={25} color={colors.primaryDark} />
           </View>
 
           <View style={s.primaryCopy}>
@@ -352,11 +260,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
           </View>
 
           <View style={s.primaryArrow}>
-            <Ionicons
-              name="arrow-forward"
-              size={18}
-              color={colors.white}
-            />
+            <Ionicons name="arrow-forward" size={18} color={colors.white} />
           </View>
         </Pressable>
 
@@ -365,10 +269,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
           accessibilityLabel="Open assessment history"
           accessibilityHint="View assessments saved during this session"
           onPress={onHistory}
-          style={({pressed}) => [
-            s.historyAction,
-            pressed ? s.historyPressed : null,
-          ]}>
+          style={({pressed}) => [s.historyAction, pressed ? s.historyPressed : null]}>
           <IconTile name="time-outline" />
 
           <View style={s.historyCopy}>
@@ -391,14 +292,13 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             <Text accessibilityRole="header" style={s.sectionTitle}>
               Quick-start presets
             </Text>
-
             <Text style={s.sectionSubtitle}>
               Start with common storage conditions
             </Text>
           </View>
 
-          <View style={s.countPill}>
-            <Text style={s.countPillText}>3 OPTIONS</Text>
+          <View style={s.stepCount}>
+            <Text style={s.stepCountText}>3 OPTIONS</Text>
           </View>
         </View>
 
@@ -410,10 +310,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
               accessibilityLabel={`Use ${preset.title} storage preset`}
               accessibilityHint="Opens a new assessment with these storage conditions"
               onPress={onCapture}
-              style={({pressed}) => [
-                s.presetCard,
-                pressed ? s.pressed : null,
-              ]}>
+              style={({pressed}) => [s.presetCard, pressed ? s.pressed : null]}>
               <IconTile
                 name={preset.icon}
                 size={17}
@@ -422,10 +319,8 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
               />
 
               <Text style={s.presetTitle}>{preset.title}</Text>
-
               <Text style={s.presetValue}>
-                {preset.temperature}°C · {preset.humidity}% ·{' '}
-                {preset.days}d
+                {preset.temperature}°C · {preset.humidity}% · {preset.days}d
               </Text>
             </Pressable>
           ))}
@@ -436,22 +331,17 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             <Text accessibilityRole="header" style={s.sectionTitle}>
               Before you start
             </Text>
-
-            <Text style={s.sectionSubtitle}>
-              Have these details ready
-            </Text>
+            <Text style={s.sectionSubtitle}>Have these details ready</Text>
           </View>
         </View>
 
-        <View style={s.listCard}>
+        <View style={s.readinessCard}>
           {READINESS_ITEMS.map((item, index) => (
             <View
               key={item.title}
               style={[
-                s.listRow,
-                index < READINESS_ITEMS.length - 1
-                  ? s.listRowBorder
-                  : null,
+                s.readinessRow,
+                index < READINESS_ITEMS.length - 1 ? s.readinessRowBorder : null,
               ]}>
               <IconTile
                 name={item.icon}
@@ -460,11 +350,9 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
                 background={colors.primarySoft}
               />
 
-              <View style={s.listCopy}>
-                <Text style={s.listTitle}>{item.title}</Text>
-                <Text style={s.listDescription}>
-                  {item.description}
-                </Text>
+              <View style={s.readinessCopy}>
+                <Text style={s.readinessTitle}>{item.title}</Text>
+                <Text style={s.readinessDescription}>{item.description}</Text>
               </View>
 
               <Ionicons
@@ -482,22 +370,19 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             <Text accessibilityRole="header" style={s.sectionTitle}>
               Storage tips
             </Text>
-
             <Text style={s.sectionSubtitle}>
               Practical guidance for tomato batches
             </Text>
           </View>
         </View>
 
-        <View style={s.listCard}>
+        <View style={s.tipsCard}>
           {STORAGE_TIPS.map((tip, index) => (
             <View
               key={tip.title}
               style={[
-                s.listRow,
-                index < STORAGE_TIPS.length - 1
-                  ? s.listRowBorder
-                  : null,
+                s.tipRow,
+                index < STORAGE_TIPS.length - 1 ? s.tipRowBorder : null,
               ]}>
               <IconTile
                 name={tip.icon}
@@ -506,11 +391,9 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
                 background={colors.primarySoft}
               />
 
-              <View style={s.listCopy}>
-                <Text style={s.listTitle}>{tip.title}</Text>
-                <Text style={s.listDescription}>
-                  {tip.description}
-                </Text>
+              <View style={s.tipCopy}>
+                <Text style={s.tipTitle}>{tip.title}</Text>
+                <Text style={s.tipDescription}>{tip.description}</Text>
               </View>
             </View>
           ))}
@@ -521,40 +404,31 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             <Text accessibilityRole="header" style={s.sectionTitle}>
               How it works
             </Text>
-
-            <Text style={s.sectionSubtitle}>
-              Three steps from photo to result
-            </Text>
+            <Text style={s.sectionSubtitle}>Three steps from photo to result</Text>
           </View>
 
-          <View style={s.countPill}>
-            <Text style={s.countPillText}>03 STEPS</Text>
+          <View style={s.stepCount}>
+            <Text style={s.stepCountText}>03 STEPS</Text>
           </View>
         </View>
 
-        <View style={s.listCard}>
+        <View style={s.stepsCard}>
           {STEPS.map((step, index) => (
             <View
               key={step.number}
               style={[
-                s.listRow,
-                index < STEPS.length - 1 ? s.listRowBorder : null,
+                s.stepRow,
+                index < STEPS.length - 1 ? s.stepRowBorder : null,
               ]}>
-              <IconTile
-                name={step.icon}
-                size={18}
-                background={colors.primarySoft}
-              />
+              <IconTile name={step.icon} size={18} background={colors.primarySoft} />
 
-              <View style={s.listCopy}>
+              <View style={s.stepCopy}>
                 <View style={s.stepTitleRow}>
                   <Text style={s.stepNumber}>{step.number}</Text>
-                  <Text style={s.listTitle}>{step.title}</Text>
+                  <Text style={s.stepTitle}>{step.title}</Text>
                 </View>
 
-                <Text style={s.listDescription}>
-                  {step.description}
-                </Text>
+                <Text style={s.stepDescription}>{step.description}</Text>
               </View>
             </View>
           ))}
@@ -568,7 +442,6 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
               color="#57764F"
               background="#E6EEE1"
             />
-
             <Text style={s.infoTitle}>Tomato-first</Text>
             <Text style={s.infoDescription}>
               This prototype currently focuses on tomatoes.
@@ -582,7 +455,6 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
               color="#57764F"
               background="#E6EEE1"
             />
-
             <Text style={s.infoTitle}>Session history</Text>
             <Text style={s.infoDescription}>
               History resets when the app restarts.
@@ -613,28 +485,16 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
               accessibilityRole="button"
               accessibilityLabel="Send feedback by email"
               onPress={openFeedbackEmail}
-              style={({pressed}) => [
-                s.supportPrimary,
-                pressed ? s.pressed : null,
-              ]}>
-              <Ionicons
-                name="mail-outline"
-                size={16}
-                color={colors.primary}
-              />
-              <Text style={s.supportPrimaryText}>
-                Send feedback
-              </Text>
+              style={({pressed}) => [s.supportPrimary, pressed ? s.pressed : null]}>
+              <Ionicons name="mail-outline" size={16} color={colors.primary} />
+              <Text style={s.supportPrimaryText}>Send feedback</Text>
             </Pressable>
 
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Copy support email address"
               onPress={copySupportEmail}
-              style={({pressed}) => [
-                s.supportSecondary,
-                pressed ? s.pressed : null,
-              ]}>
+              style={({pressed}) => [s.supportSecondary, pressed ? s.pressed : null]}>
               <Ionicons
                 name={copiedEmail ? 'checkmark' : 'copy-outline'}
                 size={16}
@@ -654,34 +514,25 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
               size={18}
               color="#776D49"
             />
-
             <Text style={s.disclosureTitle}>About this demo</Text>
           </View>
 
           <Text style={s.disclosureText}>
-            Results use storage-context heuristics. Images are validated
-            but not analyzed by a trained AI model. Packaging is recorded
-            but does not affect demo scoring.
+            Results use storage-context heuristics. Images are validated but not
+            analyzed by a trained AI model. Packaging is recorded but does not
+            affect demo scoring.
           </Text>
 
           <View style={s.disclosureDivider} />
 
           <Text style={s.disclosureFootnote}>
-            Images are not permanently stored. Results do not certify
-            food safety.
+            Images are not permanently stored. Results do not certify food safety.
           </Text>
         </View>
 
         <View style={s.footer}>
-          <Ionicons
-            name="leaf-outline"
-            size={14}
-            color={colors.faint}
-          />
-
-          <Text style={s.footerText}>
-            PRESERVE QUALITY · REDUCE LOSS
-          </Text>
+          <Ionicons name="leaf-outline" size={14} color={colors.faint} />
+          <Text style={s.footerText}>PRESERVE QUALITY · REDUCE LOSS</Text>
         </View>
       </ScrollView>
     </View>
@@ -716,9 +567,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
-  },
-  brandCopy: {
-    minWidth: 0,
   },
   brandName: {
     color: colors.ink,
@@ -801,7 +649,7 @@ const s = StyleSheet.create({
     marginTop: 9,
   },
   hero: {
-    minHeight: 214,
+    minHeight: 210,
     overflow: 'hidden',
     justifyContent: 'space-between',
     padding: 18,
@@ -811,12 +659,12 @@ const s = StyleSheet.create({
   },
   heroOrb: {
     position: 'absolute',
-    width: 190,
-    height: 190,
-    top: -100,
-    right: -60,
-    borderRadius: 95,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    width: 180,
+    height: 180,
+    top: -95,
+    right: -55,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255,255,255,0.045)',
   },
   heroHeader: {
     flexDirection: 'row',
@@ -839,7 +687,7 @@ const s = StyleSheet.create({
     letterSpacing: 0.7,
   },
   heroContent: {
-    minHeight: 122,
+    minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -850,10 +698,10 @@ const s = StyleSheet.create({
   },
   heroTitle: {
     color: colors.white,
-    fontSize: 25,
-    lineHeight: 31,
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: '800',
-    letterSpacing: -0.7,
+    letterSpacing: -0.6,
   },
   heroDescription: {
     color: '#C8D9CA',
@@ -964,7 +812,7 @@ const s = StyleSheet.create({
     letterSpacing: 0.5,
   },
   primaryAction: {
-    minHeight: 80,
+    minHeight: 78,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -1017,7 +865,7 @@ const s = StyleSheet.create({
     transform: [{scale: 0.99}],
   },
   historyAction: {
-    minHeight: 68,
+    minHeight: 66,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
@@ -1027,7 +875,6 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    ...shadow.card,
   },
   historyPressed: {
     backgroundColor: colors.primarySoft,
@@ -1073,13 +920,13 @@ const s = StyleSheet.create({
     color: colors.muted,
     marginTop: 4,
   },
-  countPill: {
+  stepCount: {
     paddingHorizontal: 9,
     paddingVertical: 6,
     borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
   },
-  countPillText: {
+  stepCountText: {
     color: colors.primary,
     fontSize: 8,
     fontWeight: '800',
@@ -1092,7 +939,7 @@ const s = StyleSheet.create({
   presetCard: {
     flex: 1,
     minWidth: 0,
-    minHeight: 116,
+    minHeight: 112,
     padding: 12,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -1110,7 +957,7 @@ const s = StyleSheet.create({
     color: colors.muted,
     marginTop: 4,
   },
-  listCard: {
+  readinessCard: {
     paddingHorizontal: 13,
     borderRadius: radius.xl,
     borderWidth: 1,
@@ -1118,29 +965,84 @@ const s = StyleSheet.create({
     backgroundColor: colors.surface,
     ...shadow.card,
   },
-  listRow: {
+  readinessRow: {
+    minHeight: 72,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  readinessRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  readinessCopy: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 11,
+  },
+  readinessTitle: {
+    ...typography.label,
+    color: colors.ink,
+  },
+  readinessDescription: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 3,
+  },
+  tipsCard: {
+    paddingHorizontal: 13,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  tipRow: {
     minHeight: 76,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
   },
-  listRowBorder: {
+  tipRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },
-  listCopy: {
+  tipCopy: {
     flex: 1,
     minWidth: 0,
     paddingVertical: 11,
   },
-  listTitle: {
+  tipTitle: {
     ...typography.label,
     color: colors.ink,
   },
-  listDescription: {
+  tipDescription: {
     ...typography.caption,
     color: colors.muted,
     marginTop: 4,
+  },
+  stepsCard: {
+    paddingHorizontal: 13,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  stepRow: {
+    minHeight: 77,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  stepRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  stepCopy: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 11,
   },
   stepTitleRow: {
     flexDirection: 'row',
@@ -1152,6 +1054,16 @@ const s = StyleSheet.create({
     fontSize: 8,
     fontWeight: '800',
   },
+  stepTitle: {
+    flex: 1,
+    ...typography.label,
+    color: colors.ink,
+  },
+  stepDescription: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 4,
+  },
   infoRow: {
     flexDirection: 'row',
     gap: 10,
@@ -1159,7 +1071,7 @@ const s = StyleSheet.create({
   infoCard: {
     flex: 1,
     minWidth: 0,
-    minHeight: 136,
+    minHeight: 132,
     padding: 12,
     borderRadius: radius.lg,
     borderWidth: 1,
