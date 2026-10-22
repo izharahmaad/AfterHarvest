@@ -1283,4 +1283,3 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
   },
 });
-
