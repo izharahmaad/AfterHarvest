@@ -4,6 +4,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -77,9 +78,7 @@ function normalizeState(value: unknown): string {
 }
 
 function getStatus(value: unknown): StatusStyle {
-  const state = normalizeState(value);
-
-  return STATUS_STYLES[state] ?? UNKNOWN_STATUS;
+  return STATUS_STYLES[normalizeState(value)] ?? UNKNOWN_STATUS;
 }
 
 function getScore(value: unknown): number | null {
@@ -167,6 +166,28 @@ function getAssessmentKey(
 
 function isDemoAssessment(assessment: Assessment): boolean {
   return assessment.inference_mode === 'demo';
+}
+
+function matchesSearch(item: Assessment, query: string): boolean {
+  const search = query.trim().toLowerCase();
+
+  if (!search) {
+    return true;
+  }
+
+  const score = getScore(item.quality_score);
+  const fields = [
+    item.quality_state,
+    item.recommendation,
+    item.inference_mode,
+    item.produce_type,
+    item.created_at,
+    score === null ? '' : String(score),
+  ];
+
+  return fields.some(field =>
+    normalizeString(field).toLowerCase().includes(search),
+  );
 }
 
 function SummaryTile({
@@ -365,6 +386,7 @@ export default function HistoryScreen({
   onSelect,
 }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
+  const [search, setSearch] = useState('');
   const {width} = useWindowDimensions();
 
   const narrow = width < layout.narrowBreakpoint;
@@ -394,14 +416,14 @@ export default function HistoryScreen({
   }, [items]);
 
   const visibleItems = useMemo(() => {
-    if (filter === 'all') {
-      return sortedItems;
-    }
+    return sortedItems.filter(item => {
+      const matchesFilter =
+        filter === 'all' ||
+        normalizeState(item.quality_state) === filter;
 
-    return sortedItems.filter(
-      item => normalizeState(item.quality_state) === filter,
-    );
-  }, [filter, sortedItems]);
+      return matchesFilter && matchesSearch(item, search);
+    });
+  }, [filter, search, sortedItems]);
 
   const selectedFilter =
     FILTERS.find(option => option.value === filter) ?? FILTERS[0];
@@ -412,8 +434,13 @@ export default function HistoryScreen({
       : `${selectedFilter.label} assessments`;
 
   const historyProgress = items.length
-    ? Math.min(100, Math.round((counts.fresh / items.length) * 100))
+    ? Math.min(
+        100,
+        Math.round((counts.fresh / items.length) * 100),
+      )
     : 0;
+
+  const hasActiveSearch = search.trim().length > 0;
 
   return (
     <View style={s.screen}>
@@ -427,7 +454,7 @@ export default function HistoryScreen({
             />
           </View>
 
-          <View>
+          <View style={s.brandCopy}>
             <Text style={s.brandName}>Assessment history</Text>
             <Text style={s.brandCaption}>THIS SESSION</Text>
           </View>
@@ -487,6 +514,46 @@ export default function HistoryScreen({
           />
         </View>
 
+        <View style={s.searchCard}>
+          <View style={s.searchIcon}>
+            <Ionicons
+              name="search-outline"
+              size={17}
+              color={colors.primary}
+            />
+          </View>
+
+          <TextInput
+            accessibilityLabel="Search assessments"
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search state, score, date or recommendation"
+            placeholderTextColor={colors.faint}
+            selectionColor={colors.primary}
+            autoCorrect={false}
+            autoCapitalize="none"
+            style={s.searchInput}
+          />
+
+          {hasActiveSearch ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+              onPress={() => setSearch('')}
+              hitSlop={10}
+              style={({pressed}) => [
+                s.clearButton,
+                pressed ? s.pressed : null,
+              ]}>
+              <Ionicons
+                name="close-circle"
+                size={20}
+                color={colors.muted}
+              />
+            </Pressable>
+          ) : null}
+        </View>
+
         <View style={s.sessionNotice}>
           <View style={s.noticeIcon}>
             <Ionicons
@@ -524,7 +591,9 @@ export default function HistoryScreen({
                 <Ionicons
                   name={option.icon}
                   size={14}
-                  color={selected ? colors.white : colors.muted}
+                  color={
+                    selected ? colors.white : colors.muted
+                  }
                   accessible={false}
                 />
 
@@ -584,20 +653,27 @@ export default function HistoryScreen({
             <Text style={s.emptyTitle}>
               {items.length === 0
                 ? 'Your history starts here'
-                : 'No matching assessments'}
+                : hasActiveSearch
+                  ? 'No search results'
+                  : 'No matching assessments'}
             </Text>
 
             <Text style={s.emptyDescription}>
               {items.length === 0
                 ? 'Complete your first tomato assessment and it will appear here.'
-                : `There are no ${filter} results in this session. Try another filter.`}
+                : hasActiveSearch
+                  ? 'Try a different search term or clear the search.'
+                  : `There are no ${filter} results in this session. Try another filter.`}
             </Text>
 
-            {filter !== 'all' ? (
+            {filter !== 'all' || hasActiveSearch ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="View all assessments"
-                onPress={() => setFilter('all')}
+                onPress={() => {
+                  setFilter('all');
+                  setSearch('');
+                }}
                 style={({pressed}) => [
                   s.resetButton,
                   pressed ? s.resetPressed : null,
@@ -663,6 +739,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
+  },
+  brandCopy: {
+    minWidth: 0,
   },
   brandName: {
     color: colors.ink,
@@ -801,6 +880,40 @@ const s = StyleSheet.create({
   },
   summaryHintEmphasized: {
     color: colors.primaryDark,
+  },
+  searchCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: layout.touchTarget + 6,
+    paddingHorizontal: 13,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  searchIcon: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.primarySoft,
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.ink,
+    fontSize: 13,
+    fontWeight: '600',
+    paddingVertical: 12,
+  },
+  clearButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sessionNotice: {
     flexDirection: 'row',
@@ -1092,6 +1205,9 @@ const s = StyleSheet.create({
     color: colors.primary,
     fontSize: 12,
     fontWeight: '800',
+  },
+  pressed: {
+    opacity: 0.8,
   },
   footer: {
     ...typography.overline,
