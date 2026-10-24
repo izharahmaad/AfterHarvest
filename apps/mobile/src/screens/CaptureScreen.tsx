@@ -366,6 +366,36 @@ export default function CaptureScreen({onResult}: Props) {
     }));
   }
 
+  function resetForm() {
+    if (busy || picking) {
+      return;
+    }
+
+    Alert.alert(
+      'Clear assessment',
+      'Remove the selected photo and reset all storage details?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            setAsset(null);
+            setContext({
+              temperature: '8.5',
+              humidity: '72',
+              days: '4',
+              packaging: 'open_crate',
+            });
+          },
+        },
+      ],
+    );
+  }
+
   async function chooseImage(useCamera: boolean) {
     if (operationLocked.current) return;
 
@@ -541,16 +571,38 @@ export default function CaptureScreen({onResult}: Props) {
             />
           </View>
 
-          <View>
+          <View style={s.brandCopy}>
             <Text style={s.brandName}>New assessment</Text>
             <Text style={s.brandCaption}>TOMATO QUALITY</Text>
           </View>
         </View>
 
-        <View style={s.progressChip}>
-          <Text style={s.progressChipText}>
-            {completedSteps}/3
-          </Text>
+        <View style={s.topBarActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Clear assessment form"
+            accessibilityState={{disabled}}
+            disabled={disabled}
+            onPress={resetForm}
+            hitSlop={8}
+            style={({pressed}) => [
+              s.clearButton,
+              pressed ? s.pressed : null,
+              disabled ? s.disabled : null,
+            ]}>
+            <Ionicons
+              name="refresh-outline"
+              size={16}
+              color={colors.muted}
+            />
+            <Text style={s.clearButtonText}>Clear</Text>
+          </Pressable>
+
+          <View style={s.progressChip}>
+            <Text style={s.progressChipText}>
+              {completedSteps}/3
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -745,6 +797,63 @@ export default function CaptureScreen({onResult}: Props) {
               </Text>
             </View>
           ) : null}
+        </View>
+
+        <View style={s.tipsCard}>
+          <View style={s.tipsHeader}>
+            <View style={s.tipsIcon}>
+              <Ionicons
+                name="bulb-outline"
+                size={17}
+                color={colors.primary}
+              />
+            </View>
+
+            <View style={s.tipsCopy}>
+              <Text style={s.tipsTitle}>
+                Take a better photo
+              </Text>
+              <Text style={s.tipsDescription}>
+                Follow these tips for a more reliable assessment.
+              </Text>
+            </View>
+          </View>
+
+          <View style={s.tipsList}>
+            <View style={s.tipRow}>
+              <Ionicons
+                name="sunny-outline"
+                size={15}
+                color={colors.primary}
+              />
+              <Text style={s.tipText}>
+                Use bright, indirect light. Avoid dark or shadowed
+                photos.
+              </Text>
+            </View>
+
+            <View style={s.tipRow}>
+              <Ionicons
+                name="crop-outline"
+                size={15}
+                color={colors.primary}
+              />
+              <Text style={s.tipText}>
+                Keep the tomato centered and fill most of the frame.
+              </Text>
+            </View>
+
+            <View style={s.tipRow}>
+              <Ionicons
+                name="hand-left-outline"
+                size={15}
+                color={colors.primary}
+              />
+              <Text style={s.tipText}>
+                Hold the phone steady and avoid blurred images.
+              </Text>
+            </View>
+          </View>
         </View>
 
         <View style={s.card}>
@@ -1050,6 +1159,9 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.primary,
   },
+  brandCopy: {
+    minWidth: 0,
+  },
   brandName: {
     color: colors.ink,
     fontSize: 14,
@@ -1062,6 +1174,27 @@ const s = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.9,
     marginTop: 3,
+  },
+  topBarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  clearButtonText: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: '700',
   },
   progressChip: {
     paddingHorizontal: 10,
@@ -1322,6 +1455,56 @@ const s = StyleSheet.create({
   loadingText: {
     ...typography.caption,
     color: colors.muted,
+  },
+  tipsCard: {
+    padding: 15,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.primarySoft,
+    backgroundColor: colors.primarySoft,
+    ...shadow.card,
+  },
+  tipsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    marginBottom: 13,
+  },
+  tipsIcon: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  tipsCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  tipsTitle: {
+    ...typography.label,
+    color: colors.ink,
+  },
+  tipsDescription: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 3,
+  },
+  tipsList: {
+    gap: 9,
+  },
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  tipText: {
+    flex: 1,
+    minWidth: 0,
+    ...typography.caption,
+    lineHeight: 17,
+    color: colors.text,
   },
   presetRow: {
     flexDirection: 'row',
