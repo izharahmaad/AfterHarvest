@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 
 import {
   colors,
@@ -41,21 +42,24 @@ const STATUS_STYLES: Record<string, StatusStyle> = {
     color: colors.success,
     background: colors.successSoft,
     description: 'Fresh is the assigned quality-state label.',
-    action: 'Continue normal storage and inspect the batch again before distribution.',
+    action:
+      'Continue normal storage and inspect the batch again before distribution.',
   },
   aging: {
     label: 'Aging',
     color: colors.warning,
     background: colors.warningSoft,
     description: 'Aging is the assigned quality-state label.',
-    action: 'Prioritize this batch for earlier use and review storage conditions.',
+    action:
+      'Prioritize this batch for earlier use and review storage conditions.',
   },
   spoiled: {
     label: 'Spoiled',
     color: colors.danger,
     background: colors.dangerSoft,
     description: 'Spoiled is the assigned quality-state label.',
-    action: 'Isolate affected produce and inspect it manually before making any handling decision.',
+    action:
+      'Isolate affected produce and inspect it manually before making any handling decision.',
   },
 };
 
@@ -64,7 +68,8 @@ const UNKNOWN_STATUS: StatusStyle = {
   color: colors.neutral,
   background: colors.neutralSoft,
   description: 'Review this result with caution.',
-  action: 'Review the available context and inspect the produce manually.',
+  action:
+    'Review the available context and inspect the produce manually.',
 };
 
 const FACTOR_LABELS: Record<string, string> = {
@@ -223,7 +228,12 @@ function DetailRow({
   return (
     <View style={s.detailRow}>
       <View style={s.detailLabelGroup}>
-        <Ionicons name={icon} size={15} color={colors.muted} accessible={false} />
+        <Ionicons
+          name={icon}
+          size={15}
+          color={colors.muted}
+          accessible={false}
+        />
         <Text style={s.detailLabel}>{label}</Text>
       </View>
 
@@ -240,6 +250,7 @@ export default function ResultScreen({result, onNew}: Props) {
   const tablet = width >= layout.tabletBreakpoint;
 
   const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const isDemo = result.inference_mode === 'demo';
   const score = displayScore(result.quality_score);
@@ -261,19 +272,23 @@ export default function ResultScreen({result, onNew}: Props) {
       )
       .sort(
         (first, second) =>
-          clamp(Number(second.weight)) - clamp(Number(first.weight)),
+          clamp(Number(second.weight)) -
+          clamp(Number(first.weight)),
       );
   }, [result.contributing_factors]);
 
   const topFactors = factors.slice(0, 3);
   const recommendation = getRecommendation(result.recommendation);
   const produceName = getProduceName(result.produce_type);
-  const modelVersion = normalizeString(result.model_version) || 'Unavailable';
+  const modelVersion =
+    normalizeString(result.model_version) || 'Unavailable';
 
   const resultSummary = [
     `AfterHarvest ${produceName.toLowerCase()} assessment`,
     `Quality state: ${status.label}`,
-    `Quality score: ${score === null ? 'Unavailable' : `${score}/100`}`,
+    `Quality score: ${
+      score === null ? 'Unavailable' : `${score}/100`
+    }`,
     `Mode: ${isDemo ? 'Demo inference' : 'Model inference'}`,
     `Assessed: ${formatDate(result.created_at)}`,
     '',
@@ -281,6 +296,25 @@ export default function ResultScreen({result, onNew}: Props) {
     '',
     'This is educational decision support, not food-safety certification.',
   ].join('\n');
+
+  async function copyResultSummary() {
+    try {
+      await Clipboard.setStringAsync(resultSummary);
+
+      setCopied(true);
+      Alert.alert(
+        'Summary copied',
+        'The assessment summary has been copied to your clipboard.',
+      );
+
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      Alert.alert(
+        'Unable to copy',
+        'Please try copying the result summary again.',
+      );
+    }
+  }
 
   async function shareResult() {
     if (sharing) return;
@@ -293,7 +327,10 @@ export default function ResultScreen({result, onNew}: Props) {
         title: 'AfterHarvest assessment result',
       });
     } catch {
-      Alert.alert('Unable to share', 'Please try sharing this result again.');
+      Alert.alert(
+        'Unable to share',
+        'Please try sharing this result again.',
+      );
     } finally {
       setSharing(false);
     }
@@ -304,10 +341,14 @@ export default function ResultScreen({result, onNew}: Props) {
       <View style={s.topBar}>
         <View style={s.brand}>
           <View style={s.brandIcon}>
-            <Ionicons name="analytics" size={17} color={colors.white} />
+            <Ionicons
+              name="analytics"
+              size={17}
+              color={colors.white}
+            />
           </View>
 
-          <View>
+          <View style={s.brandCopy}>
             <Text style={s.brandName}>Assessment result</Text>
             <Text style={s.brandCaption}>TOMATO QUALITY</Text>
           </View>
@@ -325,14 +366,20 @@ export default function ResultScreen({result, onNew}: Props) {
         <View
           style={[
             s.progressRailFill,
-            {width: `${score ?? 0}%`, backgroundColor: status.color},
+            {
+              width: `${score ?? 0}%`,
+              backgroundColor: status.color,
+            },
           ]}
         />
       </View>
 
       <ScrollView
         style={s.scroll}
-        contentContainerStyle={[s.content, tablet ? s.contentTablet : null]}
+        contentContainerStyle={[
+          s.content,
+          tablet ? s.contentTablet : null,
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
         <View style={s.intro}>
@@ -344,7 +391,8 @@ export default function ResultScreen({result, onNew}: Props) {
           </Text>
 
           <Text style={s.subtitle}>
-            Review the score, context indicators and recommendation together.
+            Review the score, context indicators and recommendation
+            together.
           </Text>
         </View>
 
@@ -358,7 +406,10 @@ export default function ResultScreen({result, onNew}: Props) {
                 {backgroundColor: 'rgba(255,255,255,0.12)'},
               ]}>
               <View
-                style={[s.heroStatusDot, {backgroundColor: status.color}]}
+                style={[
+                  s.heroStatusDot,
+                  {backgroundColor: status.color},
+                ]}
               />
 
               <Text style={s.heroStatusText}>
@@ -373,12 +424,16 @@ export default function ResultScreen({result, onNew}: Props) {
 
           <View style={s.heroBody}>
             <View style={s.heroScoreGroup}>
-              <Text style={s.heroScore}>{score === null ? '—' : score}</Text>
+              <Text style={s.heroScore}>
+                {score === null ? '—' : score}
+              </Text>
               <Text style={s.heroScoreMax}>/100</Text>
             </View>
 
             <View style={s.heroCopy}>
-              <Text style={s.heroTitle}>{interpretation.title}</Text>
+              <Text style={s.heroTitle}>
+                {interpretation.title}
+              </Text>
               <Text style={s.heroDescription}>
                 {produceName} · {formatDate(result.created_at)}
               </Text>
@@ -389,7 +444,10 @@ export default function ResultScreen({result, onNew}: Props) {
             <View
               style={[
                 s.heroProgressFill,
-                {width: `${score ?? 0}%`, backgroundColor: status.color},
+                {
+                  width: `${score ?? 0}%`,
+                  backgroundColor: status.color,
+                },
               ]}
             />
           </View>
@@ -406,18 +464,27 @@ export default function ResultScreen({result, onNew}: Props) {
         <View style={s.scoreCard}>
           <View style={s.scoreHeader}>
             <View
-              style={[s.statusPill, {backgroundColor: status.background}]}>
+              style={[
+                s.statusPill,
+                {backgroundColor: status.background},
+              ]}>
               <View
-                style={[s.statusDot, {backgroundColor: status.color}]}
+                style={[
+                  s.statusDot,
+                  {backgroundColor: status.color},
+                ]}
               />
 
-              <Text style={[s.statusLabel, {color: status.color}]}>
+              <Text
+                style={[s.statusLabel, {color: status.color}]}>
                 {status.label}
               </Text>
             </View>
 
             <Text style={s.scoreCaption}>
-              {isDemo ? 'Illustrative quality score' : 'Quality score'}
+              {isDemo
+                ? 'Illustrative quality score'
+                : 'Quality score'}
             </Text>
           </View>
 
@@ -468,7 +535,9 @@ export default function ResultScreen({result, onNew}: Props) {
             <IconTile name="arrow-forward" />
 
             <View style={s.sectionCopy}>
-              <Text accessibilityRole="header" style={s.sectionTitle}>
+              <Text
+                accessibilityRole="header"
+                style={s.sectionTitle}>
                 Recommended next step
               </Text>
               <Text style={s.sectionSubtitle}>
@@ -486,7 +555,9 @@ export default function ResultScreen({result, onNew}: Props) {
               color={colors.primary}
             />
 
-            <Text style={s.recommendationText}>{recommendation}</Text>
+            <Text style={s.recommendationText}>
+              {recommendation}
+            </Text>
           </View>
         </View>
 
@@ -495,7 +566,9 @@ export default function ResultScreen({result, onNew}: Props) {
             <IconTile name="options-outline" />
 
             <View style={s.sectionCopy}>
-              <Text accessibilityRole="header" style={s.sectionTitle}>
+              <Text
+                accessibilityRole="header"
+                style={s.sectionTitle}>
                 Context indicators
               </Text>
               <Text style={s.sectionSubtitle}>
@@ -525,9 +598,13 @@ export default function ResultScreen({result, onNew}: Props) {
                 return (
                   <View key={`${label}-${index}`}>
                     <View style={s.factorHeader}>
-                      <Text style={s.factorName}>{label}</Text>
+                      <Text style={s.factorName}>
+                        {label}
+                      </Text>
                       <Text style={s.factorValue}>
-                        {hasValidWeight ? rawWeight.toFixed(2) : '—'}
+                        {hasValidWeight
+                          ? rawWeight.toFixed(2)
+                          : '—'}
                       </Text>
                     </View>
 
@@ -560,7 +637,9 @@ export default function ResultScreen({result, onNew}: Props) {
               <IconTile name="star-outline" />
 
               <View style={s.sectionCopy}>
-                <Text accessibilityRole="header" style={s.sectionTitle}>
+                <Text
+                  accessibilityRole="header"
+                  style={s.sectionTitle}>
                   Top indicators
                 </Text>
                 <Text style={s.sectionSubtitle}>
@@ -575,7 +654,9 @@ export default function ResultScreen({result, onNew}: Props) {
                   key={`${getFactorLabel(factor?.name)}-${index}`}
                   style={s.topFactor}>
                   <View style={s.topFactorRank}>
-                    <Text style={s.topFactorRankText}>{index + 1}</Text>
+                    <Text style={s.topFactorRankText}>
+                      {index + 1}
+                    </Text>
                   </View>
 
                   <Text style={s.topFactorName}>
@@ -592,14 +673,18 @@ export default function ResultScreen({result, onNew}: Props) {
         ) : null}
 
         <View style={s.card}>
-          <Text accessibilityRole="header" style={s.cardTitle}>
+          <Text
+            accessibilityRole="header"
+            style={s.cardTitle}>
             Inference details
           </Text>
 
           <View style={s.detailList}>
             <DetailRow
               label="Mode"
-              value={isDemo ? 'Demo inference' : 'Model inference'}
+              value={
+                isDemo ? 'Demo inference' : 'Model inference'
+              }
               icon="sparkles-outline"
             />
 
@@ -621,7 +706,11 @@ export default function ResultScreen({result, onNew}: Props) {
 
             <DetailRow
               label="Score meaning"
-              value={isDemo ? 'Illustrative only' : 'Not a safety rating'}
+              value={
+                isDemo
+                  ? 'Illustrative only'
+                  : 'Not a safety rating'
+              }
               icon="information-circle-outline"
             />
 
@@ -658,12 +747,36 @@ export default function ResultScreen({result, onNew}: Props) {
           <View style={s.noticeDivider} />
 
           <Text style={s.noticeFootnote}>
-            Inspect the produce manually. Do not use this result alone to decide
-            whether food is safe to eat.
+            Inspect the produce manually. Do not use this result alone
+            to decide whether food is safe to eat.
           </Text>
         </View>
 
         <View style={s.exportRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Copy assessment result summary"
+            onPress={copyResultSummary}
+            style={({pressed}) => [
+              s.exportButton,
+              s.copyButton,
+              pressed ? s.pressed : null,
+              copied ? s.copiedButton : null,
+            ]}>
+            <Ionicons
+              name={copied ? 'checkmark' : 'copy-outline'}
+              size={17}
+              color={copied ? colors.success : colors.primary}
+            />
+            <Text
+              style={[
+                s.copyButtonText,
+                copied ? s.copyButtonTextSuccess : null,
+              ]}>
+              {copied ? 'Copied' : 'Copy'}
+            </Text>
+          </Pressable>
+
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Share assessment result summary"
@@ -685,21 +798,24 @@ export default function ResultScreen({result, onNew}: Props) {
               {sharing ? 'Sharing…' : 'Share'}
             </Text>
           </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Start a new tomato assessment"
-            accessibilityHint="Returns to the photo and storage details form"
-            onPress={onNew}
-            style={({pressed}) => [
-              s.exportButton,
-              s.newButton,
-              pressed ? s.pressed : null,
-            ]}>
-            <Ionicons name="add" size={18} color={colors.primaryDark} />
-            <Text style={s.newButtonText}>New assessment</Text>
-          </Pressable>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Start a new tomato assessment"
+          accessibilityHint="Returns to the photo and storage details form"
+          onPress={onNew}
+          style={({pressed}) => [
+            s.newButton,
+            pressed ? s.pressed : null,
+          ]}>
+          <Ionicons
+            name="add"
+            size={19}
+            color={colors.primaryDark}
+          />
+          <Text style={s.newButtonText}>New assessment</Text>
+        </Pressable>
 
         <Text style={s.footer}>
           Educational decision support · Not food-safety certification
@@ -737,6 +853,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
+  },
+  brandCopy: {
+    minWidth: 0,
   },
   brandName: {
     color: colors.ink,
@@ -1254,20 +1373,44 @@ const s = StyleSheet.create({
     gap: 8,
     borderRadius: radius.md,
   },
+  copyButton: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  copiedButton: {
+    borderColor: colors.success,
+    backgroundColor: colors.successSoft,
+  },
+  copyButtonText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  copyButtonTextSuccess: {
+    color: colors.success,
+  },
   shareButton: {
     backgroundColor: colors.primarySoft,
-  },
-  newButton: {
-    backgroundColor: colors.accent,
   },
   shareButtonText: {
     color: colors.primary,
     fontSize: 13,
     fontWeight: '800',
   },
+  newButton: {
+    minHeight: layout.touchTarget + 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
+    marginTop: 2,
+  },
   newButtonText: {
     color: colors.primaryDark,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
   },
   pressed: {
