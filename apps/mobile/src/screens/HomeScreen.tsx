@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useState} from 'react';
 import {
   Alert,
   Linking,
@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -41,16 +40,6 @@ type StorageTip = {
   title: string;
   description: string;
   icon: IconName;
-};
-
-type RiskLevel = 'low' | 'moderate' | 'high';
-
-type RiskResult = {
-  level: RiskLevel;
-  label: string;
-  color: string;
-  background: string;
-  message: string;
 };
 
 const SUPPORT_EMAIL = 'support@afterharvest.app';
@@ -142,105 +131,6 @@ const STEPS = [
   },
 ];
 
-const DAILY_CHECKLIST = [
-  'Remove damaged or soft tomatoes',
-  'Check storage temperature',
-  'Confirm packaging ventilation',
-  'Keep produce dry and clean',
-];
-
-const RISK_RESULTS: Record<
-  RiskLevel,
-  Omit<RiskResult, 'level' | 'message'>
-> = {
-  low: {
-    label: 'Lower risk',
-    color: colors.success,
-    background: colors.successSoft,
-  },
-  moderate: {
-    label: 'Monitor closely',
-    color: colors.warning,
-    background: colors.warningSoft,
-  },
-  high: {
-    label: 'Higher risk',
-    color: colors.danger,
-    background: colors.dangerSoft,
-  },
-};
-
-function parseNumber(value: string): number | null {
-  const normalized = value.trim().replace(',', '.');
-
-  if (!/^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized)) {
-    return null;
-  }
-
-  const parsed = Number(normalized);
-
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function getRisk(
-  temperature: number | null,
-  days: number | null,
-): RiskResult | null {
-  if (
-    temperature === null ||
-    days === null ||
-    temperature < -20 ||
-    temperature > 60 ||
-    days < 0 ||
-    days > 365
-  ) {
-    return null;
-  }
-
-  let riskPoints = 0;
-
-  if (temperature > 20) {
-    riskPoints += 3;
-  } else if (temperature > 12) {
-    riskPoints += 2;
-  } else if (temperature > 8) {
-    riskPoints += 1;
-  }
-
-  if (days >= 7) {
-    riskPoints += 3;
-  } else if (days >= 4) {
-    riskPoints += 2;
-  } else if (days >= 2) {
-    riskPoints += 1;
-  }
-
-  if (riskPoints <= 1) {
-    return {
-      level: 'low',
-      ...RISK_RESULTS.low,
-      message:
-        'Conditions look relatively favorable. Continue regular inspection.',
-    };
-  }
-
-  if (riskPoints <= 3) {
-    return {
-      level: 'moderate',
-      ...RISK_RESULTS.moderate,
-      message:
-        'Review storage conditions and prioritize this batch for earlier use.',
-    };
-  }
-
-  return {
-    level: 'high',
-    ...RISK_RESULTS.high,
-    message:
-      'Use cooler storage if possible and inspect the batch more frequently.',
-  };
-}
-
 function IconTile({
   name,
   color = colors.primary,
@@ -281,29 +171,6 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
   const tablet = width >= layout.tabletBreakpoint;
 
   const [copiedEmail, setCopiedEmail] = useState(false);
-  const [riskTemperature, setRiskTemperature] = useState('12');
-  const [riskDays, setRiskDays] = useState('3');
-  const [completedTasks, setCompletedTasks] = useState<
-    Record<string, boolean>
-  >({});
-
-  const temperatureValue = parseNumber(riskTemperature);
-  const daysValue = parseNumber(riskDays);
-
-  const risk = useMemo(
-    () => getRisk(temperatureValue, daysValue),
-    [temperatureValue, daysValue],
-  );
-
-  const completedCount = DAILY_CHECKLIST.filter(
-    item => completedTasks[item],
-  ).length;
-
-  const checklistProgress = Math.round(
-    (completedCount / DAILY_CHECKLIST.length) * 100,
-  );
-
-  const checklistComplete = completedCount === DAILY_CHECKLIST.length;
 
   async function copySupportEmail() {
     try {
@@ -349,17 +216,6 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
         // Keep the fallback quiet.
       }
     }
-  }
-
-  function toggleTask(item: string) {
-    setCompletedTasks(previous => ({
-      ...previous,
-      [item]: !previous[item],
-    }));
-  }
-
-  function resetChecklist() {
-    setCompletedTasks({});
   }
 
   return (
@@ -529,197 +385,6 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             accessible={false}
           />
         </Pressable>
-
-        <View style={s.riskCard}>
-          <View style={s.sectionHeader}>
-            <IconTile name="speedometer-outline" />
-
-            <View style={s.sectionCopy}>
-              <Text
-                accessibilityRole="header"
-                style={s.sectionTitle}>
-                Storage risk checker
-              </Text>
-              <Text style={s.sectionSubtitle}>
-                Get an instant handling signal before starting an
-                assessment.
-              </Text>
-            </View>
-          </View>
-
-          <View style={s.riskInputs}>
-            <View style={s.riskField}>
-              <Text style={s.riskLabel}>Temperature</Text>
-
-              <View style={s.riskInputWrapper}>
-                <TextInput
-                  accessibilityLabel="Storage temperature in Celsius"
-                  value={riskTemperature}
-                  onChangeText={setRiskTemperature}
-                  keyboardType="decimal-pad"
-                  placeholder="12"
-                  placeholderTextColor={colors.faint}
-                  selectionColor={colors.primary}
-                  style={s.riskInput}
-                />
-
-                <Text style={s.riskUnit}>°C</Text>
-              </View>
-            </View>
-
-            <View style={s.riskField}>
-              <Text style={s.riskLabel}>Storage days</Text>
-
-              <View style={s.riskInputWrapper}>
-                <TextInput
-                  accessibilityLabel="Storage duration in days"
-                  value={riskDays}
-                  onChangeText={setRiskDays}
-                  keyboardType="number-pad"
-                  placeholder="3"
-                  placeholderTextColor={colors.faint}
-                  selectionColor={colors.primary}
-                  style={s.riskInput}
-                />
-
-                <Text style={s.riskUnit}>days</Text>
-              </View>
-            </View>
-          </View>
-
-          {risk ? (
-            <View
-              style={[
-                s.riskResult,
-                {backgroundColor: risk.background},
-              ]}>
-              <View style={s.riskResultHeader}>
-                <View
-                  style={[
-                    s.riskDot,
-                    {backgroundColor: risk.color},
-                  ]}
-                />
-
-                <Text
-                  style={[s.riskResultTitle, {color: risk.color}]}>
-                  {risk.label}
-                </Text>
-              </View>
-
-              <Text style={s.riskResultMessage}>
-                {risk.message}
-              </Text>
-            </View>
-          ) : (
-            <View style={s.riskResultEmpty}>
-              <Text style={s.riskResultEmptyText}>
-                Enter temperature from −20 to 60°C and storage days
-                from 0 to 365.
-              </Text>
-            </View>
-          )}
-
-          <Text style={s.riskNote}>
-            This is general storage guidance, not a freshness prediction
-            or food-safety assessment.
-          </Text>
-        </View>
-
-        <View style={s.checklistCard}>
-          <View style={s.sectionHeader}>
-            <IconTile name="checkbox-outline" />
-
-            <View style={s.sectionCopy}>
-              <Text
-                accessibilityRole="header"
-                style={s.sectionTitle}>
-                Daily quality checklist
-              </Text>
-              <Text style={s.sectionSubtitle}>
-                Keep your tomato batch in better condition.
-              </Text>
-            </View>
-
-            <View style={s.checklistCount}>
-              <Text style={s.checklistCountText}>
-                {completedCount}/{DAILY_CHECKLIST.length}
-              </Text>
-            </View>
-          </View>
-
-          <View style={s.checklistProgress}>
-            <View
-              style={[
-                s.checklistProgressFill,
-                {
-                  width: `${checklistProgress}%`,
-                  backgroundColor: checklistComplete
-                    ? colors.success
-                    : colors.primary,
-                },
-              ]}
-            />
-          </View>
-
-          <View style={s.checklistList}>
-            {DAILY_CHECKLIST.map(item => {
-              const completed = Boolean(completedTasks[item]);
-
-              return (
-                <Pressable
-                  key={item}
-                  accessibilityRole="checkbox"
-                  accessibilityLabel={item}
-                  accessibilityState={{checked: completed}}
-                  onPress={() => toggleTask(item)}
-                  style={({pressed}) => [
-                    s.checklistItem,
-                    completed ? s.checklistItemCompleted : null,
-                    pressed ? s.pressed : null,
-                  ]}>
-                  <View
-                    style={[
-                      s.checkbox,
-                      completed ? s.checkboxCompleted : null,
-                    ]}>
-                    {completed ? (
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={colors.white}
-                      />
-                    ) : null}
-                  </View>
-
-                  <Text
-                    style={[
-                      s.checklistText,
-                      completed ? s.checklistTextCompleted : null,
-                    ]}>
-                    {item}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Reset daily quality checklist"
-            onPress={resetChecklist}
-            style={({pressed}) => [
-              s.resetButton,
-              pressed ? s.pressed : null,
-            ]}>
-            <Ionicons
-              name="refresh-outline"
-              size={15}
-              color={colors.muted}
-            />
-            <Text style={s.resetButtonText}>Reset checklist</Text>
-          </Pressable>
-        </View>
 
         <View style={s.sectionHeader}>
           <View style={s.sectionHeadingCopy}>
@@ -1388,23 +1053,16 @@ const s = StyleSheet.create({
     color: colors.muted,
     marginTop: 3,
   },
-  riskCard: {
-    padding: 17,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.primarySoft,
-    backgroundColor: colors.primarySoft,
-    ...shadow.card,
-  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 11,
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 3,
+    marginBottom: -5,
   },
-  sectionCopy: {
+  sectionHeadingCopy: {
     flex: 1,
-    minWidth: 0,
   },
   sectionTitle: {
     ...typography.heading,
@@ -1414,178 +1072,6 @@ const s = StyleSheet.create({
     ...typography.caption,
     color: colors.muted,
     marginTop: 4,
-  },
-  riskInputs: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  riskField: {
-    flex: 1,
-    minWidth: 0,
-  },
-  riskLabel: {
-    ...typography.label,
-    color: colors.text,
-    marginBottom: 7,
-  },
-  riskInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 52,
-    paddingHorizontal: 12,
-    gap: 7,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  riskInput: {
-    flex: 1,
-    minWidth: 0,
-    color: colors.ink,
-    fontSize: 17,
-    fontWeight: '700',
-    paddingVertical: 11,
-  },
-  riskUnit: {
-    ...typography.label,
-    color: colors.muted,
-  },
-  riskResult: {
-    marginTop: 14,
-    padding: 13,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.04)',
-  },
-  riskResultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    marginBottom: 6,
-  },
-  riskDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  riskResultTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  riskResultMessage: {
-    ...typography.caption,
-    lineHeight: 17,
-    color: colors.text,
-  },
-  riskResultEmpty: {
-    marginTop: 14,
-    padding: 13,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  riskResultEmptyText: {
-    ...typography.caption,
-    lineHeight: 17,
-    color: colors.muted,
-  },
-  riskNote: {
-    ...typography.overline,
-    color: colors.muted,
-    marginTop: 11,
-  },
-  checklistCard: {
-    padding: 17,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  checklistCount: {
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primarySoft,
-  },
-  checklistCountText: {
-    color: colors.primary,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  checklistProgress: {
-    height: 7,
-    overflow: 'hidden',
-    borderRadius: 4,
-    backgroundColor: colors.surfaceMuted,
-    marginBottom: 15,
-  },
-  checklistProgressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  checklistList: {
-    gap: 9,
-  },
-  checklistItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-    minHeight: 54,
-    paddingHorizontal: 12,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceMuted,
-  },
-  checklistItemCompleted: {
-    borderColor: colors.success,
-    backgroundColor: colors.successSoft,
-  },
-  checkbox: {
-    width: 23,
-    height: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 7,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surface,
-  },
-  checkboxCompleted: {
-    borderColor: colors.success,
-    backgroundColor: colors.success,
-  },
-  checklistText: {
-    flex: 1,
-    minWidth: 0,
-    ...typography.label,
-    color: colors.ink,
-  },
-  checklistTextCompleted: {
-    color: colors.success,
-  },
-  resetButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    minHeight: 42,
-    marginTop: 13,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  resetButtonText: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  sectionHeadingCopy: {
-    flex: 1,
   },
   countPill: {
     paddingHorizontal: 9,
