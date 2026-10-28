@@ -350,10 +350,6 @@ export default function CaptureScreen({onResult}: Props) {
     );
   }, [context]);
 
-  const selectedPackaging = PACKAGING_OPTIONS.find(
-    option => option.value === context.packaging,
-  );
-
   function updateContext(key: keyof Context, value: string) {
     setContext(previous => ({
       ...previous,
@@ -368,36 +364,6 @@ export default function CaptureScreen({onResult}: Props) {
       humidity: preset.humidity,
       days: preset.days,
     }));
-  }
-
-  function resetForm() {
-    if (busy || picking) {
-      return;
-    }
-
-    Alert.alert(
-      'Clear assessment',
-      'Remove the selected photo and reset all storage details?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: () => {
-            setAsset(null);
-            setContext({
-              temperature: '8.5',
-              humidity: '72',
-              days: '4',
-              packaging: 'open_crate',
-            });
-          },
-        },
-      ],
-    );
   }
 
   async function chooseImage(useCamera: boolean) {
@@ -575,64 +541,26 @@ export default function CaptureScreen({onResult}: Props) {
             />
           </View>
 
-          <View style={s.brandCopy}>
+          <View>
             <Text style={s.brandName}>New assessment</Text>
             <Text style={s.brandCaption}>TOMATO QUALITY</Text>
           </View>
         </View>
 
-        <View style={s.topBarActions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Clear assessment form"
-            accessibilityState={{disabled}}
-            disabled={disabled}
-            onPress={resetForm}
-            hitSlop={8}
-            style={({pressed}) => [
-              s.clearButton,
-              pressed ? s.pressed : null,
-              disabled ? s.disabled : null,
-            ]}>
-            <Ionicons
-              name="refresh-outline"
-              size={16}
-              color={colors.muted}
-            />
-            <Text style={s.clearButtonText}>Clear</Text>
-          </Pressable>
-
-          <View style={s.progressChip}>
-            <Text style={s.progressChipText}>
-              {completedSteps}/3
-            </Text>
-          </View>
+        <View style={s.progressChip}>
+          <Text style={s.progressChipText}>
+            {completedSteps}/3
+          </Text>
         </View>
       </View>
 
-      <View style={s.progressSection}>
-        <View style={s.progressLabels}>
-          <Text style={s.progressLabel}>
-            {completedSteps === 0
-              ? 'Start your assessment'
-              : completedSteps === 3
-                ? 'Ready to assess'
-                : `${completedSteps} of 3 steps complete`}
-          </Text>
-
-          <Text style={s.progressPercent}>
-            {progressPercent}%
-          </Text>
-        </View>
-
-        <View style={s.progressRail}>
-          <View
-            style={[
-              s.progressRailFill,
-              {width: `${progressPercent}%`},
-            ]}
-          />
-        </View>
+      <View style={s.progressRail}>
+        <View
+          style={[
+            s.progressRailFill,
+            {width: `${progressPercent}%`},
+          ]}
+        />
       </View>
 
       <ScrollView
@@ -641,8 +569,6 @@ export default function CaptureScreen({onResult}: Props) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
         <View style={s.intro}>
-          <Text style={s.eyebrow}>TOMATO QUALITY CHECK</Text>
-
           <Text
             accessibilityRole="header"
             style={s.heading}>
@@ -651,8 +577,8 @@ export default function CaptureScreen({onResult}: Props) {
           </Text>
 
           <Text style={s.subtitle}>
-            Add a clear tomato photo and the storage conditions for a
-            transparent demo assessment.
+            Add a clear tomato photo and the conditions it was stored
+            in.
           </Text>
         </View>
 
@@ -723,34 +649,12 @@ export default function CaptureScreen({onResult}: Props) {
               <Text style={s.uploadTitle}>
                 Add a tomato photo
               </Text>
-
               <Text style={s.uploadDescription}>
                 Choose a clear, well-lit image from your gallery.
               </Text>
-
-              <View style={s.uploadHintRow}>
-                <View style={s.uploadHintChip}>
-                  <Ionicons
-                    name="checkmark-circle-outline"
-                    size={12}
-                    color={colors.primary}
-                  />
-                  <Text style={s.uploadHintChipText}>
-                    JPEG · PNG · WebP
-                  </Text>
-                </View>
-
-                <View style={s.uploadHintChip}>
-                  <Ionicons
-                    name="document-outline"
-                    size={12}
-                    color={colors.primary}
-                  />
-                  <Text style={s.uploadHintChipText}>
-                    Max 5 MB
-                  </Text>
-                </View>
-              </View>
+              <Text style={s.uploadHint}>
+                JPEG, PNG or WebP · Maximum 5 MB
+              </Text>
             </Pressable>
           )}
 
@@ -841,63 +745,6 @@ export default function CaptureScreen({onResult}: Props) {
               </Text>
             </View>
           ) : null}
-        </View>
-
-        <View style={s.tipsCard}>
-          <View style={s.tipsHeader}>
-            <View style={s.tipsIcon}>
-              <Ionicons
-                name="bulb-outline"
-                size={17}
-                color={colors.primary}
-              />
-            </View>
-
-            <View style={s.tipsCopy}>
-              <Text style={s.tipsTitle}>
-                Take a better photo
-              </Text>
-              <Text style={s.tipsDescription}>
-                Follow these tips for a more reliable assessment.
-              </Text>
-            </View>
-          </View>
-
-          <View style={s.tipsList}>
-            <View style={s.tipRow}>
-              <Ionicons
-                name="sunny-outline"
-                size={15}
-                color={colors.primary}
-              />
-              <Text style={s.tipText}>
-                Use bright, indirect light. Avoid dark or shadowed
-                photos.
-              </Text>
-            </View>
-
-            <View style={s.tipRow}>
-              <Ionicons
-                name="crop-outline"
-                size={15}
-                color={colors.primary}
-              />
-              <Text style={s.tipText}>
-                Keep the tomato centered and fill most of the frame.
-              </Text>
-            </View>
-
-            <View style={s.tipRow}>
-              <Ionicons
-                name="hand-left-outline"
-                size={15}
-                color={colors.primary}
-              />
-              <Text style={s.tipText}>
-                Hold the phone steady and avoid blurred images.
-              </Text>
-            </View>
-          </View>
         </View>
 
         <View style={s.card}>
@@ -1029,21 +876,6 @@ export default function CaptureScreen({onResult}: Props) {
               );
             })}
           </View>
-
-          {conditionsReady ? (
-            <View style={s.conditionSummary}>
-              <Ionicons
-                name="checkmark-circle"
-                size={15}
-                color={colors.success}
-              />
-
-              <Text style={s.conditionSummaryText}>
-                {temperature}°C · {humidity}% · {days} day
-                {days === 1 ? '' : 's'}
-              </Text>
-            </View>
-          ) : null}
         </View>
 
         <View style={s.card}>
@@ -1140,105 +972,50 @@ export default function CaptureScreen({onResult}: Props) {
           </Text>
         </View>
 
-        <View style={s.submitSection}>
-          <View style={s.submitSummary}>
-            <View style={s.submitSummaryItem}>
-              <Ionicons
-                name={
-                  photoReady
-                    ? 'checkmark-circle'
-                    : 'ellipse-outline'
-                }
-                size={15}
-                color={
-                  photoReady ? colors.success : colors.faint
-                }
-              />
-              <Text style={s.submitSummaryText}>Photo</Text>
-            </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            busy
+              ? 'Generating demo assessment'
+              : 'Run demo assessment'
+          }
+          accessibilityState={{disabled, busy}}
+          disabled={!canSubmit}
+          onPress={submitAssessment}
+          style={({pressed}) => [
+            s.submitButton,
+            pressed && canSubmit ? s.pressed : null,
+            !canSubmit ? s.disabled : null,
+          ]}>
+          {busy ? (
+            <ActivityIndicator
+              color={colors.primaryDark}
+              size="small"
+            />
+          ) : (
+            <Ionicons
+              name="analytics-outline"
+              size={20}
+              color={colors.primaryDark}
+            />
+          )}
 
-            <View style={s.submitSummaryItem}>
-              <Ionicons
-                name={
-                  conditionsReady
-                    ? 'checkmark-circle'
-                    : 'ellipse-outline'
-                }
-                size={15}
-                color={
-                  conditionsReady
-                    ? colors.success
-                    : colors.faint
-                }
-              />
-              <Text style={s.submitSummaryText}>Conditions</Text>
-            </View>
-
-            <View style={s.submitSummaryItem}>
-              <Ionicons
-                name={
-                  packagingReady
-                    ? 'checkmark-circle'
-                    : 'ellipse-outline'
-                }
-                size={15}
-                color={
-                  packagingReady
-                    ? colors.success
-                    : colors.faint
-                }
-              />
-              <Text style={s.submitSummaryText}>
-                {selectedPackaging?.title ?? 'Packaging'}
-              </Text>
-            </View>
-          </View>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              busy
-                ? 'Generating demo assessment'
-                : 'Run demo assessment'
-            }
-            accessibilityState={{disabled, busy}}
-            disabled={!canSubmit}
-            onPress={submitAssessment}
-            style={({pressed}) => [
-              s.submitButton,
-              pressed && canSubmit ? s.pressed : null,
-              !canSubmit ? s.disabled : null,
-            ]}>
-            {busy ? (
-              <ActivityIndicator
-                color={colors.primaryDark}
-                size="small"
-              />
-            ) : (
-              <Ionicons
-                name="analytics-outline"
-                size={20}
-                color={colors.primaryDark}
-              />
-            )}
-
-            <Text style={s.submitText}>
-              {busy ? 'Assessing…' : 'Run demo assessment'}
-            </Text>
-
-            {!busy ? (
-              <Ionicons
-                name="arrow-forward"
-                size={18}
-                color={colors.primaryDark}
-              />
-            ) : null}
-          </Pressable>
-
-          <Text style={s.footer}>
-            Tomato-only prototype · Images are not permanently stored
+          <Text style={s.submitText}>
+            {busy ? 'Assessing…' : 'Run demo assessment'}
           </Text>
-        </View>
+
+          {!busy ? (
+            <Ionicons
+              name="arrow-forward"
+              size={18}
+              color={colors.primaryDark}
+            />
+          ) : null}
+        </Pressable>
+
+        <Text style={s.footer}>
+          Tomato-only prototype · Images are not permanently stored
+        </Text>
       </ScrollView>
     </View>
   );
@@ -1273,9 +1050,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.primary,
   },
-  brandCopy: {
-    minWidth: 0,
-  },
   brandName: {
     color: colors.ink,
     fontSize: 14,
@@ -1289,27 +1063,6 @@ const s = StyleSheet.create({
     letterSpacing: 0.9,
     marginTop: 3,
   },
-  topBarActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  clearButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    minHeight: 34,
-    paddingHorizontal: 10,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  clearButtonText: {
-    color: colors.muted,
-    fontSize: 11,
-    fontWeight: '700',
-  },
   progressChip: {
     paddingHorizontal: 10,
     paddingVertical: 7,
@@ -1322,38 +1075,12 @@ const s = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  progressSection: {
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 12,
-    paddingBottom: 13,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  progressLabels: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  progressLabel: {
-    ...typography.caption,
-    color: colors.muted,
-  },
-  progressPercent: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: '800',
-  },
   progressRail: {
-    height: 6,
-    overflow: 'hidden',
-    borderRadius: 3,
+    height: 3,
     backgroundColor: colors.surfaceMuted,
   },
   progressRailFill: {
     height: '100%',
-    borderRadius: 3,
     backgroundColor: colors.primary,
   },
   scroll: {
@@ -1371,14 +1098,9 @@ const s = StyleSheet.create({
   intro: {
     paddingTop: 2,
   },
-  eyebrow: {
-    ...typography.overline,
-    color: colors.muted,
-  },
   heading: {
     ...typography.display,
     color: colors.ink,
-    marginTop: 8,
   },
   headingAccent: {
     color: colors.primary,
@@ -1451,7 +1173,7 @@ const s = StyleSheet.create({
     letterSpacing: 0.7,
   },
   uploadArea: {
-    minHeight: 225,
+    minHeight: 210,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -1462,8 +1184,8 @@ const s = StyleSheet.create({
     backgroundColor: colors.surfaceMuted,
   },
   uploadIcon: {
-    width: 56,
-    height: 56,
+    width: 54,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.lg,
@@ -1481,31 +1203,14 @@ const s = StyleSheet.create({
     textAlign: 'center',
     marginTop: 5,
   },
-  uploadHintRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 7,
+  uploadHint: {
+    ...typography.overline,
+    color: colors.faint,
+    textAlign: 'center',
     marginTop: 15,
   },
-  uploadHintChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  uploadHintChipText: {
-    color: colors.muted,
-    fontSize: 9,
-    fontWeight: '700',
-  },
   preview: {
-    height: 245,
+    height: 235,
     borderRadius: radius.lg,
     overflow: 'hidden',
     backgroundColor: colors.surfaceMuted,
@@ -1618,56 +1323,6 @@ const s = StyleSheet.create({
     ...typography.caption,
     color: colors.muted,
   },
-  tipsCard: {
-    padding: 15,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.primarySoft,
-    backgroundColor: colors.primarySoft,
-    ...shadow.card,
-  },
-  tipsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-    marginBottom: 13,
-  },
-  tipsIcon: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-  },
-  tipsCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  tipsTitle: {
-    ...typography.label,
-    color: colors.ink,
-  },
-  tipsDescription: {
-    ...typography.caption,
-    color: colors.muted,
-    marginTop: 3,
-  },
-  tipsList: {
-    gap: 9,
-  },
-  tipRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  tipText: {
-    flex: 1,
-    minWidth: 0,
-    ...typography.caption,
-    lineHeight: 17,
-    color: colors.text,
-  },
   presetRow: {
     flexDirection: 'row',
     gap: 8,
@@ -1675,7 +1330,7 @@ const s = StyleSheet.create({
   },
   preset: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1723,7 +1378,7 @@ const s = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 56,
+    minHeight: 54,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -1762,20 +1417,6 @@ const s = StyleSheet.create({
   fieldHintError: {
     color: colors.danger,
   },
-  conditionSummary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    marginTop: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    borderRadius: radius.md,
-    backgroundColor: colors.successSoft,
-  },
-  conditionSummaryText: {
-    ...typography.label,
-    color: colors.success,
-  },
   packagingList: {
     gap: 10,
   },
@@ -1783,7 +1424,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    minHeight: 74,
+    minHeight: 72,
     padding: 12,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -1866,32 +1507,8 @@ const s = StyleSheet.create({
     lineHeight: 17,
     color: '#79745F',
   },
-  submitSection: {
-    gap: 13,
-    marginTop: 3,
-  },
-  submitSummary: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 8,
-    padding: 12,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  submitSummaryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  submitSummaryText: {
-    ...typography.caption,
-    color: colors.text,
-  },
   submitButton: {
-    minHeight: 60,
+    minHeight: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
