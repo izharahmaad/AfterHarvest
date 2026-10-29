@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {
   Alert,
   Pressable,
@@ -34,7 +34,6 @@ type StatusStyle = {
   background: string;
   description: string;
   action: string;
-  checklist: string[];
 };
 
 const STATUS_STYLES: Record<string, StatusStyle> = {
@@ -45,11 +44,6 @@ const STATUS_STYLES: Record<string, StatusStyle> = {
     description: 'Fresh is the assigned quality-state label.',
     action:
       'Continue normal storage and inspect the batch again before distribution.',
-    checklist: [
-      'Confirm the storage temperature',
-      'Check for damage or soft spots',
-      'Plan timely distribution or use',
-    ],
   },
   aging: {
     label: 'Aging',
@@ -58,11 +52,6 @@ const STATUS_STYLES: Record<string, StatusStyle> = {
     description: 'Aging is the assigned quality-state label.',
     action:
       'Prioritize this batch for earlier use and review storage conditions.',
-    checklist: [
-      'Move to cooler storage if possible',
-      'Prioritize this batch for early use or sale',
-      'Inspect the batch again within 24 hours',
-    ],
   },
   spoiled: {
     label: 'Spoiled',
@@ -71,11 +60,6 @@ const STATUS_STYLES: Record<string, StatusStyle> = {
     description: 'Spoiled is the assigned quality-state label.',
     action:
       'Isolate affected produce and inspect it manually before making any handling decision.',
-    checklist: [
-      'Isolate affected produce',
-      'Do not mix it with healthy stock',
-      'Inspect manually before disposal or use',
-    ],
   },
 };
 
@@ -86,11 +70,6 @@ const UNKNOWN_STATUS: StatusStyle = {
   description: 'Review this result with caution.',
   action:
     'Review the available context and inspect the produce manually.',
-  checklist: [
-    'Review the photo quality',
-    'Verify storage readings',
-    'Inspect the produce manually',
-  ],
 };
 
 const FACTOR_LABELS: Record<string, string> = {
@@ -272,19 +251,12 @@ export default function ResultScreen({result, onNew}: Props) {
 
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [completedActions, setCompletedActions] = useState<
-    Record<string, boolean>
-  >({});
 
   const isDemo = result.inference_mode === 'demo';
   const score = displayScore(result.quality_score);
   const confidence = displayScore(result.confidence);
   const status = getStatus(result.quality_state);
   const interpretation = getInterpretation(score);
-
-  useEffect(() => {
-    setCompletedActions({});
-  }, [result.assessment_id, result.created_at]);
 
   const factors = useMemo(() => {
     if (!Array.isArray(result.contributing_factors)) {
@@ -310,14 +282,6 @@ export default function ResultScreen({result, onNew}: Props) {
   const produceName = getProduceName(result.produce_type);
   const modelVersion =
     normalizeString(result.model_version) || 'Unavailable';
-
-  const completedCount = status.checklist.filter(
-    item => completedActions[item],
-  ).length;
-
-  const checklistProgress = Math.round(
-    (completedCount / status.checklist.length) * 100,
-  );
 
   const resultSummary = [
     `AfterHarvest ${produceName.toLowerCase()} assessment`,
@@ -370,13 +334,6 @@ export default function ResultScreen({result, onNew}: Props) {
     } finally {
       setSharing(false);
     }
-  }
-
-  function toggleAction(item: string) {
-    setCompletedActions(previous => ({
-      ...previous,
-      [item]: !previous[item],
-    }));
   }
 
   return (
@@ -602,85 +559,6 @@ export default function ResultScreen({result, onNew}: Props) {
               {recommendation}
             </Text>
           </View>
-        </View>
-
-        <View style={s.checklistCard}>
-          <View style={s.sectionHeader}>
-            <IconTile name="checkbox-outline" />
-
-            <View style={s.sectionCopy}>
-              <Text
-                accessibilityRole="header"
-                style={s.sectionTitle}>
-                Storage action checklist
-              </Text>
-              <Text style={s.sectionSubtitle}>
-                Track the immediate handling steps for this batch.
-              </Text>
-            </View>
-
-            <View style={s.checklistCount}>
-              <Text style={s.checklistCountText}>
-                {completedCount}/{status.checklist.length}
-              </Text>
-            </View>
-          </View>
-
-          <View style={s.checklistProgress}>
-            <View
-              style={[
-                s.checklistProgressFill,
-                {width: `${checklistProgress}%`},
-              ]}
-            />
-          </View>
-
-          <View style={s.checklistList}>
-            {status.checklist.map(item => {
-              const completed = Boolean(completedActions[item]);
-
-              return (
-                <Pressable
-                  key={item}
-                  accessibilityRole="checkbox"
-                  accessibilityLabel={item}
-                  accessibilityState={{checked: completed}}
-                  onPress={() => toggleAction(item)}
-                  style={({pressed}) => [
-                    s.checklistItem,
-                    completed ? s.checklistItemCompleted : null,
-                    pressed ? s.pressed : null,
-                  ]}>
-                  <View
-                    style={[
-                      s.checkbox,
-                      completed ? s.checkboxCompleted : null,
-                    ]}>
-                    {completed ? (
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={colors.white}
-                      />
-                    ) : null}
-                  </View>
-
-                  <Text
-                    style={[
-                      s.checklistText,
-                      completed ? s.checklistTextCompleted : null,
-                    ]}>
-                    {item}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <Text style={s.checklistNote}>
-            This checklist is local guidance for this assessment and
-            does not replace manual inspection.
-          </Text>
         </View>
 
         <View style={s.card}>
@@ -1319,83 +1197,6 @@ const s = StyleSheet.create({
     flex: 1,
     ...typography.caption,
     color: colors.text,
-  },
-  checklistCard: {
-    padding: 17,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    ...shadow.card,
-  },
-  checklistCount: {
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primarySoft,
-  },
-  checklistCountText: {
-    color: colors.primary,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  checklistProgress: {
-    height: 7,
-    overflow: 'hidden',
-    borderRadius: 4,
-    backgroundColor: colors.surfaceMuted,
-    marginBottom: 15,
-  },
-  checklistProgressFill: {
-    height: '100%',
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-  },
-  checklistList: {
-    gap: 9,
-  },
-  checklistItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-    minHeight: 54,
-    paddingHorizontal: 12,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceMuted,
-  },
-  checklistItemCompleted: {
-    borderColor: colors.success,
-    backgroundColor: colors.successSoft,
-  },
-  checkbox: {
-    width: 23,
-    height: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 7,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surface,
-  },
-  checkboxCompleted: {
-    borderColor: colors.success,
-    backgroundColor: colors.success,
-  },
-  checklistText: {
-    flex: 1,
-    minWidth: 0,
-    ...typography.label,
-    color: colors.ink,
-  },
-  checklistTextCompleted: {
-    color: colors.success,
-  },
-  checklistNote: {
-    ...typography.caption,
-    color: colors.muted,
-    marginTop: 13,
   },
   card: {
     padding: 17,
