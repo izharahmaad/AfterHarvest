@@ -22,13 +22,6 @@ type Props = {
 
 type NumericField = 'temperature' | 'humidity' | 'days';
 
-type PackagingOption = {
-  value: Context['packaging'];
-  title: string;
-  description: string;
-  badge: string;
-};
-
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_PIXELS = 20_000_000;
 
@@ -39,34 +32,34 @@ const SUPPORTED_MIME_TYPES = new Set([
   'image/webp',
 ]);
 
-const PACKAGING_OPTIONS: PackagingOption[] = [
+const PACKAGING_OPTIONS = [
   {
     value: 'open_crate',
     title: 'Open crate',
     description: 'Uncovered storage',
-    badge: 'OPEN',
+    symbol: '▤',
   },
   {
     value: 'sealed_bag',
     title: 'Sealed bag',
     description: 'Closed packaging',
-    badge: 'SEALED',
+    symbol: '▣',
   },
   {
     value: 'ventilated_box',
     title: 'Ventilated box',
     description: 'Airflow openings',
-    badge: 'AIRFLOW',
+    symbol: '▦',
   },
-];
+] as const;
 
-const FIELDS: Array<{
+const FIELDS: {
   key: NumericField;
   label: string;
   unit: string;
   hint: string;
   placeholder: string;
-}> = [
+}[] = [
   {
     key: 'temperature',
     label: 'Temperature',
@@ -85,7 +78,7 @@ const FIELDS: Array<{
     key: 'days',
     label: 'Storage duration',
     unit: 'days',
-    hint: 'Whole days from 0 to 365',
+    hint: 'Whole days since storage began',
     placeholder: '4',
   },
 ];
@@ -98,7 +91,6 @@ function parseDecimal(value: string): number | null {
   }
 
   const parsed = Number(normalized);
-
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -130,58 +122,35 @@ function validateImage(
     .trim();
 
   if (mimeType && !SUPPORTED_MIME_TYPES.has(mimeType)) {
-    return 'Choose a JPEG, PNG or WebP image. HEIC and HEIF are not supported by the current backend.';
+    return 'Choose a JPEG, PNG or WebP image. The current backend does not support HEIC/HEIF.';
   }
 
+  // Missing metadata is allowed here.
+  // The backend must still validate the actual uploaded bytes.
   return null;
 }
 
-function StepHeader({
+function SectionHeader({
   number,
   title,
   description,
-  required = false,
 }: {
   number: string;
   title: string;
   description: string;
-  required?: boolean;
 }) {
   return (
-    <View style={s.stepHeader}>
-      <View style={s.stepNumber}>
-        <Text style={s.stepNumberText}>{number}</Text>
+    <View style={s.sectionHeader}>
+      <View style={s.step}>
+        <Text style={s.stepText}>{number}</Text>
       </View>
 
-      <View style={s.stepHeaderCopy}>
-        <View style={s.stepTitleRow}>
-          <Text style={s.stepTitle}>{title}</Text>
-
-          {required ? (
-            <View style={s.requiredBadge}>
-              <Text style={s.requiredBadgeText}>REQUIRED</Text>
-            </View>
-          ) : null}
-        </View>
-
-        <Text style={s.stepDescription}>{description}</Text>
+      <View style={s.sectionCopy}>
+        <Text style={s.sectionTitle}>{title}</Text>
+        <Text style={s.sectionSubtitle}>{description}</Text>
       </View>
     </View>
   );
-}
-
-function getKeyboardType(field: NumericField) {
-  if (field === 'days') {
-    return 'number-pad' as const;
-  }
-
-  if (field === 'temperature') {
-    return Platform.OS === 'ios'
-      ? ('numbers-and-punctuation' as const)
-      : ('numeric' as const);
-  }
-
-  return 'decimal-pad' as const;
 }
 
 export default function CaptureScreen({onResult}: Props) {
@@ -211,7 +180,7 @@ export default function CaptureScreen({onResult}: Props) {
     }));
   }
 
-  async function chooseImage(useCamera: boolean) {
+  async function choose(camera: boolean) {
     if (operationLocked.current) return;
 
     operationLocked.current = true;
@@ -219,7 +188,7 @@ export default function CaptureScreen({onResult}: Props) {
     Keyboard.dismiss();
 
     try {
-      if (useCamera) {
+      if (camera) {
         const permission =
           await ImagePicker.requestCameraPermissionsAsync();
 
@@ -240,7 +209,7 @@ export default function CaptureScreen({onResult}: Props) {
         quality: 0.8,
       };
 
-      const response = useCamera
+      const response = camera
         ? await ImagePicker.launchCameraAsync(options)
         : await ImagePicker.launchImageLibraryAsync(options);
 
@@ -250,16 +219,16 @@ export default function CaptureScreen({onResult}: Props) {
 
       if (!selectedImage) {
         Alert.alert(
-          'No image selected',
-          'Please choose your tomato photo again.',
+          'No image returned',
+          'Please select your tomato photo again.',
         );
         return;
       }
 
-      const validationError = validateImage(selectedImage);
+      const error = validateImage(selectedImage);
 
-      if (validationError) {
-        Alert.alert('Check your image', validationError);
+      if (error) {
+        Alert.alert('Check your image', error);
         return;
       }
 
@@ -277,13 +246,13 @@ export default function CaptureScreen({onResult}: Props) {
     }
   }
 
-  async function submitAssessment() {
+  async function submit() {
     if (operationLocked.current) return;
 
     if (!asset) {
       Alert.alert(
-        'Photo required',
-        'Take a photo or choose a tomato image.',
+        'Add a tomato photo',
+        'Take a photo or choose one from your gallery.',
       );
       return;
     }
@@ -305,7 +274,7 @@ export default function CaptureScreen({onResult}: Props) {
       temperature > 60
     ) {
       Alert.alert(
-        'Invalid temperature',
+        'Check temperature',
         'Enter a temperature from −20 to 60°C.',
       );
       return;
@@ -317,16 +286,16 @@ export default function CaptureScreen({onResult}: Props) {
       humidity > 100
     ) {
       Alert.alert(
-        'Invalid humidity',
-        'Enter humidity from 0 to 100%.',
+        'Check humidity',
+        'Enter a humidity percentage from 0 to 100.',
       );
       return;
     }
 
     if (!/^\d+$/.test(daysText)) {
       Alert.alert(
-        'Invalid storage duration',
-        'Enter a whole number from 0 to 365.',
+        'Check storage duration',
+        'Enter a whole number of days from 0 to 365.',
       );
       return;
     }
@@ -335,19 +304,19 @@ export default function CaptureScreen({onResult}: Props) {
 
     if (!Number.isSafeInteger(days) || days > 365) {
       Alert.alert(
-        'Invalid storage duration',
-        'Enter a whole number from 0 to 365.',
+        'Check storage duration',
+        'Enter a whole number of days from 0 to 365.',
       );
       return;
     }
 
-    const packagingIsValid = PACKAGING_OPTIONS.some(
-      option => option.value === context.packaging,
-    );
-
-    if (!packagingIsValid) {
+    if (
+      !PACKAGING_OPTIONS.some(
+        option => option.value === context.packaging,
+      )
+    ) {
       Alert.alert(
-        'Packaging required',
+        'Choose packaging',
         'Select one of the available packaging types.',
       );
       return;
@@ -364,9 +333,10 @@ export default function CaptureScreen({onResult}: Props) {
     setBusy(true);
     Keyboard.dismiss();
 
+    let assessment: Assessment;
+
     try {
-      const assessment = await predict(asset, requestContext);
-      onResult(assessment);
+      assessment = await predict(asset, requestContext);
     } catch (error: unknown) {
       Alert.alert(
         'Unable to assess',
@@ -374,48 +344,37 @@ export default function CaptureScreen({onResult}: Props) {
           ? error.message
           : 'Check your connection and try again.',
       );
+      return;
     } finally {
       operationLocked.current = false;
       setBusy(false);
     }
+
+    onResult(assessment);
   }
 
   return (
     <View style={s.container}>
-      <View style={s.intro}>
-        <View style={s.eyebrow}>
-          <View style={s.eyebrowDot} />
-          <Text style={s.eyebrowText}>TOMATO ASSESSMENT</Text>
+      <View>
+        <View style={s.badge}>
+          <View style={s.badgeDot} />
+          <Text style={s.badgeText}>TOMATO ASSESSMENT</Text>
         </View>
 
         <Text style={s.heading}>
-          Assess quality{'\n'}with context.
+          A clearer picture{'\n'}of your produce.
         </Text>
 
         <Text style={s.subtitle}>
-          Add a clear photo and the storage conditions for this
-          tomato batch.
+          Add a photo and storage details to start your assessment.
         </Text>
       </View>
 
-      <View style={s.progressCard}>
-        <View style={s.progressCopy}>
-          <Text style={s.progressTitle}>Assessment checklist</Text>
-          <Text style={s.progressDescription}>
-            Complete three short steps to get a transparent demo
-            result.
-          </Text>
-        </View>
-
-        <Text style={s.progressValue}>3 STEPS</Text>
-      </View>
-
       <View style={s.card}>
-        <StepHeader
+        <SectionHeader
           number="01"
           title="Produce photo"
-          description="Use one clear image of the tomato."
-          required
+          description="Choose a clear image of your tomato."
         />
 
         {asset ? (
@@ -427,11 +386,8 @@ export default function CaptureScreen({onResult}: Props) {
               accessibilityLabel="Selected tomato photo"
             />
 
-            <View style={s.previewOverlay}>
-              <View style={s.photoReadyBadge}>
-                <View style={s.photoReadyDot} />
-                <Text style={s.photoReadyText}>PHOTO READY</Text>
-              </View>
+            <View style={s.previewLabel}>
+              <Text style={s.previewLabelText}>Photo selected</Text>
             </View>
 
             <Pressable
@@ -440,11 +396,11 @@ export default function CaptureScreen({onResult}: Props) {
               accessibilityState={{disabled}}
               disabled={disabled}
               onPress={() => setAsset(null)}
-              hitSlop={10}
+              hitSlop={8}
               style={({pressed}) => [
                 s.removeButton,
-                pressed ? s.pressed : null,
-                disabled ? s.disabled : null,
+                pressed && s.pressed,
+                disabled && s.disabled,
               ]}>
               <Text style={s.removeText}>×</Text>
             </Pressable>
@@ -455,22 +411,20 @@ export default function CaptureScreen({onResult}: Props) {
             accessibilityLabel="Choose tomato photo from gallery"
             accessibilityState={{disabled}}
             disabled={disabled}
-            onPress={() => chooseImage(false)}
+            onPress={() => choose(false)}
             style={({pressed}) => [
               s.uploadArea,
-              pressed ? s.pressed : null,
-              disabled ? s.disabled : null,
+              pressed && s.pressed,
+              disabled && s.disabled,
             ]}>
             <View style={s.uploadIcon}>
-              <Text style={s.uploadIconText}>+</Text>
+              <Text style={s.uploadIconText}>＋</Text>
             </View>
 
-            <Text style={s.uploadTitle}>Add a tomato photo</Text>
-
+            <Text style={s.uploadTitle}>Add your tomato photo</Text>
             <Text style={s.uploadDescription}>
-              Tap here to choose an image from your gallery.
+              Tap to browse your gallery
             </Text>
-
             <Text style={s.uploadHint}>
               JPEG, PNG or WebP · Maximum 5 MB
             </Text>
@@ -480,106 +434,107 @@ export default function CaptureScreen({onResult}: Props) {
         <View style={s.photoActions}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Take a tomato photo with the camera"
             accessibilityState={{disabled}}
             disabled={disabled}
-            onPress={() => chooseImage(true)}
+            onPress={() => choose(true)}
             style={({pressed}) => [
               s.photoButton,
               s.cameraButton,
-              pressed ? s.pressed : null,
-              disabled ? s.disabled : null,
+              pressed && s.pressed,
+              disabled && s.disabled,
             ]}>
-            <Text style={s.cameraButtonText}>Take photo</Text>
+            <Text style={s.cameraText}>Take photo</Text>
           </Pressable>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={
-              asset
-                ? 'Replace the selected tomato photo'
-                : 'Choose a tomato image from gallery'
-            }
             accessibilityState={{disabled}}
             disabled={disabled}
-            onPress={() => chooseImage(false)}
+            onPress={() => choose(false)}
             style={({pressed}) => [
               s.photoButton,
               s.galleryButton,
-              pressed ? s.pressed : null,
-              disabled ? s.disabled : null,
+              pressed && s.pressed,
+              disabled && s.disabled,
             ]}>
-            <Text style={s.galleryButtonText}>
+            <Text style={s.galleryText}>
               {asset ? 'Replace photo' : 'Choose image'}
             </Text>
           </Pressable>
         </View>
 
-        {picking ? (
+        {picking && (
           <View style={s.loadingRow}>
-            <ActivityIndicator color="#1C6846" size="small" />
+            <ActivityIndicator color="#1C6846" />
             <Text style={s.loadingText}>Opening image picker…</Text>
           </View>
-        ) : null}
+        )}
       </View>
 
       <View style={s.card}>
-        <StepHeader
+        <SectionHeader
           number="02"
           title="Storage conditions"
-          description="Enter the known storage environment."
+          description="Enter the conditions for this produce."
         />
 
         <View style={s.fields}>
-          {FIELDS.map(field => {
-            const isDays = field.key === 'days';
-            const isFocused = focusedField === field.key;
+          {FIELDS.map(field => (
+            <View
+              key={field.key}
+              style={
+                field.key === 'days'
+                  ? s.fullField
+                  : s.halfField
+              }>
+              <Text style={s.fieldLabel}>{field.label}</Text>
 
-            return (
               <View
-                key={field.key}
-                style={isDays ? s.fullField : s.halfField}>
-                <Text style={s.fieldLabel}>{field.label}</Text>
+                style={[
+                  s.inputWrapper,
+                  focusedField === field.key && s.inputFocused,
+                  disabled && s.disabled,
+                ]}>
+                <TextInput
+                  accessibilityLabel={`${field.label} in ${field.unit}`}
+                  editable={!disabled}
+                  value={context[field.key]}
+                  onChangeText={value =>
+                    updateContext(field.key, value)
+                  }
+                  onFocus={() => setFocusedField(field.key)}
+                  onBlur={() => setFocusedField(null)}
+                  keyboardType={
+                    field.key === 'days'
+                      ? 'number-pad'
+                      : field.key === 'temperature'
+                        ? Platform.OS === 'ios'
+                          ? 'numbers-and-punctuation'
+                          : 'numeric'
+                        : 'decimal-pad'
+                  }
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                  placeholder={field.placeholder}
+                  placeholderTextColor="#94A298"
+                  selectionColor="#26744E"
+                  style={s.input}
+                />
 
-                <View
-                  style={[
-                    s.inputWrapper,
-                    isFocused ? s.inputFocused : null,
-                    disabled ? s.disabled : null,
-                  ]}>
-                  <TextInput
-                    accessibilityLabel={`${field.label} in ${field.unit}`}
-                    editable={!disabled}
-                    value={context[field.key]}
-                    onChangeText={value =>
-                      updateContext(field.key, value)
-                    }
-                    onFocus={() => setFocusedField(field.key)}
-                    onBlur={() => setFocusedField(null)}
-                    keyboardType={getKeyboardType(field.key)}
-                    autoCorrect={false}
-                    autoCapitalize="none"
-                    placeholder={field.placeholder}
-                    placeholderTextColor="#94A298"
-                    selectionColor="#26744E"
-                    style={s.input}
-                  />
-
-                  <Text style={s.unit}>{field.unit}</Text>
-                </View>
-
-                <Text style={s.fieldHint}>{field.hint}</Text>
+                <Text style={s.unit}>{field.unit}</Text>
               </View>
-            );
-          })}
+
+              <Text style={s.fieldHint}>{field.hint}</Text>
+            </View>
+          ))}
         </View>
       </View>
 
       <View style={s.card}>
-        <StepHeader
+        <SectionHeader
           number="03"
           title="Packaging type"
-          description="Select how this tomato is currently stored."
+          description="Select how the tomato is stored."
         />
 
         <View style={s.packagingList}>
@@ -601,23 +556,17 @@ export default function CaptureScreen({onResult}: Props) {
                 }
                 style={({pressed}) => [
                   s.packagingOption,
-                  selected ? s.packagingSelected : null,
-                  pressed ? s.pressed : null,
-                  disabled ? s.disabled : null,
+                  selected && s.packagingSelected,
+                  pressed && s.pressed,
+                  disabled && s.disabled,
                 ]}>
                 <View
                   style={[
-                    s.packagingBadge,
-                    selected ? s.packagingBadgeSelected : null,
+                    s.packagingIcon,
+                    selected && s.packagingIconSelected,
                   ]}>
-                  <Text
-                    style={[
-                      s.packagingBadgeText,
-                      selected
-                        ? s.packagingBadgeTextSelected
-                        : null,
-                    ]}>
-                    {option.badge}
+                  <Text style={s.packagingSymbol}>
+                    {option.symbol}
                   </Text>
                 </View>
 
@@ -633,9 +582,9 @@ export default function CaptureScreen({onResult}: Props) {
                 <View
                   style={[
                     s.radio,
-                    selected ? s.radioSelected : null,
+                    selected && s.radioSelected,
                   ]}>
-                  {selected ? <View style={s.radioDot} /> : null}
+                  {selected && <View style={s.radioDot} />}
                 </View>
               </Pressable>
             );
@@ -644,18 +593,12 @@ export default function CaptureScreen({onResult}: Props) {
       </View>
 
       <View style={s.notice}>
-        <View style={s.noticeHeader}>
-          <View style={s.noticeIcon}>
-            <Text style={s.noticeIconText}>i</Text>
-          </View>
-
-          <Text style={s.noticeTitle}>Demo assessment</Text>
-        </View>
-
+        <Text style={s.noticeTitle}>Demo assessment</Text>
         <Text style={s.noticeText}>
-          Results use storage-context heuristics. The selected image
-          is validated for upload but is not yet analyzed by a trained
-          AI model. Results do not certify food safety.
+          The current demo uses storage-context heuristics.
+          Images are validated but not analyzed by a trained AI model.
+          Packaging does not affect demo scoring.
+          Results do not certify food safety.
         </Text>
       </View>
 
@@ -666,21 +609,23 @@ export default function CaptureScreen({onResult}: Props) {
         }
         accessibilityState={{disabled, busy}}
         disabled={disabled}
-        onPress={submitAssessment}
+        onPress={submit}
         style={({pressed}) => [
           s.submitButton,
-          pressed ? s.pressed : null,
-          disabled ? s.disabled : null,
+          pressed && s.pressed,
+          disabled && s.disabled,
         ]}>
         {busy ? (
-          <ActivityIndicator color="#FFFFFF" size="small" />
-        ) : null}
-
-        <Text style={s.submitText}>
-          {busy ? 'Assessing…' : 'Run demo assessment'}
-        </Text>
-
-        {!busy ? <Text style={s.submitArrow}>→</Text> : null}
+          <>
+            <ActivityIndicator color="#FFFFFF" />
+            <Text style={s.submitText}>Assessing…</Text>
+          </>
+        ) : (
+          <>
+            <Text style={s.submitText}>Run demo assessment</Text>
+            <Text style={s.submitArrow}>→</Text>
+          </>
+        )}
       </Pressable>
 
       <Text style={s.footer}>
@@ -696,34 +641,31 @@ const s = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
   },
-  intro: {
-    marginBottom: 2,
-  },
-  eyebrow: {
-    alignSelf: 'flex-start',
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: 7,
     backgroundColor: '#E8F2EB',
     paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: 20,
   },
-  eyebrowDot: {
+  badgeDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: '#26744E',
   },
-  eyebrowText: {
+  badgeText: {
     fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 1.1,
+    letterSpacing: 1.2,
     color: '#26744E',
   },
   heading: {
-    fontSize: 31,
-    lineHeight: 38,
+    fontSize: 30,
+    lineHeight: 37,
     fontWeight: '800',
     letterSpacing: -0.8,
     color: '#173C2A',
@@ -732,147 +674,94 @@ const s = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#64796B',
+    color: '#65776B',
     marginTop: 10,
-  },
-  progressCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 14,
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: '#EEF6F0',
-    borderWidth: 1,
-    borderColor: '#DAEBDD',
-  },
-  progressCopy: {
-    flex: 1,
-  },
-  progressTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#2D6242',
-  },
-  progressDescription: {
-    fontSize: 11,
-    lineHeight: 17,
-    color: '#6E8876',
-    marginTop: 4,
-  },
-  progressValue: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    color: '#3C8057',
   },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#E2EBE4',
+    borderColor: '#E3EBE5',
   },
-  stepHeader: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 11,
+    gap: 10,
     marginBottom: 18,
   },
-  stepNumber: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
-    backgroundColor: '#EEF5EF',
+  step: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#EFF5F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepNumberText: {
+  stepText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#36764D',
+    color: '#38734F',
   },
-  stepHeaderCopy: {
+  sectionCopy: {
     flex: 1,
-    minWidth: 0,
   },
-  stepTitleRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepTitle: {
+  sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#203D2D',
   },
-  stepDescription: {
+  sectionSubtitle: {
     fontSize: 11,
     lineHeight: 16,
-    color: '#6D8273',
+    color: '#687D6E',
     marginTop: 3,
   },
-  requiredBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#F8EEE8',
-  },
-  requiredBadgeText: {
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.7,
-    color: '#A25647',
-  },
   uploadArea: {
-    minHeight: 202,
+    minHeight: 190,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: '#BFD5C6',
-    borderRadius: 18,
-    backgroundColor: '#F8FBF8',
+    borderRadius: 16,
+    backgroundColor: '#F7FAF7',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 18,
   },
   uploadIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
-    backgroundColor: '#E1EFE5',
+    width: 52,
+    height: 52,
+    borderRadius: 17,
+    backgroundColor: '#E5F0E8',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 13,
+    marginBottom: 12,
   },
   uploadIconText: {
     color: '#26744E',
-    fontSize: 29,
-    lineHeight: 33,
-    fontWeight: '400',
+    fontSize: 30,
+    lineHeight: 36,
   },
   uploadTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#31563E',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#33563F',
     textAlign: 'center',
   },
   uploadDescription: {
     fontSize: 12,
-    lineHeight: 18,
-    color: '#6B8072',
-    textAlign: 'center',
+    color: '#6D8273',
     marginTop: 5,
   },
   uploadHint: {
     fontSize: 10,
-    color: '#829589',
-    marginTop: 15,
+    color: '#718476',
+    marginTop: 14,
     textAlign: 'center',
   },
   preview: {
-    height: 230,
-    borderRadius: 18,
+    height: 225,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#EEF3EE',
   },
@@ -880,47 +769,35 @@ const s = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  previewOverlay: {
+  previewLabel: {
     position: 'absolute',
     bottom: 12,
     left: 12,
-  },
-  photoReadyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(24, 78, 53, 0.9)',
-    paddingHorizontal: 10,
+    backgroundColor: 'rgba(23,60,42,0.85)',
+    paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: 20,
   },
-  photoReadyDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#A9D9B1',
-  },
-  photoReadyText: {
+  previewLabelText: {
     color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    fontSize: 11,
+    fontWeight: '600',
   },
   removeButton: {
     position: 'absolute',
     top: 10,
     right: 10,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.96)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.95)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeText: {
     fontSize: 25,
-    lineHeight: 28,
     color: '#31513C',
+    lineHeight: 28,
   },
   photoActions: {
     flexDirection: 'row',
@@ -929,28 +806,28 @@ const s = StyleSheet.create({
   },
   photoButton: {
     flex: 1,
-    minHeight: 48,
-    borderRadius: 13,
-    paddingHorizontal: 10,
+    minHeight: 46,
+    borderRadius: 12,
+    paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cameraButton: {
-    backgroundColor: '#EAF4ED',
+    backgroundColor: '#EAF3EC',
   },
   galleryButton: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#D7E4DA',
+    borderColor: '#DDE7DF',
   },
-  cameraButtonText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#1C6642',
-  },
-  galleryButtonText: {
+  cameraText: {
     fontSize: 12,
     fontWeight: '700',
+    color: '#21623F',
+  },
+  galleryText: {
+    fontSize: 12,
+    fontWeight: '600',
     color: '#536D5C',
   },
   loadingRow: {
@@ -978,42 +855,41 @@ const s = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#496555',
+    fontWeight: '600',
+    color: '#526A59',
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 54,
-    borderRadius: 14,
-    backgroundColor: '#FAFCFA',
+    minHeight: 52,
+    borderRadius: 12,
+    backgroundColor: '#F8FAF8',
     borderWidth: 1,
-    borderColor: '#DCE7DE',
-    paddingHorizontal: 13,
+    borderColor: '#E1E9E2',
+    paddingHorizontal: 12,
   },
   inputFocused: {
-    borderColor: '#2E7C50',
-    backgroundColor: '#F4FAF5',
+    borderColor: '#388557',
+    backgroundColor: '#F3F9F4',
   },
   input: {
     flex: 1,
     minWidth: 0,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#244A32',
     paddingVertical: 12,
   },
   unit: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#718577',
+    color: '#6C8172',
     marginLeft: 6,
   },
   fieldHint: {
     fontSize: 10,
     lineHeight: 15,
-    color: '#7B8D80',
+    color: '#748678',
     marginTop: 6,
   },
   packagingList: {
@@ -1025,38 +901,32 @@ const s = StyleSheet.create({
     gap: 12,
     minHeight: 72,
     padding: 12,
-    borderRadius: 15,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2EAE3',
+    borderColor: '#E5EBE6',
     backgroundColor: '#FFFFFF',
   },
   packagingSelected: {
     backgroundColor: '#F1F8F2',
-    borderColor: '#71A685',
+    borderColor: '#74A785',
   },
-  packagingBadge: {
-    minWidth: 48,
-    paddingHorizontal: 7,
-    paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: '#F0F4F1',
+  packagingIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 11,
+    backgroundColor: '#F3F6F3',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  packagingBadgeSelected: {
-    backgroundColor: '#DDEDE1',
+  packagingIconSelected: {
+    backgroundColor: '#E0EFE4',
   },
-  packagingBadgeText: {
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    color: '#69806F',
-  },
-  packagingBadgeTextSelected: {
-    color: '#36764D',
+  packagingSymbol: {
+    fontSize: 23,
+    color: '#477353',
   },
   packagingCopy: {
     flex: 1,
-    minWidth: 0,
   },
   packagingTitle: {
     fontSize: 13,
@@ -1066,15 +936,15 @@ const s = StyleSheet.create({
   packagingDescription: {
     fontSize: 11,
     lineHeight: 16,
-    color: '#748679',
+    color: '#718577',
     marginTop: 3,
   },
   radio: {
-    width: 21,
-    height: 21,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#C6D4C9',
+    borderColor: '#CCD8CE',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1082,51 +952,33 @@ const s = StyleSheet.create({
     borderColor: '#2C7C4E',
   },
   radioDot: {
-    width: 11,
-    height: 11,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#2C7C4E',
   },
   notice: {
-    padding: 16,
-    borderRadius: 17,
-    backgroundColor: '#F4F0E7',
-    borderWidth: 1,
-    borderColor: '#E9E1CF',
-  },
-  noticeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 9,
-  },
-  noticeIcon: {
-    width: 23,
-    height: 23,
-    borderRadius: 7,
-    backgroundColor: '#EAE2CF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  noticeIconText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#89784E',
+    backgroundColor: '#EEF3EF',
+    borderRadius: 14,
+    padding: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: '#A0BCA8',
   },
   noticeTitle: {
     fontSize: 12,
-    fontWeight: '800',
-    color: '#7D704E',
+    fontWeight: '700',
+    color: '#526D5B',
+    marginBottom: 5,
   },
   noticeText: {
     fontSize: 11,
-    lineHeight: 18,
-    color: '#8B8064',
+    lineHeight: 17,
+    color: '#657C6D',
   },
   submitButton: {
-    minHeight: 58,
-    backgroundColor: '#1B6A45',
-    borderRadius: 17,
+    minHeight: 56,
+    backgroundColor: '#1C6846',
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1135,7 +987,7 @@ const s = StyleSheet.create({
   },
   submitText: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   submitArrow: {
@@ -1146,13 +998,12 @@ const s = StyleSheet.create({
     fontSize: 10,
     lineHeight: 16,
     textAlign: 'center',
-    color: '#7E9083',
-    paddingHorizontal: 8,
+    color: '#718577',
   },
   pressed: {
-    opacity: 0.82,
+    opacity: 0.8,
   },
   disabled: {
-    opacity: 0.52,
+    opacity: 0.55,
   },
 });
