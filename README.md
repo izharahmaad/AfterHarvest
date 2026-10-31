@@ -26,3 +26,268 @@ See `docs/SETUP.md` for backend and mobile commands. See `docs/COMPLETION_CHECKL
 - .github/workflows — backend CI
 
 History lives in mobile memory for this release. Backend history is an explicit stub. API has no authentication; use locally only. Do not treat scores as probabilities or safety assessments.
+
+```
+
+```
+AfterHarvest
+├─ apps
+│  └─ mobile
+│     ├─ app.json
+│     ├─ App.tsx
+│     ├─ assets
+│     ├─ index.js
+│     ├─ package-lock.json
+│     ├─ package.json
+│     ├─ src
+│     │  ├─ components
+│     │  │  └─ UI.tsx
+│     │  ├─ screens
+│     │  │  ├─ CaptureScreen.tsx
+│     │  │  ├─ HistoryScreen.tsx
+│     │  │  ├─ HomeScreen.tsx
+│     │  │  └─ ResultScreen.tsx
+│     │  ├─ services
+│     │  │  └─ api.ts
+│     │  ├─ theme
+│     │  │  ├─ index.ts
+│     │  │  └─ tokens.ts
+│     │  └─ types
+│     │     └─ assessment.ts
+│     └─ tsconfig.json
+├─ backend
+│  ├─ app
+│  │  ├─ api
+│  │  │  ├─ routes.py
+│  │  │  └─ __init__.py
+│  │  ├─ config.py
+│  │  ├─ database.py
+│  │  ├─ main.py
+│  │  ├─ ml
+│  │  │  └─ labels.json
+│  │  ├─ models
+│  │  ├─ models.py
+│  │  ├─ routers
+│  │  │  └─ assessments.py
+│  │  ├─ schemas
+│  │  │  ├─ assessment.py
+│  │  │  └─ __init__.py
+│  │  ├─ schemas.py
+│  │  ├─ services
+│  │  │  ├─ assessment_engine.py
+│  │  │  ├─ history_store.py
+│  │  │  ├─ inference.py
+│  │  │  ├─ storage.py
+│  │  │  └─ __init__.py
+│  │  └─ __init__.py
+│  ├─ data
+│  ├─ README.md
+│  └─ requirements.txt
+├─ data
+│  └─ README.md
+├─ docker-compose.yml
+├─ docs
+│  ├─ architecture.md
+│  ├─ COMPLETION_CHECKLIST.md
+│  ├─ model-card.md
+│  ├─ PROJECT_TREE.txt
+│  └─ SETUP.md
+├─ infra
+│  └─ firebase
+│     ├─ firestore.indexes.json
+│     └─ firestore.rules
+├─ packages
+│  └─ contracts
+│     └─ README.md
+├─ pyproject.toml
+├─ README.md
+├─ scripts
+│  └─ README.md
+└─ services
+   └─ api
+      ├─ .pytest_cache
+      │  ├─ CACHEDIR.TAG
+      │  ├─ README.md
+      │  └─ v
+      │     └─ cache
+      │        ├─ nodeids
+      │        └─ stepwise
+      ├─ app
+      │  ├─ api
+      │  │  ├─ routes.py
+      │  │  └─ __init__.py
+      │  ├─ core
+      │  │  └─ README.md
+      │  ├─ main.py
+      │  ├─ models
+      │  │  └─ README.md
+      │  ├─ repositories
+      │  │  └─ README.md
+      │  ├─ schemas
+      │  │  ├─ assessment.py
+      │  │  └─ __init__.py
+      │  ├─ services
+      │  │  ├─ inference.py
+      │  │  └─ __init__.py
+      │  └─ __init__.py
+      ├─ data
+      │  └─ README.md
+      ├─ Dockerfile
+      ├─ pytest.ini
+      ├─ requirements.txt
+      └─ tests
+         └─ test_api.py
+
+```
+```
+AfterHarvest
+├─ apps
+│  └─ mobile
+│     ├─ app.json
+│     ├─ App.tsx
+│     ├─ assets
+│     ├─ index.js
+│     ├─ package-lock.json
+│     ├─ package.json
+│     ├─ src
+│     │  ├─ components
+│     │  │  └─ UI.tsx
+│     │  ├─ screens
+│     │  │  ├─ CaptureScreen.tsx
+│     │  │  ├─ HistoryScreen.tsx
+│     │  │  ├─ HomeScreen.tsx
+│     │  │  └─ ResultScreen.tsx
+│     │  ├─ services
+│     │  │  └─ api.ts
+│     │  ├─ theme
+│     │  │  ├─ index.ts
+│     │  │  └─ tokens.ts
+│     │  └─ types
+│     │     └─ assessment.ts
+│     └─ tsconfig.json
+├─ backend
+│  ├─ app
+│  │  ├─ api
+│  │  │  ├─ routes.py
+│  │  │  └─ __init__.py
+│  │  ├─ config.py
+│  │  ├─ database.py
+│  │  ├─ main.py
+│  │  ├─ ml
+│  │  │  └─ labels.json
+│  │  ├─ models
+│  │  ├─ models.py
+│  │  ├─ routers
+│  │  │  └─ assessments.py
+│  │  ├─ schemas
+│  │  │  ├─ assessment.py
+│  │  │  └─ __init__.py
+│  │  ├─ schemas.py
+│  │  ├─ services
+│  │  │  ├─ assessment_engine.py
+│  │  │  ├─ history_store.py
+│  │  │  ├─ inference.py
+│  │  │  ├─ storage.py
+│  │  │  └─ __init__.py
+│  │  └─ __init__.py
+│  ├─ data
+│  ├─ README.md
+│  └─ requirements.txt
+├─ data
+│  └─ README.md
+├─ docker-compose.yml
+├─ docs
+│  ├─ architecture.md
+│  ├─ COMPLETION_CHECKLIST.md
+│  ├─ model-card.md
+│  ├─ PROJECT_TREE.txt
+│  └─ SETUP.md
+├─ infra
+│  └─ firebase
+│     ├─ firestore.indexes.json
+│     └─ firestore.rules
+├─ packages
+│  └─ contracts
+│     └─ README.md
+├─ pyproject.toml
+├─ README.md
+└─ scripts
+   └─ README.md
+
+```
+```
+AfterHarvest
+├─ apps
+│  └─ mobile
+│     ├─ app.json
+│     ├─ App.tsx
+│     ├─ assets
+│     ├─ index.js
+│     ├─ package-lock.json
+│     ├─ package.json
+│     ├─ src
+│     │  ├─ components
+│     │  │  └─ UI.tsx
+│     │  ├─ screens
+│     │  │  ├─ CaptureScreen.tsx
+│     │  │  ├─ HistoryScreen.tsx
+│     │  │  ├─ HomeScreen.tsx
+│     │  │  └─ ResultScreen.tsx
+│     │  ├─ services
+│     │  │  └─ api.ts
+│     │  ├─ theme
+│     │  │  ├─ index.ts
+│     │  │  └─ tokens.ts
+│     │  └─ types
+│     │     └─ assessment.ts
+│     └─ tsconfig.json
+├─ backend
+│  ├─ app
+│  │  ├─ api
+│  │  │  ├─ routes.py
+│  │  │  └─ __init__.py
+│  │  ├─ config.py
+│  │  ├─ database.py
+│  │  ├─ main.py
+│  │  ├─ ml
+│  │  │  └─ labels.json
+│  │  ├─ models
+│  │  ├─ models.py
+│  │  ├─ routers
+│  │  │  └─ assessments.py
+│  │  ├─ schemas
+│  │  │  ├─ assessment.py
+│  │  │  └─ __init__.py
+│  │  ├─ schemas.py
+│  │  ├─ services
+│  │  │  ├─ assessment_engine.py
+│  │  │  ├─ history_store.py
+│  │  │  ├─ inference.py
+│  │  │  ├─ storage.py
+│  │  │  └─ __init__.py
+│  │  └─ __init__.py
+│  ├─ data
+│  ├─ README.md
+│  └─ requirements.txt
+├─ data
+│  └─ README.md
+├─ docker-compose.yml
+├─ docs
+│  ├─ architecture.md
+│  ├─ COMPLETION_CHECKLIST.md
+│  ├─ model-card.md
+│  ├─ PROJECT_TREE.txt
+│  └─ SETUP.md
+├─ infra
+│  └─ firebase
+│     ├─ firestore.indexes.json
+│     └─ firestore.rules
+├─ packages
+│  └─ contracts
+│     └─ README.md
+├─ pyproject.toml
+├─ README.md
+└─ scripts
+   └─ README.md
+
+```
