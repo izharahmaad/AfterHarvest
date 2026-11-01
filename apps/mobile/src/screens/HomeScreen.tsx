@@ -519,6 +519,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
               Revisit results from this session
             </Text>
           </View>
+
           <Ionicons
             name="chevron-forward"
             size={17}
