@@ -501,7 +501,6 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             />
           </View>
         </Pressable>
-
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Open assessment history"
