@@ -512,6 +512,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             pressed ? s.historyPressed : null,
           ]}>
           <IconTile name="time-outline" />
+
           <View style={s.historyCopy}>
             <Text style={s.historyTitle}>Assessment history</Text>
             <Text style={s.historyDescription}>
