@@ -3,9 +3,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes import router
 from app.config import settings
 from app.database import Base, engine
-from app.routers import assessments
 from app.services.inference import inference_service
 
 
@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
     except FileNotFoundError:
         print(
             "WARNING: model files are missing. "
-            "Add model.pt and labels.json before using inference.",
+            "Add model.pt and labels.json before using inference."
         )
 
     yield
@@ -38,7 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(assessments.router)
+app.include_router(router)
 
 
 @app.get("/api/health")
