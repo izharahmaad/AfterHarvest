@@ -394,6 +394,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
         keyboardShouldPersistTaps="handled">
         <View style={s.intro}>
           <Text style={s.eyebrow}>TOMATO QUALITY WORKSPACE</Text>
+
           <Text
             accessibilityRole="header"
             style={[s.heading, narrow ? s.headingNarrow : null]}>
