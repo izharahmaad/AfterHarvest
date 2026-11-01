@@ -400,7 +400,6 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             Understand your{'\n'}
             <Text style={s.headingAccent}>produce better.</Text>
           </Text>
-
           <Text style={s.introText}>
             Combine a tomato photo with its storage conditions to explore
             a clear, transparent demo assessment.
