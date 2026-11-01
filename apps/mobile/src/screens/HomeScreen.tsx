@@ -407,7 +407,6 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
             a clear, transparent demo assessment.
           </Text>
         </View>
-
         <View style={s.hero}>
           <View style={s.heroOrb} />
 
