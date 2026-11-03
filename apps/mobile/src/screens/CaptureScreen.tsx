@@ -1029,6 +1029,7 @@ export default function CaptureScreen({onResult}: Props) {
               );
             })}
           </View>
+
           {conditionsReady ? (
             <View style={s.conditionSummary}>
               <Ionicons
