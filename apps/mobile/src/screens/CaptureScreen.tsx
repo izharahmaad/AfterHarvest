@@ -1037,7 +1037,6 @@ export default function CaptureScreen({onResult}: Props) {
                 size={15}
                 color={colors.success}
               />
-
               <Text style={s.conditionSummaryText}>
                 {temperature}°C · {humidity}% · {days} day
                 {days === 1 ? '' : 's'}
