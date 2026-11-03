@@ -1029,7 +1029,6 @@ export default function CaptureScreen({onResult}: Props) {
               );
             })}
           </View>
-
           {conditionsReady ? (
             <View style={s.conditionSummary}>
               <Ionicons
@@ -1045,7 +1044,6 @@ export default function CaptureScreen({onResult}: Props) {
             </View>
           ) : null}
         </View>
-
         <View style={s.card}>
           <StepHeader
             number="03"
@@ -1053,7 +1051,6 @@ export default function CaptureScreen({onResult}: Props) {
             description="Select how this tomato is currently stored."
             complete={packagingReady}
           />
-
           <View style={s.packagingList}>
             {PACKAGING_OPTIONS.map(option => {
               const selected =
