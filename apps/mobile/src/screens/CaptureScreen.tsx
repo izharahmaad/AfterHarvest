@@ -1045,7 +1045,6 @@ export default function CaptureScreen({onResult}: Props) {
             </View>
           ) : null}
         </View>
-
         <View style={s.card}>
           <StepHeader
             number="03"
