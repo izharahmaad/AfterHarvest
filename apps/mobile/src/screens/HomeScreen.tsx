@@ -1152,11 +1152,7 @@ const s = StyleSheet.create({
     right: -60,
     borderRadius: 95,
     backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  heroHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+
   },
   heroLabel: {
     flexDirection: 'row',
