@@ -907,6 +907,7 @@ export default function CaptureScreen({onResult}: Props) {
             description="Enter the known storage environment."
             complete={conditionsReady}
           />
+
           <View style={s.presetRow}>
             {STORAGE_PRESETS.map(preset => {
               const selected = activePreset?.id === preset.id;
