@@ -901,6 +901,7 @@ const s = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
   },
+
   clearButton: {
     width: 32,
     height: 32,
