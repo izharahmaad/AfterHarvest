@@ -13,6 +13,7 @@ import {
 import {Ionicons} from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 
+import TopBar from '../components/TopBar';
 import {
   colors,
   layout,
@@ -137,7 +138,7 @@ const STEPS = [
   {
     number: '03',
     title: 'Explore results',
-    description: 'Review the demo assessment and its context.',
+    description: 'Review the assessment and its context.',
     icon: 'analytics-outline' as IconName,
   },
 ];
@@ -364,25 +365,16 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
 
   return (
     <View style={s.screen}>
-      <View style={s.topBar}>
-        <View style={s.brand}>
-          <View style={s.brandIcon}>
-            <Ionicons name="leaf" size={17} color={colors.white} />
+      <TopBar
+        title="AfterHarvest"
+        subtitle="PRODUCE INSIGHTS"
+        right={
+          <View style={s.demoPill}>
+            <View style={s.demoDot} />
+            <Text style={s.demoText}>PROTOTYPE</Text>
           </View>
-
-          <View style={s.brandCopy}>
-            <Text style={s.brandName}>AfterHarvest</Text>
-            <Text style={s.brandCaption}>PRODUCE INSIGHTS</Text>
-          </View>
-        </View>
-
-        <View style={s.demoPill}>
-          <View style={s.demoDot} />
-          <Text style={s.demoText}>PROTOTYPE</Text>
-        </View>
-      </View>
-
-      <View style={s.brandRail} />
+        }
+      />
 
       <ScrollView
         style={s.scroll}
@@ -404,7 +396,7 @@ export default function HomeScreen({onCapture, onHistory}: Props) {
 
           <Text style={s.introText}>
             Combine a tomato photo with its storage conditions to explore
-            a clear, transparent demo assessment.
+            a clear, transparent assessment.
           </Text>
         </View>
 
@@ -1028,46 +1020,6 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 14,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  brandIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  brandCopy: {
-    minWidth: 0,
-  },
-  brandName: {
-    color: colors.ink,
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: -0.2,
-  },
-  brandCaption: {
-    color: colors.muted,
-    fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 0.9,
-    marginTop: 3,
-  },
   demoPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1088,10 +1040,6 @@ const s = StyleSheet.create({
     fontSize: 8,
     fontWeight: '800',
     letterSpacing: 0.7,
-  },
-  brandRail: {
-    height: 3,
-    backgroundColor: colors.primary,
   },
   scroll: {
     flex: 1,
