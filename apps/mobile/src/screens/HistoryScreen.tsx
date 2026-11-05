@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 
+import TopBar from '../components/TopBar';
 import {
   colors,
   layout,
@@ -22,6 +23,7 @@ import type {Assessment} from '../types/assessment';
 type Props = {
   items: Assessment[];
   onSelect: (assessment: Assessment) => void;
+  onBack?: () => void;
 };
 
 type Filter = 'all' | 'fresh' | 'aging' | 'spoiled';
@@ -384,6 +386,7 @@ function AssessmentCard({
 export default function HistoryScreen({
   items,
   onSelect,
+  onBack,
 }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
@@ -444,27 +447,18 @@ export default function HistoryScreen({
 
   return (
     <View style={s.screen}>
-      <View style={s.topBar}>
-        <View style={s.brand}>
-          <View style={s.brandIcon}>
-            <Ionicons
-              name="time"
-              size={17}
-              color={colors.white}
-            />
+      <TopBar
+        title="Assessment history"
+        subtitle="THIS SESSION"
+        showBack
+        onBack={onBack}
+        right={
+          <View style={s.sessionPill}>
+            <View style={s.sessionDot} />
+            <Text style={s.sessionPillText}>SESSION</Text>
           </View>
-
-          <View style={s.brandCopy}>
-            <Text style={s.brandName}>Assessment history</Text>
-            <Text style={s.brandCaption}>THIS SESSION</Text>
-          </View>
-        </View>
-
-        <View style={s.sessionPill}>
-          <View style={s.sessionDot} />
-          <Text style={s.sessionPillText}>SESSION ONLY</Text>
-        </View>
-      </View>
+        }
+      />
 
       <View style={s.progressRail}>
         <View
@@ -715,46 +709,6 @@ const s = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 14,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  brandIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  brandCopy: {
-    minWidth: 0,
-  },
-  brandName: {
-    color: colors.ink,
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: -0.2,
-  },
-  brandCaption: {
-    color: colors.muted,
-    fontSize: 8,
-    fontWeight: '700',
-    letterSpacing: 0.9,
-    marginTop: 3,
   },
   sessionPill: {
     flexDirection: 'row',
