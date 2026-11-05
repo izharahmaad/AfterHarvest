@@ -901,7 +901,14 @@ const s = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.primarySoft,
   },
-
+  searchInput: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.ink,
+    fontSize: 13,
+    fontWeight: '600',
+    paddingVertical: 12,
+  },
   clearButton: {
     width: 32,
     height: 32,
