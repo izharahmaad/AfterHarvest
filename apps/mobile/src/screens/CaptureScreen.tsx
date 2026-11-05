@@ -1689,7 +1689,10 @@ const s = StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: colors.primarySoft,
   },
- 
+  presetText: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: '700',
   },
   presetTextSelected: {
     color: colors.primary,
