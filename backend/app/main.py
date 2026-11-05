@@ -6,20 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
 from app.config import settings
 from app.database import Base, engine
-from app.services.inference import inference_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
-    try:
-        inference_service.load()
-    except FileNotFoundError:
-        print(
-            "WARNING: model files are missing. "
-            "Add model.pt and labels.json before using inference."
-        )
+    print("Backend started in demo mode.")
 
     yield
 
@@ -46,4 +39,5 @@ def health():
     return {
         "status": "ok",
         "environment": settings.environment,
+        "inference_mode": "demo",
     }
