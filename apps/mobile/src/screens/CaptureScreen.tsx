@@ -15,7 +15,6 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import {Ionicons} from '@expo/vector-icons';
 
-import TopBar from '../components/TopBar';
 import {predict} from '../services/api';
 import {
   colors,
@@ -28,7 +27,6 @@ import type {Assessment, Context} from '../types/assessment';
 
 type Props = {
   onResult: (result: Assessment) => void;
-  onBack?: () => void;
 };
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -273,7 +271,7 @@ function getKeyboardType(field: NumericField) {
   return 'decimal-pad' as const;
 }
 
-export default function CaptureScreen({onResult, onBack}: Props) {
+export default function CaptureScreen({onResult}: Props) {
   const [asset, setAsset] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
 
@@ -567,19 +565,50 @@ export default function CaptureScreen({onResult, onBack}: Props) {
 
   return (
     <View style={s.screen}>
-      <TopBar
-        title="New assessment"
-        subtitle="TOMATO QUALITY"
-        showBack
-        onBack={onBack}
-        right={
+      <View style={s.topBar}>
+        <View style={s.brand}>
+          <View style={s.brandIcon}>
+            <Ionicons
+              name="camera"
+              size={17}
+              color={colors.white}
+            />
+          </View>
+
+          <View style={s.brandCopy}>
+            <Text style={s.brandName}>New assessment</Text>
+            <Text style={s.brandCaption}>TOMATO QUALITY</Text>
+          </View>
+        </View>
+
+        <View style={s.topBarActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Clear assessment form"
+            accessibilityState={{disabled}}
+            disabled={disabled}
+            onPress={resetForm}
+            hitSlop={8}
+            style={({pressed}) => [
+              s.clearButton,
+              pressed ? s.pressed : null,
+              disabled ? s.disabled : null,
+            ]}>
+            <Ionicons
+              name="refresh-outline"
+              size={16}
+              color={colors.muted}
+            />
+            <Text style={s.clearButtonText}>Clear</Text>
+          </Pressable>
+
           <View style={s.progressChip}>
             <Text style={s.progressChipText}>
               {completedSteps}/3
             </Text>
           </View>
-        }
-      />
+        </View>
+      </View>
 
       <View style={s.progressSection}>
         <View style={s.progressLabels}>
@@ -623,7 +652,7 @@ export default function CaptureScreen({onResult, onBack}: Props) {
 
           <Text style={s.subtitle}>
             Add a clear tomato photo and the storage conditions for a
-            transparent assessment.
+            transparent demo assessment.
           </Text>
         </View>
 
@@ -1169,8 +1198,8 @@ export default function CaptureScreen({onResult, onBack}: Props) {
             accessibilityRole="button"
             accessibilityLabel={
               busy
-                ? 'Generating assessment'
-                : 'Run assessment'
+                ? 'Generating demo assessment'
+                : 'Run demo assessment'
             }
             accessibilityState={{disabled, busy}}
             disabled={!canSubmit}
@@ -1194,7 +1223,7 @@ export default function CaptureScreen({onResult, onBack}: Props) {
             )}
 
             <Text style={s.submitText}>
-              {busy ? 'Assessing…' : 'Run assessment'}
+              {busy ? 'Assessing…' : 'Run demo assessment'}
             </Text>
 
             {!busy ? (
@@ -1219,6 +1248,67 @@ const s = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 14,
+    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  brandIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  brandCopy: {
+    minWidth: 0,
+  },
+  brandName: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  brandCaption: {
+    color: colors.muted,
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 0.9,
+    marginTop: 3,
+  },
+  topBarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  clearButtonText: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: '700',
   },
   progressChip: {
     paddingHorizontal: 10,
