@@ -1143,6 +1143,15 @@ const s = StyleSheet.create({
     borderRadius: radius.xxl,
     backgroundColor: colors.primaryDark,
     ...shadow.card,
+  },
+  heroOrb: {
+    position: 'absolute',
+    width: 190,
+    height: 190,
+    top: -100,
+    right: -60,
+    borderRadius: 95,
+    backgroundColor: 'rgba(255,255,255,0.05)',
 
   },
   heroLabel: {
