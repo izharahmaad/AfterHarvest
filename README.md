@@ -1,82 +1,145 @@
-# AfterHarvest
+<div align="center">
 
-**AfterHarvest** is a multimodal post-harvest intelligence prototype that helps assess visible tomato quality using a produce photo and storage context.
+# 🍅 AfterHarvest
 
-It combines image-based classification with storage conditions such as temperature, humidity, storage duration, and packaging type to generate a quality state, score, contributing factors, and a practical recommendation.
+### AI-Powered Post-Harvest Produce Quality Intelligence
 
-> **Preserve quality. Reduce loss.**
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![React Native](https://img.shields.io/badge/React_Native-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 
-## GitHub Description
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/izharahmaad/AfterHarvest?style=for-the-badge)](https://github.com/izharahmaad/AfterHarvest/commits/main)
+[![GitHub repo size](https://img.shields.io/github/repo-size/izharahmaad/AfterHarvest?style=for-the-badge)](https://github.com/izharahmaad/AfterHarvest)
+[![GitHub stars](https://img.shields.io/github/stars/izharahmaad/AfterHarvest?style=for-the-badge)](https://github.com/izharahmaad/AfterHarvest/stargazers)
+
+**Preserve quality. Reduce loss.**
+
+AfterHarvest is an AI-powered post-harvest intelligence platform that combines **PyTorch-based tomato image classification** with **storage-context analysis** to estimate visible quality risk and generate explainable handling recommendations.
+
+</div>
+
+---
+
+## 📌 GitHub Description
 
 ```text
-AfterHarvest is a React Native + FastAPI AI prototype for tomato post-harvest quality assessment using produce images and storage context.
+AfterHarvest is an AI-powered post-harvest intelligence platform that combines PyTorch tomato image classification with storage-context analysis to estimate visible quality risk and generate explainable recommendations.
 ```
 
-## Important Limitation
+## 🚀 Overview
 
-AfterHarvest is an **educational decision-support prototype**, not a food-safety certification system.
+AfterHarvest helps users assess the visible condition of tomatoes by combining a produce photo with real storage conditions.
 
-It does not guarantee that produce is safe to eat. Users should always inspect produce manually before consumption, sale, or distribution.
+Instead of relying only on an image, the system considers:
 
-## Features
+- Tomato image quality indicators
+- Storage temperature
+- Relative humidity
+- Storage duration
+- Packaging type
 
-- Capture or select a tomato photo
-- Enter storage temperature, humidity, storage duration, and packaging type
-- Receive a quality state: fresh, aging, spoiled, or uncertain
-- View an illustrative quality score from 0 to 100
-- Review contributing context indicators
-- Receive practical storage and handling recommendations
-- Save assessment metadata during the current session
-- Search and filter previous assessments
-- Copy or share an assessment summary
-- Daily quality checklist for tomato storage
+The backend processes these inputs, estimates a quality state and score, identifies important contributing factors, and returns a practical recommendation.
 
-## Technology Stack
+> **Important:** AfterHarvest is an educational decision-support prototype. It is not a food-safety certification system and should not be used as the only basis for deciding whether food is safe to eat.
+
+## ✨ Key Features
+
+- 📷 Capture or upload a tomato photo
+- 🌡️ Enter temperature, humidity, storage duration, and packaging type
+- 🧠 Receive an AI-based quality assessment
+- 📊 View quality state, score, confidence, and contributing factors
+- 💡 Get practical storage and handling recommendations
+- 🕘 Review, search, and filter assessment history
+- 📋 Use a daily tomato-quality checklist
+- 📤 Copy or share assessment summaries
+- 🔐 Firebase Authentication support
+- ☁️ Firestore-based assessment metadata storage
+- 🗄️ SQLite fallback for local backend development
+
+## 🧠 AI / ML Approach
+
+AfterHarvest uses a multimodal decision approach that combines computer vision with structured storage-context data.
+
+```text
+Tomato Image + Storage Context
+              |
+              v
+      FastAPI Backend
+              |
+              +------------------+
+              |                  |
+              v                  v
+     PyTorch Image Model   Context Risk Model
+              |                  |
+              +--------+---------+
+                       |
+                       v
+              Decision Engine
+                       |
+                       v
+       Quality State + Score + Recommendation
+```
+
+### Visual Model
+
+The visual model analyzes a tomato image and estimates probabilities for:
+
+| Class | Meaning |
+|---|---|
+| Fresh | Tomato appears visually healthy |
+| Aging | Tomato shows early visible quality decline |
+| Spoiled | Tomato shows clear visible spoilage indicators |
+
+### Context Model
+
+The context model evaluates storage conditions such as:
+
+- Temperature
+- Humidity
+- Storage duration
+- Packaging type
+
+### Decision Engine
+
+The prototype combines visual and contextual signals into a final result:
+
+```text
+quality_score = 0.65 × visual_quality + 0.35 × context_quality
+```
+
+This weighting is a prototype assumption and should be tuned using a validation dataset.
+
+## 🛠️ Technology Stack
 
 | Layer | Technology |
 |---|---|
-| Mobile app | React Native, Expo, TypeScript |
+| Mobile application | React Native, Expo, TypeScript |
 | Navigation | React Navigation |
-| Backend | Python, FastAPI, Uvicorn |
-| AI / ML | PyTorch, torchvision, scikit-learn |
+| Backend API | Python, FastAPI, Uvicorn |
+| Deep learning | PyTorch, torchvision |
+| Classical ML | NumPy, scikit-learn |
 | Image processing | Pillow |
-| Database | SQLite for local development |
-| Cloud services | Firebase Authentication and Firestore |
-| Icons | Expo Vector Icons |
+| Local database | SQLite |
+| Cloud database | Firebase Firestore |
+| Authentication | Firebase Authentication |
+| API documentation | Swagger UI / OpenAPI |
 
-## Project Architecture
+## 📱 Mobile Screens
 
-```text
-React Native + Expo Mobile App
-                |
-                | Photo + storage context
-                v
-            FastAPI Backend
-                |
-                +-- Request validation
-                +-- Image preprocessing
-                +-- Visual quality model
-                +-- Context risk model
-                +-- Decision engine
-                +-- Explanation builder
-                |
-                v
-        Assessment result
-                |
-                v
-Mobile Result Screen + Session History
-```
-
-## Mobile Screens
-
-| Screen | Purpose |
+| Screen | Description |
 |---|---|
-| Home | Project overview, quick actions, storage risk checker, checklist, and guidance |
+| Home | Overview, quick actions, storage risk checker, checklist, and guidance |
 | Capture | Add a tomato photo and enter storage conditions |
 | Result | View quality state, score, factors, recommendation, and action checklist |
-| History | Review, search, and filter assessments from the current session |
+| History | Review, search, and filter previous assessments |
 
-## Backend API
+## ⚙️ Backend API
 
 ### Health Check
 
@@ -100,15 +163,17 @@ POST /api/v1/quality/predict
 Content-Type: multipart/form-data
 ```
 
-Request fields:
+### Request Fields
 
-- `image`: Tomato photo
-- `temperature`: Storage temperature in Celsius
-- `humidity`: Relative humidity percentage
-- `days`: Storage duration in days
-- `packaging`: Packaging type
+| Field | Type | Description |
+|---|---|---|
+| `image` | File | Tomato photo |
+| `temperature` | Number | Storage temperature in Celsius |
+| `humidity` | Number | Relative humidity percentage |
+| `days` | Integer | Storage duration in days |
+| `packaging` | String | Packaging type |
 
-Example response:
+### Example Response
 
 ```json
 {
@@ -146,7 +211,7 @@ Example response:
 }
 ```
 
-## Local Setup
+## 🧪 Local Setup
 
 ### 1. Clone the repository
 
@@ -155,7 +220,7 @@ git clone [https://github.com/izharahmaad/AfterHarvest.git](https://github.com/i
 cd AfterHarvest
 ```
 
-### 2. Create a Python virtual environment
+### 2. Create and activate a Python environment
 
 ```powershell
 python -m venv .venv
@@ -174,22 +239,28 @@ pip install -r backend/requirements.txt
 uvicorn backend.app.main:app --reload
 ```
 
-The API will usually be available at:
+The API will be available at:
 
 ```text
 http://127.0.0.1:8000
 ```
 
+Open Swagger documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
 ### 5. Install mobile dependencies
 
-Open a new terminal and run:
+Open a new terminal:
 
 ```powershell
 cd apps/mobile
 npm install
 ```
 
-### 6. Start the Expo mobile app
+### 6. Start the Expo app
 
 ```powershell
 npx expo start
@@ -197,11 +268,11 @@ npx expo start
 
 Scan the QR code using the Expo Go app, or run the app on an Android emulator or iOS simulator.
 
-## Environment Variables
+## 🔐 Environment Variables
 
-Create a `.env` file in the backend folder and add the required configuration values.
+Create a `.env` file in the backend folder.
 
-Do not commit `.env` files, API keys, Firebase credentials, or database files to GitHub.
+Do **not** commit `.env`, Firebase keys, API keys, or database files to GitHub.
 
 Example:
 
@@ -210,7 +281,7 @@ API_HOST=127.0.0.1
 API_PORT=8000
 ```
 
-## Repository Structure
+## 📁 Repository Structure
 
 ```text
 AfterHarvest/
@@ -240,68 +311,69 @@ AfterHarvest/
 └── README.md
 ```
 
-## AI Approach
+## 📊 Dataset Plan
 
-AfterHarvest uses a simple multimodal decision approach:
+The initial model focuses on tomatoes and three visible quality classes.
 
-1. The mobile app sends a tomato image and storage context to the backend.
-2. The backend validates the request and preprocesses the image.
-3. The visual model estimates probabilities for fresh, aging, and spoiled states.
-4. The context model evaluates storage conditions.
-5. The decision engine combines both signals into a final quality score and recommendation.
-
-Prototype weighting:
-
-```text
-quality_score = 0.65 × visual_quality + 0.35 × context_quality
-```
-
-This weighting is a prototype assumption and should be evaluated and tuned using a validation dataset.
-
-## Dataset Plan
-
-The initial model focuses on tomatoes and three visible quality classes:
-
-| Class | Description |
+| Item | Target |
 |---|---|
-| Fresh | Tomato appears visually healthy and suitable for normal storage |
-| Aging | Tomato shows early visible quality decline |
-| Spoiled | Tomato shows clear visible spoilage indicators |
+| Produce | Tomato |
+| Classes | Fresh, Aging, Spoiled |
+| Images per class | 150–250 |
+| Total images | 450–750 |
+| Training split | 70% |
+| Validation split | 15% |
+| Test split | 15% |
 
-Initial target:
+Recommended augmentation:
 
-- 150 to 250 images per class
-- 450 to 750 total images
-- 70% training data
-- 15% validation data
-- 15% test data
+- Small rotation
+- Random cropping
+- Brightness adjustment
+- Horizontal flipping
 
-## Privacy and Data Handling
+## 🔒 Privacy and Data Handling
 
-- Images are validated before upload.
+- Uploaded images are validated before processing.
 - Images are processed through the backend.
 - The MVP does not permanently store uploaded images.
 - Assessment metadata may be stored locally or in Firestore.
 - Users should avoid uploading images containing personal information.
 
-## Future Improvements
+## 🚧 Future Improvements
 
-- Add a trained tomato image-classification model
-- Improve model explainability
+- Train and deploy a production tomato classification model
+- Improve explainability and confidence calibration
 - Add multi-produce support
 - Add batch-level inventory tracking
 - Add storage-location management
 - Add shelf-life estimation
 - Add cloud image storage with access controls
-- Add offline support
-- Add user accounts and team roles
-- Add real model performance metrics
+- Add offline-first mobile support
+- Add user roles and team collaboration
+- Add model performance dashboards
 
-## License
+## 🤝 Contributing
 
-This project is for educational and portfolio purposes.
+Contributions are welcome.
 
-## Author
+1. Fork the repository
+2. Create a new branch
+3. Make your changes
+4. Commit and push
+5. Open a pull request
 
-**Izhar Ahmad**  
-GitHub: [izharahmaad](https://github.com/izharahmaad)
+## 📄 License
+
+This project is intended for educational and portfolio purposes.
+
+## 👤 Author
+
+<div align="center">
+
+**Izhar Ahmad**
+
+[![GitHub](https://img.shields.io/badge/GitHub-izharahmaad-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/izharahmaad)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/)
+
+</div>
