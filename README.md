@@ -56,29 +56,76 @@ The backend processes these inputs, estimates a quality state and score, identif
 - ☁️ Firestore-based assessment metadata storage
 - 🗄️ SQLite fallback for local backend development
 
-## 🧠 AI / ML Approach
+## 🧠 AI / ML Architecture
 
-AfterHarvest uses a multimodal decision approach that combines computer vision with structured storage-context data.
+AfterHarvest uses a multimodal decision pipeline that combines visual produce analysis with structured storage-context modeling.
+
+The mobile application sends a tomato image and storage metadata to the FastAPI backend. The backend validates the request, processes the image, runs the visual and context models, combines their outputs, and returns an explainable assessment.
 
 ```text
-Tomato Image + Storage Context
-              |
-              v
-      FastAPI Backend
-              |
-              +------------------+
-              |                  |
-              v                  v
-     PyTorch Image Model   Context Risk Model
-              |                  |
-              +--------+---------+
-                       |
-                       v
-              Decision Engine
-                       |
-                       v
-       Quality State + Score + Recommendation
+┌─────────────────────────────────────────────────────────────┐
+│                    React Native + Expo App                  │
+│                                                             │
+│  Capture Screen → Photo + Temperature + Humidity + Days     │
+│                                + Packaging Type             │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               │ Multipart image + context
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      FastAPI Backend                        │
+│                                                             │
+│  Request Validation → Image Preprocessing → Inference       │
+└───────────────┬─────────────────────────────┬───────────────┘
+                │                             │
+                ▼                             ▼
+┌───────────────────────────┐   ┌───────────────────────────┐
+│   PyTorch Vision Model    │   │    Context Risk Model     │
+│                           │   │                           │
+│  Tomato image analysis    │   │  Temperature              │
+│  Fresh / Aging / Spoiled  │   │  Humidity                 │
+│  Visual probabilities     │   │  Storage duration         │
+│                           │   │  Packaging type           │
+└───────────────┬───────────┘   └───────────────┬───────────┘
+                │                               │
+                └───────────────┬───────────────┘
+                                ▼
+                  ┌───────────────────────────┐
+                  │      Decision Engine      │
+                  │                           │
+                  │  Score fusion             │
+                  │  Risk interpretation      │
+                  │  Confidence estimation    │
+                  │  Explanation generation   │
+                  └───────────────┬───────────┘
+                                  ▼
+                  ┌───────────────────────────┐
+                  │     Assessment Response   │
+                  │                           │
+                  │  Quality state            │
+                  │  Quality score            │
+                  │  Contributing factors     │
+                  │  Recommendation           │
+                  │  Confidence               │
+                  └───────────────┬───────────┘
+                                  │
+                                  ▼
+                  ┌───────────────────────────┐
+                  │  Result Screen + History  │
+                  └───────────────────────────┘
 ```
+
+### Inference Pipeline
+
+1. The user captures or selects a tomato image.
+2. The user provides temperature, humidity, storage duration, and packaging type.
+3. The mobile app sends the image and context to the FastAPI backend.
+4. The backend validates the request and preprocesses the image.
+5. The PyTorch vision model estimates visual class probabilities.
+6. The context model evaluates storage-related risk.
+7. The decision engine combines both signals into a quality score and state.
+8. The explanation builder identifies the most relevant contributing factors.
+9. The mobile app displays the result and saves its metadata in history.
 
 ### Visual Model
 
@@ -99,15 +146,36 @@ The context model evaluates storage conditions such as:
 - Storage duration
 - Packaging type
 
-### Decision Engine
+### Decision Logic
 
-The prototype combines visual and contextual signals into a final result:
+The prototype uses a transparent score-fusion formula:
 
 ```text
 quality_score = 0.65 × visual_quality + 0.35 × context_quality
 ```
 
-This weighting is a prototype assumption and should be tuned using a validation dataset.
+The final quality state is selected from the combined score and model outputs:
+
+| Quality State | Meaning |
+|---|---|
+| Fresh | The assessment indicates relatively favorable visible and storage conditions |
+| Aging | The assessment indicates early quality decline or increased handling priority |
+| Spoiled | The assessment indicates significant visible quality concerns |
+| Uncertain | The system cannot make a reliable assessment from the available inputs |
+
+### Explainability
+
+The response includes contributing factors such as:
+
+- Visual color change
+- Storage duration
+- Temperature
+- Humidity
+- Packaging type
+
+These indicators help the user understand why a particular quality state and recommendation were returned.
+
+> **Note:** The factor values are decision-support indicators, not proof of food safety. Manual inspection remains essential.
 
 ## 🛠️ Technology Stack
 
