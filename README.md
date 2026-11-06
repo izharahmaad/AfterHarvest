@@ -1,293 +1,307 @@
 # AfterHarvest
 
-Preserve quality. Reduce loss.
+**AfterHarvest** is a multimodal post-harvest intelligence prototype that helps assess visible tomato quality using a produce photo and storage context.
 
-Professional-structure mobile/API starter for a tomato-only post-harvest decision-support portfolio project, based on the supplied AfterHarvest notes.
+It combines image-based classification with storage conditions such as temperature, humidity, storage duration, and packaging type to generate a quality state, score, contributing factors, and a practical recommendation.
 
-## Status
-Requested 70% foundation milestone: functional demo flow and engineering scaffold, not production readiness. Real AI and Firebase remain unimplemented. The image is validated but not analyzed, and demo scores are unvalidated context heuristics. No food-safety certification or remaining usable-days prediction is provided.
+> **Preserve quality. Reduce loss.**
 
-## Start
-See `docs/SETUP.md` for backend and mobile commands. See `docs/COMPLETION_CHECKLIST.md` for implemented/remaining work.
+## GitHub Description
 
-## Structure
-- apps/mobile/src/screens — Home, Capture, Result, History
-- apps/mobile/src/components — reusable UI
-- apps/mobile/src/services — API client
-- apps/mobile/src/types — typed domain response
-- apps/mobile/src/theme — theme constants
-- services/api/app/api — endpoints
-- services/api/app/schemas — validated response models
-- services/api/app/services — replaceable inference boundary
-- services/api/tests — API test suite
-- infra/firebase — future Firestore rule template
-- docs — architecture, setup, model limitations and roadmap
-- packages/contracts — shared-contract placeholder
-- .github/workflows — backend CI
-
-History lives in mobile memory for this release. Backend history is an explicit stub. API has no authentication; use locally only. Do not treat scores as probabilities or safety assessments.
-
+```text
+AfterHarvest is a React Native + FastAPI AI prototype for tomato post-harvest quality assessment using produce images and storage context.
 ```
 
-```
-AfterHarvest
-├─ apps
-│  └─ mobile
-│     ├─ app.json
-│     ├─ App.tsx
-│     ├─ assets
-│     ├─ index.js
-│     ├─ package-lock.json
-│     ├─ package.json
-│     ├─ src
-│     │  ├─ components
-│     │  │  └─ UI.tsx
-│     │  ├─ screens
-│     │  │  ├─ CaptureScreen.tsx
-│     │  │  ├─ HistoryScreen.tsx
-│     │  │  ├─ HomeScreen.tsx
-│     │  │  └─ ResultScreen.tsx
-│     │  ├─ services
-│     │  │  └─ api.ts
-│     │  ├─ theme
-│     │  │  ├─ index.ts
-│     │  │  └─ tokens.ts
-│     │  └─ types
-│     │     └─ assessment.ts
-│     └─ tsconfig.json
-├─ backend
-│  ├─ app
-│  │  ├─ api
-│  │  │  ├─ routes.py
-│  │  │  └─ __init__.py
-│  │  ├─ config.py
-│  │  ├─ database.py
-│  │  ├─ main.py
-│  │  ├─ ml
-│  │  │  └─ labels.json
-│  │  ├─ models
-│  │  ├─ models.py
-│  │  ├─ routers
-│  │  │  └─ assessments.py
-│  │  ├─ schemas
-│  │  │  ├─ assessment.py
-│  │  │  └─ __init__.py
-│  │  ├─ schemas.py
-│  │  ├─ services
-│  │  │  ├─ assessment_engine.py
-│  │  │  ├─ history_store.py
-│  │  │  ├─ inference.py
-│  │  │  ├─ storage.py
-│  │  │  └─ __init__.py
-│  │  └─ __init__.py
-│  ├─ data
-│  ├─ README.md
-│  └─ requirements.txt
-├─ data
-│  └─ README.md
-├─ docker-compose.yml
-├─ docs
-│  ├─ architecture.md
-│  ├─ COMPLETION_CHECKLIST.md
-│  ├─ model-card.md
-│  ├─ PROJECT_TREE.txt
-│  └─ SETUP.md
-├─ infra
-│  └─ firebase
-│     ├─ firestore.indexes.json
-│     └─ firestore.rules
-├─ packages
-│  └─ contracts
-│     └─ README.md
-├─ pyproject.toml
-├─ README.md
-├─ scripts
-│  └─ README.md
-└─ services
-   └─ api
-      ├─ .pytest_cache
-      │  ├─ CACHEDIR.TAG
-      │  ├─ README.md
-      │  └─ v
-      │     └─ cache
-      │        ├─ nodeids
-      │        └─ stepwise
-      ├─ app
-      │  ├─ api
-      │  │  ├─ routes.py
-      │  │  └─ __init__.py
-      │  ├─ core
-      │  │  └─ README.md
-      │  ├─ main.py
-      │  ├─ models
-      │  │  └─ README.md
-      │  ├─ repositories
-      │  │  └─ README.md
-      │  ├─ schemas
-      │  │  ├─ assessment.py
-      │  │  └─ __init__.py
-      │  ├─ services
-      │  │  ├─ inference.py
-      │  │  └─ __init__.py
-      │  └─ __init__.py
-      ├─ data
-      │  └─ README.md
-      ├─ Dockerfile
-      ├─ pytest.ini
-      ├─ requirements.txt
-      └─ tests
-         └─ test_api.py
+## Important Limitation
 
-```
-```
-AfterHarvest
-├─ apps
-│  └─ mobile
-│     ├─ app.json
-│     ├─ App.tsx
-│     ├─ assets
-│     ├─ index.js
-│     ├─ package-lock.json
-│     ├─ package.json
-│     ├─ src
-│     │  ├─ components
-│     │  │  └─ UI.tsx
-│     │  ├─ screens
-│     │  │  ├─ CaptureScreen.tsx
-│     │  │  ├─ HistoryScreen.tsx
-│     │  │  ├─ HomeScreen.tsx
-│     │  │  └─ ResultScreen.tsx
-│     │  ├─ services
-│     │  │  └─ api.ts
-│     │  ├─ theme
-│     │  │  ├─ index.ts
-│     │  │  └─ tokens.ts
-│     │  └─ types
-│     │     └─ assessment.ts
-│     └─ tsconfig.json
-├─ backend
-│  ├─ app
-│  │  ├─ api
-│  │  │  ├─ routes.py
-│  │  │  └─ __init__.py
-│  │  ├─ config.py
-│  │  ├─ database.py
-│  │  ├─ main.py
-│  │  ├─ ml
-│  │  │  └─ labels.json
-│  │  ├─ models
-│  │  ├─ models.py
-│  │  ├─ routers
-│  │  │  └─ assessments.py
-│  │  ├─ schemas
-│  │  │  ├─ assessment.py
-│  │  │  └─ __init__.py
-│  │  ├─ schemas.py
-│  │  ├─ services
-│  │  │  ├─ assessment_engine.py
-│  │  │  ├─ history_store.py
-│  │  │  ├─ inference.py
-│  │  │  ├─ storage.py
-│  │  │  └─ __init__.py
-│  │  └─ __init__.py
-│  ├─ data
-│  ├─ README.md
-│  └─ requirements.txt
-├─ data
-│  └─ README.md
-├─ docker-compose.yml
-├─ docs
-│  ├─ architecture.md
-│  ├─ COMPLETION_CHECKLIST.md
-│  ├─ model-card.md
-│  ├─ PROJECT_TREE.txt
-│  └─ SETUP.md
-├─ infra
-│  └─ firebase
-│     ├─ firestore.indexes.json
-│     └─ firestore.rules
-├─ packages
-│  └─ contracts
-│     └─ README.md
-├─ pyproject.toml
-├─ README.md
-└─ scripts
-   └─ README.md
+AfterHarvest is an **educational decision-support prototype**, not a food-safety certification system.
 
-```
-```
-AfterHarvest
-├─ apps
-│  └─ mobile
-│     ├─ app.json
-│     ├─ App.tsx
-│     ├─ assets
-│     ├─ index.js
-│     ├─ package-lock.json
-│     ├─ package.json
-│     ├─ src
-│     │  ├─ components
-│     │  │  └─ UI.tsx
-│     │  ├─ screens
-│     │  │  ├─ CaptureScreen.tsx
-│     │  │  ├─ HistoryScreen.tsx
-│     │  │  ├─ HomeScreen.tsx
-│     │  │  └─ ResultScreen.tsx
-│     │  ├─ services
-│     │  │  └─ api.ts
-│     │  ├─ theme
-│     │  │  ├─ index.ts
-│     │  │  └─ tokens.ts
-│     │  └─ types
-│     │     └─ assessment.ts
-│     └─ tsconfig.json
-├─ backend
-│  ├─ app
-│  │  ├─ api
-│  │  │  ├─ routes.py
-│  │  │  └─ __init__.py
-│  │  ├─ config.py
-│  │  ├─ database.py
-│  │  ├─ main.py
-│  │  ├─ ml
-│  │  │  └─ labels.json
-│  │  ├─ models
-│  │  ├─ models.py
-│  │  ├─ routers
-│  │  │  └─ assessments.py
-│  │  ├─ schemas
-│  │  │  ├─ assessment.py
-│  │  │  └─ __init__.py
-│  │  ├─ schemas.py
-│  │  ├─ services
-│  │  │  ├─ assessment_engine.py
-│  │  │  ├─ history_store.py
-│  │  │  ├─ inference.py
-│  │  │  ├─ storage.py
-│  │  │  └─ __init__.py
-│  │  └─ __init__.py
-│  ├─ data
-│  ├─ README.md
-│  └─ requirements.txt
-├─ data
-│  └─ README.md
-├─ docker-compose.yml
-├─ docs
-│  ├─ architecture.md
-│  ├─ COMPLETION_CHECKLIST.md
-│  ├─ model-card.md
-│  ├─ PROJECT_TREE.txt
-│  └─ SETUP.md
-├─ infra
-│  └─ firebase
-│     ├─ firestore.indexes.json
-│     └─ firestore.rules
-├─ packages
-│  └─ contracts
-│     └─ README.md
-├─ pyproject.toml
-├─ README.md
-└─ scripts
-   └─ README.md
+It does not guarantee that produce is safe to eat. Users should always inspect produce manually before consumption, sale, or distribution.
 
+## Features
+
+- Capture or select a tomato photo
+- Enter storage temperature, humidity, storage duration, and packaging type
+- Receive a quality state: fresh, aging, spoiled, or uncertain
+- View an illustrative quality score from 0 to 100
+- Review contributing context indicators
+- Receive practical storage and handling recommendations
+- Save assessment metadata during the current session
+- Search and filter previous assessments
+- Copy or share an assessment summary
+- Daily quality checklist for tomato storage
+
+## Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Mobile app | React Native, Expo, TypeScript |
+| Navigation | React Navigation |
+| Backend | Python, FastAPI, Uvicorn |
+| AI / ML | PyTorch, torchvision, scikit-learn |
+| Image processing | Pillow |
+| Database | SQLite for local development |
+| Cloud services | Firebase Authentication and Firestore |
+| Icons | Expo Vector Icons |
+
+## Project Architecture
+
+```text
+React Native + Expo Mobile App
+                |
+                | Photo + storage context
+                v
+            FastAPI Backend
+                |
+                +-- Request validation
+                +-- Image preprocessing
+                +-- Visual quality model
+                +-- Context risk model
+                +-- Decision engine
+                +-- Explanation builder
+                |
+                v
+        Assessment result
+                |
+                v
+Mobile Result Screen + Session History
 ```
+
+## Mobile Screens
+
+| Screen | Purpose |
+|---|---|
+| Home | Project overview, quick actions, storage risk checker, checklist, and guidance |
+| Capture | Add a tomato photo and enter storage conditions |
+| Result | View quality state, score, factors, recommendation, and action checklist |
+| History | Review, search, and filter assessments from the current session |
+
+## Backend API
+
+### Health Check
+
+```http
+GET /api/v1/health
+```
+
+Example response:
+
+```json
+{
+  "status": "ok",
+  "service": "afterharvest-api"
+}
+```
+
+### Quality Prediction
+
+```http
+POST /api/v1/quality/predict
+Content-Type: multipart/form-data
+```
+
+Request fields:
+
+- `image`: Tomato photo
+- `temperature`: Storage temperature in Celsius
+- `humidity`: Relative humidity percentage
+- `days`: Storage duration in days
+- `packaging`: Packaging type
+
+Example response:
+
+```json
+{
+  "assessment_id": 42,
+  "produce_type": "tomato",
+  "quality_state": "aging",
+  "quality_score": 0.62,
+  "visual_probabilities": {
+    "fresh": 0.21,
+    "aging": 0.68,
+    "spoiled": 0.11
+  },
+  "context_score": 0.57,
+  "estimated_usable_days": {
+    "minimum": 1,
+    "maximum": 2
+  },
+  "contributing_factors": [
+    {
+      "name": "visual_color_change",
+      "weight": 0.42
+    },
+    {
+      "name": "storage_duration",
+      "weight": 0.31
+    },
+    {
+      "name": "temperature",
+      "weight": 0.18
+    }
+  ],
+  "recommendation": "Prioritize this batch for use or sale soon.",
+  "confidence": 0.74,
+  "model_version": "afterharvest-tomato-v1"
+}
+```
+
+## Local Setup
+
+### 1. Clone the repository
+
+```powershell
+git clone [https://github.com/izharahmaad/AfterHarvest.git](https://github.com/izharahmaad/AfterHarvest.git)
+cd AfterHarvest
+```
+
+### 2. Create a Python virtual environment
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\activate
+```
+
+### 3. Install backend dependencies
+
+```powershell
+pip install -r backend/requirements.txt
+```
+
+### 4. Run the FastAPI backend
+
+```powershell
+uvicorn backend.app.main:app --reload
+```
+
+The API will usually be available at:
+
+```text
+http://127.0.0.1:8000
+```
+
+### 5. Install mobile dependencies
+
+Open a new terminal and run:
+
+```powershell
+cd apps/mobile
+npm install
+```
+
+### 6. Start the Expo mobile app
+
+```powershell
+npx expo start
+```
+
+Scan the QR code using the Expo Go app, or run the app on an Android emulator or iOS simulator.
+
+## Environment Variables
+
+Create a `.env` file in the backend folder and add the required configuration values.
+
+Do not commit `.env` files, API keys, Firebase credentials, or database files to GitHub.
+
+Example:
+
+```env
+API_HOST=127.0.0.1
+API_PORT=8000
+```
+
+## Repository Structure
+
+```text
+AfterHarvest/
+├── apps/
+│   └── mobile/
+│       ├── src/
+│       │   ├── components/
+│       │   ├── screens/
+│       │   ├── services/
+│       │   ├── theme/
+│       │   └── types/
+│       ├── App.tsx
+│       ├── app.json
+│       ├── package.json
+│       └── tsconfig.json
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   └── main.py
+│   ├── data/
+│   └── requirements.txt
+├── docs/
+├── .gitignore
+└── README.md
+```
+
+## AI Approach
+
+AfterHarvest uses a simple multimodal decision approach:
+
+1. The mobile app sends a tomato image and storage context to the backend.
+2. The backend validates the request and preprocesses the image.
+3. The visual model estimates probabilities for fresh, aging, and spoiled states.
+4. The context model evaluates storage conditions.
+5. The decision engine combines both signals into a final quality score and recommendation.
+
+Prototype weighting:
+
+```text
+quality_score = 0.65 × visual_quality + 0.35 × context_quality
+```
+
+This weighting is a prototype assumption and should be evaluated and tuned using a validation dataset.
+
+## Dataset Plan
+
+The initial model focuses on tomatoes and three visible quality classes:
+
+| Class | Description |
+|---|---|
+| Fresh | Tomato appears visually healthy and suitable for normal storage |
+| Aging | Tomato shows early visible quality decline |
+| Spoiled | Tomato shows clear visible spoilage indicators |
+
+Initial target:
+
+- 150 to 250 images per class
+- 450 to 750 total images
+- 70% training data
+- 15% validation data
+- 15% test data
+
+## Privacy and Data Handling
+
+- Images are validated before upload.
+- Images are processed through the backend.
+- The MVP does not permanently store uploaded images.
+- Assessment metadata may be stored locally or in Firestore.
+- Users should avoid uploading images containing personal information.
+
+## Future Improvements
+
+- Add a trained tomato image-classification model
+- Improve model explainability
+- Add multi-produce support
+- Add batch-level inventory tracking
+- Add storage-location management
+- Add shelf-life estimation
+- Add cloud image storage with access controls
+- Add offline support
+- Add user accounts and team roles
+- Add real model performance metrics
+
+## License
+
+This project is for educational and portfolio purposes.
+
+## Author
+
+**Izhar Ahmad**  
+GitHub: [izharahmaad](https://github.com/izharahmaad)
