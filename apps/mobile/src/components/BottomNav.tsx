@@ -15,8 +15,8 @@ import {
 } from '../theme/tokens';
 
 type NavItem = {
-  name: string;
-  label: string;
+  id: string;
+  title: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
 };
 
@@ -34,15 +34,15 @@ export default function BottomNav({
   return (
     <View style={s.container}>
       {items.map(item => {
-        const active = item.name === activeId;
+        const active = item.id === activeId;
 
         return (
           <Pressable
-            key={item.name}
+            key={item.id}
             accessibilityRole="tab"
-            accessibilityLabel={item.label}
+            accessibilityLabel={item.title}
             accessibilityState={{selected: active}}
-            onPress={() => onChange(item.name)}
+            onPress={() => onChange(item.id)}
             style={({pressed}) => [
               s.item,
               pressed ? s.pressed : null,
@@ -54,7 +54,7 @@ export default function BottomNav({
               ]}>
               <Ionicons
                 name={item.icon}
-                size={20}
+                size={19}
                 color={
                   active ? colors.primary : colors.muted
                 }
@@ -66,7 +66,7 @@ export default function BottomNav({
                 s.label,
                 active ? s.labelActive : null,
               ]}>
-              {item.label}
+              {item.title}
             </Text>
           </Pressable>
         );
@@ -80,7 +80,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    minHeight: 74,
+    minHeight: 72,
     paddingHorizontal: layout.screenPadding,
     paddingTop: 8,
     paddingBottom: 10,
@@ -95,8 +95,8 @@ const s = StyleSheet.create({
     gap: 4,
   },
   iconWrapper: {
-    width: 46,
-    height: 34,
+    width: 42,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.lg,
