@@ -26,12 +26,6 @@ AfterHarvest is an AI-powered post-harvest intelligence platform that combines *
 
 ---
 
-## 📌 GitHub Description
-
-```text
-AfterHarvest is an AI-powered post-harvest intelligence platform that combines PyTorch tomato image classification with storage-context analysis to estimate visible quality risk and generate explainable recommendations.
-```
-
 ## 🚀 Overview
 
 AfterHarvest helps users assess the visible condition of tomatoes by combining a produce photo with real storage conditions.
