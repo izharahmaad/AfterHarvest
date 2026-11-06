@@ -12,7 +12,6 @@ import {
 import {Ionicons} from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 
-import TopBar from '../components/TopBar';
 import {
   colors,
   layout,
@@ -25,7 +24,6 @@ import type {Assessment} from '../types/assessment';
 type Props = {
   result: Assessment;
   onNew: () => void;
-  onBack?: () => void;
 };
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -267,11 +265,7 @@ function DetailRow({
   );
 }
 
-export default function ResultScreen({
-  result,
-  onNew,
-  onBack,
-}: Props) {
+export default function ResultScreen({result, onNew}: Props) {
   const {width} = useWindowDimensions();
   const narrow = width < layout.narrowBreakpoint;
   const tablet = width >= layout.tabletBreakpoint;
@@ -387,20 +381,29 @@ export default function ResultScreen({
 
   return (
     <View style={s.screen}>
-      <TopBar
-        title="Assessment result"
-        subtitle="TOMATO QUALITY"
-        showBack
-        onBack={onBack}
-        right={
-          <View style={s.modePill}>
-            <View style={s.modeDot} />
-            <Text style={s.modePillText}>
-              {isDemo ? 'DEMO MODE' : 'MODEL MODE'}
-            </Text>
+      <View style={s.topBar}>
+        <View style={s.brand}>
+          <View style={s.brandIcon}>
+            <Ionicons
+              name="analytics"
+              size={17}
+              color={colors.white}
+            />
           </View>
-        }
-      />
+
+          <View style={s.brandCopy}>
+            <Text style={s.brandName}>Assessment result</Text>
+            <Text style={s.brandCaption}>TOMATO QUALITY</Text>
+          </View>
+        </View>
+
+        <View style={s.modePill}>
+          <View style={s.modeDot} />
+          <Text style={s.modePillText}>
+            {isDemo ? 'DEMO MODE' : 'MODEL MODE'}
+          </Text>
+        </View>
+      </View>
 
       <View style={s.progressRail}>
         <View
@@ -948,6 +951,46 @@ const s = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: 14,
+    paddingBottom: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  brandIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  brandCopy: {
+    minWidth: 0,
+  },
+  brandName: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  brandCaption: {
+    color: colors.muted,
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 0.9,
+    marginTop: 3,
   },
   modePill: {
     flexDirection: 'row',
