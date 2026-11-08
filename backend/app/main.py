@@ -1,20 +1,26 @@
 ﻿from contextlib import asynccontextmanager
 
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import router
-from app.config import settings
-from app.database import Base, engine
+
+from backend.app.api.routes import router
+from backend.app.config import settings
+from backend.app.database import Base, engine
+
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
 
+
     print("Backend started in demo mode.")
 
+
     yield
+
 
 
 app = FastAPI(
@@ -22,6 +28,7 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,7 +38,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 app.include_router(router)
+
+
+
+@app.get("/")
+def root():
+    return {
+        "message": "AfterHarvest API is running",
+        "docs": "/docs",
+        "health": "/api/health",
+    }
+
 
 
 @app.get("/api/health")
