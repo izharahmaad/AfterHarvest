@@ -40,4 +40,5 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+
 settings.upload_dir.mkdir(parents=True, exist_ok=True)
