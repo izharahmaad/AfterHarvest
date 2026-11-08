@@ -12,8 +12,16 @@ def get_context_score(
     storage_days: int,
     packaging: str,
 ) -> float:
-    temperature_risk = min(max((temperature - 4) / 26, 0), 1)
-    humidity_risk = min(max((humidity - 70) / 30, 0), 1)
+    temperature_risk = min(
+        max((temperature - 4) / 26, 0),
+        1,
+    )
+
+    humidity_risk = min(
+        max((humidity - 70) / 30, 0),
+        1,
+    )
+
     duration_risk = min(storage_days / 14, 1)
 
     packaging_risk = {
@@ -85,8 +93,14 @@ def get_contributing_factors(
     context_score: float,
 ) -> list[dict[str, float | str]]:
     duration_weight = min(storage_days / 14, 1)
-    temperature_weight = min(max((temperature - 4) / 26, 0), 1)
-    humidity_weight = min(max((humidity - 70) / 30, 0), 1)
+    temperature_weight = min(
+        max((temperature - 4) / 26, 0),
+        1,
+    )
+    humidity_weight = min(
+        max((humidity - 70) / 30, 0),
+        1,
+    )
 
     return [
         {
