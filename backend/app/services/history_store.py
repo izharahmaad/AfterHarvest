@@ -3,7 +3,13 @@ import os
 from pathlib import Path
 from typing import Any
 
-DATA_DIR = Path(os.getenv("AFTERHARVEST_DATA_DIR", "data"))
+
+# Resolve the data directory relative to the backend folder.
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+DATA_DIR = Path(
+    os.getenv("AFTERHARVEST_DATA_DIR", str(BACKEND_DIR / "data"))
+)
+
 DATABASE_PATH = DATA_DIR / "assessments.json"
 
 
@@ -12,23 +18,29 @@ def _load() -> list[dict[str, Any]]:
         return []
 
     try:
-        return json.loads(DATABASE_PATH.read_text(encoding="utf-8"))
+        return json.loads(
+            DATABASE_PATH.read_text(encoding="utf-8")
+        )
     except (OSError, json.JSONDecodeError):
         return []
 
 
 def _save(records: list[dict[str, Any]]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+
     DATABASE_PATH.write_text(
         json.dumps(records, indent=2),
         encoding="utf-8",
     )
 
 
-def save_assessment(record: dict[str, Any]) -> dict[str, Any]:
+def save_assessment(
+    record: dict[str, Any],
+) -> dict[str, Any]:
     records = _load()
     records.append(record)
     _save(records)
+
     return record
 
 
