@@ -3,13 +3,19 @@ from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
+# Resolve important paths relative to the backend folder.
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+
+
 class Settings(BaseSettings):
     app_name: str = "AfterHarvest API"
     environment: str = "development"
 
-    database_url: str = "sqlite:///./afterharvest.db"
+    database_url: str = (
+        f"sqlite:///{BACKEND_DIR / 'afterharvest.db'}"
+    )
 
-    upload_dir: Path = Path("./uploads")
+    upload_dir: Path = BACKEND_DIR / "uploads"
     max_upload_bytes: int = 5 * 1024 * 1024
 
     allowed_image_types: set[str] = {
@@ -19,12 +25,14 @@ class Settings(BaseSettings):
         "image/webp",
     }
 
-    model_path: Path = Path("./app/ml/model.pt")
-    labels_path: Path = Path("./app/ml/labels.json")
+    model_path: Path = BACKEND_DIR / "app" / "ml" / "model.pt"
+    labels_path: Path = BACKEND_DIR / "app" / "ml" / "labels.json"
 
     cors_origins: list[str] = [
         "http://localhost:8081",
         "http://localhost:19006",
+        "http://192.168.0.182:8081",
+        "http://192.168.0.182:19006",
     ]
 
     class Config:
@@ -32,5 +40,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
 
 settings.upload_dir.mkdir(parents=True, exist_ok=True)
