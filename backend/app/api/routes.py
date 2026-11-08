@@ -1,16 +1,18 @@
 ﻿import uuid
 from datetime import datetime, timezone
 
+
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from app.schemas.assessment import (
+
+from backend.app.schemas.assessment import (
     ContributingFactor,
     HistoryItem,
     HistoryResponse,
     PredictionResponse,
     VisualProbabilities,
 )
-from app.services.assessment_engine import (
+from backend.app.services.assessment_engine import (
     combine_scores,
     get_confidence,
     get_context_score,
@@ -20,12 +22,14 @@ from app.services.assessment_engine import (
     get_usable_days,
     get_visual_probabilities,
 )
-from app.services.history_store import (
+from backend.app.services.history_store import (
     list_assessments,
     save_assessment,
 )
 
+
 router = APIRouter()
+
 
 ALLOWED_CONTENT_TYPES = {
     "image/jpeg",
@@ -34,8 +38,10 @@ ALLOWED_CONTENT_TYPES = {
     "image/webp",
 }
 
+
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MODEL_VERSION = "afterharvest-tomato-v0-demo"
+
 
 
 @router.get("/health")
@@ -44,6 +50,7 @@ def health() -> dict[str, str]:
         "status": "ok",
         "service": "afterharvest-api",
     }
+
 
 
 @router.post("/quality/predict", response_model=PredictionResponse)
@@ -61,7 +68,9 @@ async def predict_quality(
             detail="Unsupported image type. Use JPEG, PNG or WebP.",
         )
 
+
     image_bytes = await image.read()
+
 
     if len(image_bytes) == 0:
         raise HTTPException(
@@ -69,11 +78,13 @@ async def predict_quality(
             detail="Uploaded image is empty.",
         )
 
+
     if len(image_bytes) > MAX_IMAGE_BYTES:
         raise HTTPException(
             status_code=413,
             detail="Image exceeds the 5 MB limit.",
         )
+
 
     if produce_type.lower() != "tomato":
         raise HTTPException(
@@ -81,11 +92,13 @@ async def predict_quality(
             detail="Only tomato assessments are supported in this prototype.",
         )
 
+
     if packaging not in {"open_crate", "sealed_bag", "ventilated_box"}:
         raise HTTPException(
             status_code=422,
             detail="Packaging must be open_crate, sealed_bag or ventilated_box.",
         )
+
 
     context_score = get_context_score(
         temperature,
@@ -94,12 +107,15 @@ async def predict_quality(
         packaging,
     )
 
+
     quality_score = combine_scores(context_score)
     quality_state = get_quality_state(quality_score)
     usable_days = get_usable_days(quality_state)
 
+
     assessment_id = str(uuid.uuid4())
     created_at = datetime.now(timezone.utc).isoformat()
+
 
     response = PredictionResponse(
         assessment_id=assessment_id,
@@ -129,6 +145,7 @@ async def predict_quality(
         created_at=created_at,
     )
 
+
     save_assessment(
         {
             "assessment_id": assessment_id,
@@ -147,12 +164,15 @@ async def predict_quality(
         }
     )
 
+
     return response
+
 
 
 @router.get("/history", response_model=HistoryResponse)
 def get_history() -> HistoryResponse:
     records = list_assessments()
+
 
     return HistoryResponse(
         items=[HistoryItem(**record) for record in records]
