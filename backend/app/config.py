@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
+
 settings = Settings()
 
 settings.upload_dir.mkdir(parents=True, exist_ok=True)
