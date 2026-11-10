@@ -51,7 +51,6 @@ def root():
         "health": "/api/health",
     }
 
-
 @app.get("/api/health")
 def health():
     return {
