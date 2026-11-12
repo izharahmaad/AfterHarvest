@@ -10,7 +10,6 @@ class Settings(BaseSettings):
     app_name: str = "AfterHarvest API"
     environment: str = "development"
 
-
     database_url: str = (
         f"sqlite:///{BACKEND_DIR / 'afterharvest.db'}"
     )
