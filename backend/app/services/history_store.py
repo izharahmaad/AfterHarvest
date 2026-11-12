@@ -22,7 +22,6 @@ def _load() -> list[dict[str, Any]]:
     except (OSError, json.JSONDecodeError):
         return []
 
-
 def _save(records: list[dict[str, Any]]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
