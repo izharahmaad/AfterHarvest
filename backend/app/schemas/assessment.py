@@ -1,6 +1,5 @@
 ﻿from pydantic import BaseModel, Field
 
-
 class VisualProbabilities(BaseModel):
     fresh: float
     aging: float
