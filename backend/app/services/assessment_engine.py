@@ -76,7 +76,6 @@ def get_confidence(state: str) -> float:
         "spoiled": 0.64,
     }.get(state, 0.50)
 
-
 def get_usable_days(state: str) -> tuple[int, int]:
     return {
         "fresh": (3, 7),
