@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from typing import Any
 
-
 # Resolve the data directory relative to the backend folder.
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = Path(
