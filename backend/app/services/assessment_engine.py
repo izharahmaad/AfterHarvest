@@ -83,7 +83,6 @@ def get_usable_days(state: str) -> tuple[int, int]:
         "spoiled": (0, 1),
     }.get(state, (0, 1))
 
-
 def get_contributing_factors(
     temperature: float,
     humidity: float,
