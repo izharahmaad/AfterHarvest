@@ -38,6 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 app.include_router(router)
 
 
@@ -49,7 +50,6 @@ def root():
         "docs": "/docs",
         "health": "/api/health",
     }
-
 
 
 @app.get("/api/health")
