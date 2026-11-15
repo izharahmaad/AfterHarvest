@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+
 # Resolve the data directory relative to the backend folder.
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = Path(
@@ -10,6 +11,7 @@ DATA_DIR = Path(
 )
 
 DATABASE_PATH = DATA_DIR / "assessments.json"
+
 
 def _load() -> list[dict[str, Any]]:
     if not DATABASE_PATH.exists():
