@@ -5,7 +5,6 @@
         "spoiled": 0.11,
     }
 
-
 def get_context_score(
     temperature: float,
     humidity: float,
