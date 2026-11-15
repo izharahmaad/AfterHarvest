@@ -11,7 +11,6 @@ DATA_DIR = Path(
 
 DATABASE_PATH = DATA_DIR / "assessments.json"
 
-
 def _load() -> list[dict[str, Any]]:
     if not DATABASE_PATH.exists():
         return []
