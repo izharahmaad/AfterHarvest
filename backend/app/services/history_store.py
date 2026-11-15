@@ -11,6 +11,7 @@ DATA_DIR = Path(
 
 DATABASE_PATH = DATA_DIR / "assessments.json"
 
+
 def _load() -> list[dict[str, Any]]:
     if not DATABASE_PATH.exists():
         return []
@@ -21,6 +22,7 @@ def _load() -> list[dict[str, Any]]:
         )
     except (OSError, json.JSONDecodeError):
         return []
+
 
 def _save(records: list[dict[str, Any]]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
