@@ -6,6 +6,7 @@ class VisualProbabilities(BaseModel):
     aging: float
     spoiled: float
 
+
 class ContributingFactor(BaseModel):
     name: str
     weight: float
