@@ -33,6 +33,7 @@ def _save(records: list[dict[str, Any]]) -> None:
         encoding="utf-8",
     )
 
+
 def save_assessment(
     record: dict[str, Any],
 ) -> dict[str, Any]:
