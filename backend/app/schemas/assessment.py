@@ -44,5 +44,6 @@ class HistoryItem(BaseModel):
     inference_mode: str
     created_at: str
 
+
 class HistoryResponse(BaseModel):
     items: list[HistoryItem]
