@@ -6,11 +6,9 @@ class VisualProbabilities(BaseModel):
     aging: float
     spoiled: float
 
-
 class ContributingFactor(BaseModel):
     name: str
     weight: float
-
 
 class PredictionResponse(BaseModel):
     assessment_id: str
@@ -43,7 +41,6 @@ class HistoryItem(BaseModel):
     model_version: str
     inference_mode: str
     created_at: str
-
 
 class HistoryResponse(BaseModel):
     items: list[HistoryItem]
