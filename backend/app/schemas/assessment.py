@@ -10,6 +10,7 @@ class ContributingFactor(BaseModel):
     name: str
     weight: float
 
+
 class PredictionResponse(BaseModel):
     assessment_id: str
     produce_type: str
