@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from typing import Any
 
-
 # Resolve the data directory relative to the backend folder.
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = Path(
@@ -32,7 +31,6 @@ def _save(records: list[dict[str, Any]]) -> None:
         json.dumps(records, indent=2),
         encoding="utf-8",
     )
-
 
 def save_assessment(
     record: dict[str, Any],
