@@ -46,10 +46,7 @@ app.include_router(router)
 @app.get("/")
 def root():
     return {
-        "message": "AfterHarvest API is running",
-        "docs": "/docs",
-        "health": "/api/health",
-    }
+ 
 
 
 @app.get("/api/health")
