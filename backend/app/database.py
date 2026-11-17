@@ -12,7 +12,6 @@ engine = create_engine(
     else {},
 )
 
-
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
