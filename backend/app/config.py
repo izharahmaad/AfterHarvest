@@ -3,7 +3,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
-
+# Resolve important paths relative to the backend folder.
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 
@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
 
 settings = Settings()
 
