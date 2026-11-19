@@ -10,6 +10,7 @@ from backend.app.config import settings
 from backend.app.database import Base, engine
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
@@ -20,11 +21,13 @@ async def lifespan(app: FastAPI):
 
     yield
 
+
 app = FastAPI(
     title=settings.app_name,
     version="1.0.0",
     lifespan=lifespan,
 )
+
 
 app.add_middleware(
     CORSMiddleware,
