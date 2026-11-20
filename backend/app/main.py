@@ -10,6 +10,7 @@ from backend.app.config import settings
 from backend.app.database import Base, engine
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
@@ -26,6 +27,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -36,6 +38,7 @@ app.add_middleware(
 
 
 app.include_router(router)
+
 
 
 @app.get("/")
