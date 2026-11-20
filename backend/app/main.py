@@ -10,6 +10,7 @@ from backend.app.config import settings
 from backend.app.database import Base, engine
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
