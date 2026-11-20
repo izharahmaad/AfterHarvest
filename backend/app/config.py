@@ -34,6 +34,7 @@ class Settings(BaseSettings):
         "http://192.168.0.182:8081",
         "http://192.168.0.182:19006",
     ]
+
     class Config:
         env_file = ".env"
 
