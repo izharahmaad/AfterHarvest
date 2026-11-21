@@ -448,7 +448,6 @@ export default function HistoryScreen({
     : 0;
 
   const hasActiveSearch = search.trim().length > 0;
-
   return (
     <View style={s.screen}>
       <TopBar
