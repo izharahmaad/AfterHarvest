@@ -178,6 +178,7 @@ function matchesSearch(item: Assessment, query: string): boolean {
   }
 
   const score = getScore(item.quality_score);
+
   const fields = [
     item.quality_state,
     item.recommendation,
@@ -289,6 +290,7 @@ function AssessmentCard({
 
         <View style={s.produceCopy}>
           <Text style={s.produceTitle}>Tomato assessment</Text>
+
           <Text style={s.produceDate}>
             {formatDate(item.created_at)}
             {time ? ` · ${time}` : ''}
@@ -332,6 +334,7 @@ function AssessmentCard({
             <Text style={s.scoreValue}>
               {score === null ? '—' : score}
             </Text>
+
             <Text style={s.scoreMax}>/100</Text>
           </View>
         </View>
@@ -371,6 +374,7 @@ function AssessmentCard({
 
         <View style={s.detailsLink}>
           <Text style={s.detailsLinkText}>View details</Text>
+
           <Ionicons
             name="chevron-forward"
             size={14}
@@ -444,7 +448,6 @@ export default function HistoryScreen({
     : 0;
 
   const hasActiveSearch = search.trim().length > 0;
-
   return (
     <View style={s.screen}>
       <TopBar
@@ -455,6 +458,7 @@ export default function HistoryScreen({
         right={
           <View style={s.sessionPill}>
             <View style={s.sessionDot} />
+
             <Text style={s.sessionPillText}>SESSION</Text>
           </View>
         }
@@ -486,8 +490,8 @@ export default function HistoryScreen({
           </Text>
 
           <Text style={s.subtitle}>
-            Review recent results and revisit the context behind each
-            assessment.
+            Review recent results and revisit the context behind
+            each assessment.
           </Text>
         </View>
 
@@ -559,9 +563,10 @@ export default function HistoryScreen({
 
           <View style={s.noticeCopy}>
             <Text style={s.noticeTitle}>Session history</Text>
+
             <Text style={s.noticeDescription}>
-              Records reset when the app restarts. Cloud persistence is
-              not connected yet.
+              Records reset when the app restarts. Cloud
+              persistence is not connected yet.
             </Text>
           </View>
         </View>
@@ -678,6 +683,7 @@ export default function HistoryScreen({
                   color={colors.primary}
                   accessible={false}
                 />
+
                 <Text style={s.resetButtonText}>
                   View all results
                 </Text>
