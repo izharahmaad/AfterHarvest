@@ -4,7 +4,6 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from backend.app.config import settings
 
-
 engine = create_engine(
     settings.database_url,
     connect_args={"check_same_thread": False}
@@ -12,13 +11,11 @@ engine = create_engine(
     else {},
 )
 
-
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,
 )
-
 
 Base = declarative_base()
 
