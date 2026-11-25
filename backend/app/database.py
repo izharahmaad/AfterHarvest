@@ -12,6 +12,7 @@ engine = create_engine(
     else {},
 )
 
+
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
@@ -19,6 +20,7 @@ SessionLocal = sessionmaker(
 )
 
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()
