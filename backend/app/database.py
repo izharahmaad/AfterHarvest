@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-
 from backend.app.config import settings
 
 engine = create_engine(
@@ -18,7 +17,6 @@ SessionLocal = sessionmaker(
 )
 
 Base = declarative_base()
-
 
 def get_db():
     db = SessionLocal()
