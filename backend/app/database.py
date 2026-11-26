@@ -18,7 +18,6 @@ SessionLocal = sessionmaker(
     bind=engine,
 )
 
-
 Base = declarative_base()
 
 def get_db():
