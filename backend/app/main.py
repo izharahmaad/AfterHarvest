@@ -9,8 +9,6 @@ from backend.app.api.routes import router
 from backend.app.config import settings
 from backend.app.database import Base, engine
 
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
@@ -38,10 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(router)
-
-
 
 @app.get("/")
 def root():
