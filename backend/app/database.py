@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-
 from backend.app.config import settings
 
 engine = create_engine(
@@ -10,8 +9,6 @@ engine = create_engine(
     if settings.database_url.startswith("sqlite")
     else {},
 )
-
-
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
